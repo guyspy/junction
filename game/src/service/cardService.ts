@@ -8,7 +8,7 @@ export const cardService = (scene: Phaser.Scene) => {
     };
 
     const createSpecificCard = (scene: Phaser.Scene, cardSetting: CardSetting): Card => {
-        return new Card({ scene, x: 0, y: 0, front: cardSetting.front.name, back: cardSetting.back.name, meta: cardSetting.meta });
+        return new Card({ scene, x: 0, y: scene.cameras.main.centerY, front: cardSetting.front.name, back: cardSetting.back.name, meta: cardSetting.meta });
     };
 
     const dealCardsToPlayer = (player: Player, cardNamesToDeal: string[]): void => {

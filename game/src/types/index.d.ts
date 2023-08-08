@@ -21,7 +21,7 @@ interface CardMeta {
 interface InventoryItem {
     name: string;
     count: number;
-};
+}
 
 type DealCardsAction = {
     action: 'dealCards';
@@ -29,7 +29,12 @@ type DealCardsAction = {
     cards: InventoryItem[];
 };
 
-type Action = DealCardsAction
+type RenderAction = {
+    action: 'render';
+    mode: 'renderMyHandCards';
+}
+
+type Action = DealCardsAction | RenderAction;
 
 interface GameDesign {
     players: number;

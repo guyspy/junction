@@ -7,9 +7,11 @@ export default class Player {
     private score: number;
 
     // Variables to hold the calculated layout values
-    private handLeftEdgeX!: number;
+    private leftEdgeX!: number;
+    private bottomEdgeY!: number;
     private handAvailableWidth!: number;
-    private handMargin!: number;
+    private handMarginX!: number;
+    private handMarginY!: number;
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
@@ -26,31 +28,49 @@ export default class Player {
 
     private calculateHandLayout() {
         // TODO: read from game config
-        const minMarginPercentage = 0.05; // 5% minimum margin width
-        const maxMarginPercentage = 0.10; // 10% maximum margin width
+        const minXMarginPercentage = 0.05; // 5% minimum margin width
+        const maxXMarginPercentage = 0.10; // 10% maximum margin width
+
+        const minYMarginPercentage = 0.05; // 5% minimum margin height
+        const maxYMarginPercentage = 0.10; // 10% maximum margin height
 
         // Calculate the actual margin based on the screen width, making sure it falls within min and max
-        this.handMargin = Math.max(Math.min(this.scene.scale.width * maxMarginPercentage, this.scene.scale.width * minMarginPercentage), maxMarginPercentage * this.scene.scale.width);
+        this.handMarginX = Math.max(Math.min(this.scene.scale.width * maxXMarginPercentage, this.scene.scale.width * minXMarginPercentage), maxXMarginPercentage * this.scene.scale.width);
+        this.handMarginY = Math.max(Math.min(this.scene.scale.height * maxYMarginPercentage, this.scene.scale.height * minYMarginPercentage), maxYMarginPercentage * this.scene.scale.height);
 
         // Calculate the width available for the cards:
-        this.handAvailableWidth = this.scene.scale.width - 2 * this.handMargin;
+        this.handAvailableWidth = this.scene.scale.width - 2 * this.handMarginX;
 
         // Calculate the left edge
-        this.handLeftEdgeX = -(this.scene.scale.width / 2);
+        this.leftEdgeX = -(this.scene.scale.width / 2);
+        this.bottomEdgeY = this.scene.scale.height - this.handMarginY;
     }
 
     receiveCard(card: Card) {
         // Add the card to the hand first
         this.hand.add(card);
+    }
 
+    renderHandCards() {
         // Then position all the cards
         (this.hand.list as Card[]).forEach((card, index) => {
-            // Calculate the x position of each card:
-            // - (this.handAvailableWidth / this.hand.list.length) calculates the space each card should take up.
-            // - (index + 0.5) positions each card at its correct position within that space.
-            // - Finally, add the this.handMargin to shift the x position from the left side of the screen.
-            card.x = this.handLeftEdgeX + (this.handAvailableWidth / this.hand.list.length) * (index + 0.5) + this.handMargin;
-            card.flip()
+            // Calculate the x and y positions of each card:
+            const newX = this.leftEdgeX + (this.handAvailableWidth / this.hand.list.length) * (index + 0.5) + this.handMarginX;
+            const newY = this.bottomEdgeY;
+
+            // Add a tween that animates the card's position to the new values over 500 milliseconds
+            // Adding an index-based delay causes each animation to start slightly after the previous one
+            this.scene.tweens.add({
+                targets: card,
+                x: newX,
+                y: newY,
+                duration: 500,
+                ease: 'Power2',
+                delay: index * 20, // delay each card's animation by 200ms * its index in the list
+                onComplete: () => {
+                    card.flip();
+                }
+            });
         });
     }
 

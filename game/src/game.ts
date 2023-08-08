@@ -28,6 +28,10 @@ export const game: GameDesign = {
                 { name: 'recombination', count: 1 }
             ]
         },
+        {
+            action: 'render',
+            mode: 'renderMyHandCards'
+        }
     ]
 }
 

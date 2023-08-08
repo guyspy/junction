@@ -22,6 +22,10 @@ export const gameService = (scene: Phaser.Scene) => {
                 } else if (step.mode === 'shuffleAndDealEvenlyToAllPayers') {
                     shuffleAndDealEvenlyToAllPayers(step.cards, [player]);
                 }
+            } else if (step.action === 'render') {
+                if (step.mode === 'renderMyHandCards') {
+                    player.renderHandCards();
+                }
             }
         });
     }
