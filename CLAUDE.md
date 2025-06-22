@@ -4,88 +4,215 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Junction is an educational gaming platform inspired by cell junction biology, allowing educators to create online 2D card-based board games with AI assistance. The platform provides a complete gaming ecosystem with creation tools, gameplay platform, and community features.
+Junction is an educational gaming platform featuring **Cadherin**, a Kotlin Multiplatform game engine for creating 2D card-based educational games. The platform uses YAML DSL for game definitions and is optimized for AI Agent driven game creation.
 
 ## Commands
 
-Since this is an early-stage project with planning documents, there are currently no build/test commands available. The project directories are primarily empty and contain documentation only.
+### Development Commands
+```bash
+# Build all platforms (JVM + JS)
+./gradlew build
+
+# Run tests
+./gradlew test
+
+# Run JVM command-line demo
+./gradlew jvmRun
+
+# Generate JavaScript module for frontend
+./gradlew jsBrowserDistribution
+
+# Generate TypeScript definitions
+./gradlew jsTypeScriptDeclarations
+```
+
+### Testing Commands
+```bash
+# Run platform-specific tests
+./gradlew jvmTest      # JVM tests
+./gradlew jsTest       # JavaScript tests
+
+# Run with coverage
+./gradlew test jacocoTestReport
+```
 
 ## Architecture & Components
 
-This project follows a microservices architecture with biological naming conventions based on cell junction proteins:
+### Cadherin Engine (Kotlin Multiplatform)
+The core game engine that compiles to both JVM and JavaScript:
 
-### Core Services
-- **`cadherin/`** - DSL interpreter for game rules (server & client shared)
-- **`game-engine/`** - Core game execution engine (Kotlin + Quarkus)  
-- **`platform-services/`** - User auth, game rooms, community features (Kotlin + Quarkus)
-- **`creator-tools/`** - Game creation and editing tools (TypeScript)
-- **`web-client/`** - Frontend application (TypeScript)
-
-### Future Components (planned naming)
-- **`claudin`** - Security and permission management
-- **`integrin`** - External system integration interfaces  
-- **`connexin`** - Real-time communication system
-- **`desmosome`** - Persistent data connections
-- **`cytoplasm`** - Shared data layer
+```
+cadherin/
+├── src/
+│   ├── commonMain/kotlin/           # Shared game logic
+│   │   ├── model/                   # Game data models
+│   │   ├── parser/                  # YAML parsing
+│   │   ├── core/                    # Game engine
+│   │   └── actions/                 # Player actions
+│   ├── jvmMain/kotlin/             # JVM-specific (server)
+│   │   ├── cli/                    # Command-line interface
+│   │   └── platform/               # File I/O
+│   └── jsMain/kotlin/              # JS-specific (frontend)
+│       └── platform/               # Browser APIs
+```
 
 ### Technology Stack
-- **Backend**: Kotlin + Quarkus microservices
-- **Frontend**: TypeScript
-- **Database**: MongoDB
-- **Development Approach**: Test Driven Development
-- **Communication**: WebSocket for real-time gaming
+- **Core**: Kotlin Multiplatform
+- **Frontend**: Kotlin/JS compiles to TypeScript-compatible JavaScript
+- **Backend**: Kotlin/JVM with Quarkus
+- **Database**: MongoDB (stores YAML as JSON)
+- **DSL Format**: YAML (AI-friendly structure)
+- **Development**: Test-driven development
 
 ### Data Architecture
-The system uses MongoDB with collections for:
-- Users (authentication, profiles, credits)
-- Games (DSL definitions, assets, metadata)
-- GameSessions (active game state, events, players)
+- **GameDefinition**: YAML-defined game rules and cards
+- **GameState**: Runtime game state (players, deck, actions)
+- **GameEngine**: Core logic engine (shared between frontend/backend)
 
-## Development Phases
+## Development Philosophy
 
-The project is planned in 4 phases:
-1. **Game Engine Core** (Priority) - DSL design, game rules engine, card systems
-2. **Platform Infrastructure** - User management, game rooms, real-time communication  
-3. **Creator Tools** - Visual game editor, AI-assisted creation, asset management
-4. **Community & Business** - Rating system, crowdfunding, donation credits
+### AI-First Design
+The engine prioritizes AI Agent usability:
+- **YAML DSL**: Structured format AI can easily understand and modify
+- **Semantic naming**: Clear, descriptive property names
+- **AI Hints system**: Built-in guidance for AI modifications
+- **Unified API**: Same game logic on frontend and backend
 
-## Cadherin DSL
+### Incremental Development
+Each day delivers a working game:
+- **Day 1**: YAML parsing + basic card display
+- **Day 2**: Player actions (draw, play cards)
+- **Day 3**: Event system (card effects)
+- **Day 4**: Turn management and scoring
+- **Day 5**: Win conditions and complete game
 
-The core DSL (Domain Specific Language) for defining card games features:
-- Natural language-like syntax for educators
-- Type system with game-specific types (Card, Player, Deck, Hand)
-- Event-driven architecture for game rules
-- Security sandboxing to prevent malicious code
-- Compilation to intermediate representation for execution
+### Key Design Decisions
 
-## Project Structure
+#### Event System Simplification (Day 3)
+Decided on minimal viable event system:
+- **Triggers**: Only `on_play` events initially
+- **Targets**: Fixed targets (`self`, `opponent`, `all_opponents`)
+- **Parameters**: Simple `{property}` substitution
+- **Display**: Clear command-line effect visualization
 
+Example:
+```yaml
+fire_spell:
+  properties:
+    damage: {type: int, min: 2, max: 5}
+  events:
+    on_play:
+      action: "deal_damage"
+      target: "opponent"
+      amount: "{damage}"
 ```
-junction/
-├── docs/                     # Development planning documents
-│   ├── overview.md           # Overall project planning  
-│   ├── architecture.md       # Technical architecture design
-│   ├── cadherin/            # DSL documentation
-│   ├── game-engine/         # Game engine plans
-│   ├── platform/            # Platform infrastructure plans
-│   ├── creator-tools/       # Creation tools plans
-│   └── community/           # Community features plans
-├── cadherin/                # DSL interpreter (empty - planned)
-├── game-engine/             # Game engine core (empty - planned)
-├── platform-services/      # Platform microservices (empty - planned)
-├── creator-tools/           # Creation tools (empty - planned)
-└── web-client/             # Frontend application (empty - planned)
+
+## Frontend Integration
+
+JavaScript compilation provides TypeScript-compatible API:
+
+```typescript
+import { GameEngine, PlayerAction } from './cadherin-core'
+
+// Create game from YAML
+const engine = GameEngine.fromYaml(yamlContent, playerNames)
+
+// Process player actions  
+const result = engine.processAction({
+  type: 'PlayCard',
+  playerId: 'player_0', 
+  cardId: 'fire_spell_1'
+})
+
+// Get UI state for rendering
+const uiState = engine.getUIState()
 ```
 
-## Key Development Considerations
+## Backend Integration
 
-- **Education Focus**: All features prioritize learning and teaching use cases
-- **Multilingual**: Documentation is primarily in Traditional Chinese
-- **Social Impact**: Includes "pay-it-forward" credit system for disadvantaged children
-- **Security**: Emphasis on safe execution of user-generated game content
-- **Performance**: Target <100ms response time, support 1000+ concurrent games
-- **AI Integration**: OpenAI/Claude API for assisted game creation
+JVM version provides server functionality:
 
-## Current Status
+```kotlin
+// Same engine, server context
+val engine = GameEngine.fromYaml(yamlContent, playerIds)
+val result = engine.processAction(playerAction)
 
-This is an early-stage project in the planning phase. The source directories are empty, containing only documentation. Implementation will begin with the Cadherin DSL and game engine core as Phase 1 priorities.
+// Save to MongoDB
+mongoAdapter.saveGameState(engine.getGameState())
+```
+
+## AI Agent Integration
+
+The engine provides AI-friendly modification points:
+
+```yaml
+ai_hints:
+  difficulty_factors: 
+    - "cards.attack_card.properties.damage.max"
+    - "mechanics.setup.players.health"
+  common_modifications:
+    easier: {damage_max: 3, health: 20}
+    harder: {damage_max: 7, health: 10}
+```
+
+## Game Definition Format
+
+Standard YAML structure for game definitions:
+
+```yaml
+meta:
+  name: "Game Name"
+  target_age: [8, 12]
+  player_count: [2, 4]
+
+cards:
+  card_type_name:
+    count: 10
+    properties:
+      property_name: {type: int, min: 1, max: 5}
+    events:
+      on_play:
+        action: "action_name"
+        target: "target_type"
+
+mechanics:
+  setup:
+    players:
+      health: 10
+      hand_size: 5
+  win_conditions:
+    - type: "health_depleted"
+      message: "{winner} wins!"
+
+ai_hints:
+  difficulty_factors: [list of YAML paths]
+  common_modifications:
+    easier: {modifications}
+    harder: {modifications}
+```
+
+## Testing Approach
+
+- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test complete game flows
+- **Cross-Platform**: Same tests run on JVM and JS
+- **Game Scenarios**: Test actual gameplay sequences
+
+## Development Status
+
+**Current Phase**: MVP Implementation (Week 1)
+- Day 1: ✅ Kotlin Multiplatform setup + YAML parsing
+- Day 2: ✅ Player state and actions  
+- Day 3: ✅ Event system implementation (card effects)
+- Day 4: ⏳ Turn management and scoring
+- Day 5: ⏳ Win conditions and complete game
+
+## Key Files
+
+- `/docs/cadherin/README.md` - Overall project design
+- `/docs/cadherin/day1-kotlin-multiplatform-setup.md` - Day 1 implementation
+- `/docs/cadherin/day2-player-state-and-actions.md` - Day 2 implementation
+- `/docs/cadherin/day3-event-system.md` - Day 3 implementation
+- `/game-samples/` - Example YAML game definitions
+
+The project prioritizes practical functionality over architectural complexity, with a focus on creating a working cross-platform game engine that AI agents can easily understand and modify.
