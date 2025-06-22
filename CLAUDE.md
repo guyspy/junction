@@ -204,7 +204,7 @@ ai_hints:
 - Day 1: ✅ Kotlin Multiplatform setup + YAML parsing
 - Day 2: ✅ Player state and actions  
 - Day 3: ✅ Event system implementation (card effects)
-- Day 4: ⏳ Turn management and scoring
+- Day 4: ✅ Turn management and scoring
 - Day 5: ⏳ Win conditions and complete game
 
 ## Key Files
@@ -213,6 +213,7 @@ ai_hints:
 - `/docs/cadherin/day1-kotlin-multiplatform-setup.md` - Day 1 implementation
 - `/docs/cadherin/day2-player-state-and-actions.md` - Day 2 implementation
 - `/docs/cadherin/day3-event-system.md` - Day 3 implementation
+- `/docs/cadherin/day4-turn-management-and-scoring.md` - Day 4 implementation
 - `/game-samples/` - Example YAML game definitions
 
 The project prioritizes practical functionality over architectural complexity, with a focus on creating a working cross-platform game engine that AI agents can easily understand and modify.
