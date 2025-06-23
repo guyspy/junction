@@ -5,11 +5,7 @@ import com.charleskorn.kaml.YamlConfiguration
 import org.junction.cadherin.model.*
 
 class YamlParser {
-    private val yaml = Yaml(
-        configuration = YamlConfiguration(
-            strictMode = false
-        )
-    )
+    private val yaml = Yaml.default
     
     fun parseGameDefinition(yamlContent: String): GameDefinition {
         try {

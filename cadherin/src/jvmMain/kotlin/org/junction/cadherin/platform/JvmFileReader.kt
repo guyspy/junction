@@ -1,7 +1,7 @@
-package org.junction.cadherin.platform
+package org.junction.cadherin.parser
 
 import java.io.File
 
-actual fun readPlatformFile(filePath: String): String {
+internal actual fun readPlatformFile(filePath: String): String {
     return File(filePath).readText()
 }

@@ -13,7 +13,7 @@ repositories {
 
 kotlin {
     jvm {
-        jvmToolchain(17)
+        jvmToolchain(21)
         withJava()
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
@@ -79,7 +79,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValid
 tasks.register<JavaExec>("jvmRun") {
     group = "application"
     description = "Run the JVM command-line demo"
-    classpath = kotlin.targets.getByName("jvm").compilations.getByName("main").output.allOutputs + 
-                kotlin.targets.getByName("jvm").compilations.getByName("main").runtimeDependencyFiles
+    dependsOn(tasks.getByName("jvmMainClasses"))
+    val jvmTarget = kotlin.targets.getByName("jvm")
+    val mainCompilation = jvmTarget.compilations.getByName("main")
+    classpath = mainCompilation.output.allOutputs + mainCompilation.runtimeDependencyFiles!!
     mainClass.set("org.junction.cadherin.MainKt")
 }

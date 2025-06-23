@@ -64,18 +64,22 @@ data class CardFactory(private val definition: GameDefinition) {
     }
     
     private fun generatePropertyValue(definition: PropertyDefinition): CardPropertyValue {
-        return when (definition) {
-            is PropertyDefinition.IntProperty -> {
-                val value = (definition.min..definition.max).random()
+        return when (definition.type) {
+            "int" -> {
+                val min = definition.min ?: 1
+                val max = definition.max ?: 10
+                val value = (min..max).random()
                 CardPropertyValue.IntValue(value)
             }
-            is PropertyDefinition.EnumProperty -> {
-                val value = definition.values.random()
+            "enum" -> {
+                val values = definition.values ?: listOf("default")
+                val value = values.random()
                 CardPropertyValue.StringValue(value)
             }
-            is PropertyDefinition.StringProperty -> {
+            "string" -> {
                 CardPropertyValue.StringValue("default")
             }
+            else -> CardPropertyValue.StringValue("unknown")
         }
     }
 }

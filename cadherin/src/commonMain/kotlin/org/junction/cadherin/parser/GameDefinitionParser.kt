@@ -1,7 +1,6 @@
 package org.junction.cadherin.parser
 
 import org.junction.cadherin.model.GameDefinition
-import org.junction.cadherin.platform.readPlatformFile
 
 class GameDefinitionParser {
     private val yamlParser = YamlParser()
@@ -56,4 +55,4 @@ sealed class ValidationResult {
 }
 
 // Platform-specific file reading, implemented in each platform
-expect fun readPlatformFile(filePath: String): String
+internal expect fun readPlatformFile(filePath: String): String

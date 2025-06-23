@@ -15,8 +15,8 @@ class CardFactoryTest {
                 "test_card" to CardTypeDefinition(
                     count = 3,
                     properties = mapOf(
-                        "damage" to PropertyDefinition.IntProperty(min = 1, max = 5),
-                        "element" to PropertyDefinition.EnumProperty(values = listOf("fire", "water"))
+                        "damage" to PropertyDefinition(type = "int", min = 1, max = 5),
+                        "element" to PropertyDefinition(type = "enum", values = listOf("fire", "water"))
                     )
                 )
             )

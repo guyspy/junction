@@ -2,8 +2,7 @@ package org.junction.cadherin.core
 
 import org.junction.cadherin.model.*
 import org.junction.cadherin.parser.GameDefinitionParser
-
-@JsExport
+import kotlin.js.JsExport
 class GameEngine private constructor(
     private val gameDefinition: GameDefinition,
     private val players: List<Player>

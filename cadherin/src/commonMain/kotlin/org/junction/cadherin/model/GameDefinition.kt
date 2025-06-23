@@ -1,19 +1,23 @@
 package org.junction.cadherin.model
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 @Serializable
 data class GameDefinition(
     val meta: GameMeta,
     val cards: Map<String, CardTypeDefinition>,
     val mechanics: GameMechanics? = null,
+    @SerialName("ai_hints")
     val aiHints: AIHints? = null
 )
 
 @Serializable
 data class GameMeta(
     val name: String,
+    @SerialName("target_age")
     val targetAge: List<Int>, // [min, max]
+    @SerialName("player_count")
     val playerCount: List<Int>? = null // [min, max]
 )
 
@@ -25,26 +29,13 @@ data class CardTypeDefinition(
 )
 
 @Serializable
-sealed class PropertyDefinition {
-    @Serializable
-    data class IntProperty(
-        val type: String = "int",
-        val min: Int,
-        val max: Int
-    ) : PropertyDefinition()
-    
-    @Serializable
-    data class EnumProperty(
-        val type: String = "enum", 
-        val values: List<String>
-    ) : PropertyDefinition()
-    
-    @Serializable
-    data class StringProperty(
-        val type: String = "string",
-        val maxLength: Int? = null
-    ) : PropertyDefinition()
-}
+data class PropertyDefinition(
+    val type: String,
+    val min: Int? = null,
+    val max: Int? = null,
+    val values: List<String>? = null,
+    val maxLength: Int? = null
+)
 
 @Serializable
 data class EventDefinition(
@@ -57,6 +48,7 @@ data class EventDefinition(
 @Serializable
 data class GameMechanics(
     val setup: SetupMechanics? = null,
+    @SerialName("win_conditions")
     val winConditions: List<WinCondition>? = null
 )
 
@@ -68,7 +60,9 @@ data class SetupMechanics(
 @Serializable
 data class PlayerSetup(
     val health: Int? = null,
+    @SerialName("hand_size")
     val handSize: Int? = null,
+    @SerialName("initial_score")
     val initialScore: Int? = null
 )
 
@@ -76,12 +70,15 @@ data class PlayerSetup(
 data class WinCondition(
     val type: String,
     val target: Int? = null,
+    @SerialName("max_turns")
     val maxTurns: Int? = null,
     val message: String
 )
 
 @Serializable
 data class AIHints(
+    @SerialName("difficulty_factors")
     val difficultyFactors: List<String>,
+    @SerialName("common_modifications")
     val commonModifications: Map<String, Map<String, Int>>
 )
