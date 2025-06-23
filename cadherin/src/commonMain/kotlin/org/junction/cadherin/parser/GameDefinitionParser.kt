@@ -9,10 +9,6 @@ class GameDefinitionParser {
         return yamlParser.parseGameDefinition(yamlContent)
     }
     
-    fun parseFromFile(filePath: String): GameDefinition {
-        val content = readFileContent(filePath)
-        return parseFromString(content)
-    }
     
     fun validate(definition: GameDefinition): ValidationResult {
         val errors = mutableListOf<String>()
@@ -44,9 +40,6 @@ class GameDefinitionParser {
         }
     }
     
-    private fun readFileContent(filePath: String): String {
-        return readPlatformFile(filePath)
-    }
 }
 
 sealed class ValidationResult {
@@ -54,5 +47,3 @@ sealed class ValidationResult {
     data class Failure(val errors: List<String>) : ValidationResult()
 }
 
-// Platform-specific file reading, implemented in each platform
-internal expect fun readPlatformFile(filePath: String): String

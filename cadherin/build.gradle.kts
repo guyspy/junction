@@ -48,22 +48,10 @@ kotlin {
             }
         }
         
-        val jvmMain by getting {
-            dependencies {
-                implementation("ch.qos.logback:logback-classic:1.4.11")
-            }
-        }
-        
         val jvmTest by getting {
             dependencies {
                 implementation("org.junit.jupiter:junit-jupiter:5.10.0")
                 implementation("org.assertj:assertj-core:3.24.2")
-            }
-        }
-        
-        val jsMain by getting {
-            dependencies {
-                // JS specific dependencies if needed
             }
         }
     }
@@ -74,13 +62,5 @@ tasks.withType<org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValid
     enabled = false
 }
 
-// Add jvmRun task for CLI demo
-tasks.register<JavaExec>("jvmRun") {
-    group = "application"
-    description = "Run the JVM command-line demo"
-    dependsOn(tasks.getByName("jvmMainClasses"))
-    val jvmTarget = kotlin.targets.getByName("jvm")
-    val mainCompilation = jvmTarget.compilations.getByName("main")
-    classpath = mainCompilation.output.allOutputs + mainCompilation.runtimeDependencyFiles!!
-    mainClass.set("org.junction.cadherin.MainKt")
-}
+// Note: Examples are separate from the library and not included in published artifacts
+// To run examples, use them as standalone projects that depend on the published library
