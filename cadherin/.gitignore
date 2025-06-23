@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+gradle-*/
+!gradle/wrapper/gradle-wrapper.properties
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kotlin
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Node.js (for JS target)
+node_modules/
+npm-debug.log*
+
+# Build outputs
+out/
+target/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
