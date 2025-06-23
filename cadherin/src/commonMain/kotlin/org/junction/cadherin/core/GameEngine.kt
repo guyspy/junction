@@ -2,7 +2,7 @@ package org.junction.cadherin.core
 
 import org.junction.cadherin.model.*
 import org.junction.cadherin.parser.GameDefinitionParser
-import kotlin.js.JsExport
+
 class GameEngine private constructor(
     private val gameDefinition: GameDefinition,
     private val players: List<Player>
@@ -33,14 +33,12 @@ class GameEngine private constructor(
     fun getUIState(): UIState = TODO("Day 2")
 }
 
-@JsExport
 data class ActionResult(
     val success: Boolean,
     val message: String,
     val effects: List<String> = emptyList()
 )
 
-@JsExport
 data class UIState(
     val players: List<Player>,
     val currentPlayer: String,

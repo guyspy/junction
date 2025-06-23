@@ -1,10 +1,8 @@
 package org.junction.cadherin.platform
 
-import kotlin.js.JsExport
 import org.junction.cadherin.model.Card
 
 // JS specific console output
-@JsExport
 object GameConsole {
     fun log(message: String) {
         console.log(message)

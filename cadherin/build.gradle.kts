@@ -21,16 +21,15 @@ kotlin {
     }
     
     js(IR) {
-        binaries.executable()
-        browser {
-            commonWebpackConfig {
-                cssSupport {
-                    enabled.set(true)
+        binaries.library()
+        browser()
+        nodejs {
+            testTask {
+                useMocha {
+                    timeout = "5s"
                 }
             }
         }
-        nodejs()
-        generateTypeScriptDefinitions()
     }
     
     sourceSets {
