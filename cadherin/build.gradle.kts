@@ -4,8 +4,8 @@ plugins {
     id("maven-publish")
 }
 
-group = "org.junction"
-version = "1.0.0-SNAPSHOT"
+group = "org.junction.cadherin"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -57,6 +57,26 @@ tasks.withType<org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValid
 // Ensure TypeScript definitions are generated  
 tasks.matching { it.name.endsWith("GenerateTypeScriptDefinitions") }.configureEach {
     dependsOn(tasks.matching { it.name.contains("compileKotlinJs") })
+}
+
+// Maven publishing configuration
+publishing {
+    publications {
+        withType<MavenPublication> {
+            pom {
+                name = "Cadherin Game Engine"
+                description = "Kotlin Multiplatform game engine for 2D card-based educational games"
+                url = "https://github.com/junction/cadherin"
+                
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://opensource.org/licenses/MIT"
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Note: Examples are separate from the library and not included in published artifacts

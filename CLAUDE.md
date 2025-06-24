@@ -17,23 +17,29 @@ Junction is an educational gaming platform featuring **Cadherin**, a Kotlin Mult
 ./gradlew test
 
 # Run JVM command-line demo
-./gradlew jvmRun
+./gradlew :cadherin:examples:jvm-cli-demo:run
+
+# Run JS browser demo
+./gradlew :cadherin:examples:js-browser-demo:jsBrowserRun
+
+# Run JS Node.js demo
+./gradlew :cadherin:examples:js-node-demo:jsNodeRun
 
 # Generate JavaScript module for frontend
-./gradlew jsBrowserDistribution
+./gradlew :cadherin:jsBrowserDistribution
 
 # Generate TypeScript definitions
-./gradlew jsTypeScriptDeclarations
+./gradlew :cadherin:jsTypeScriptDeclarations
 ```
 
 ### Testing Commands
 ```bash
 # Run platform-specific tests
-./gradlew jvmTest      # JVM tests
-./gradlew jsTest       # JavaScript tests
+./gradlew :cadherin:jvmTest      # JVM tests
+./gradlew :cadherin:jsTest       # JavaScript tests
 
 # Run with coverage
-./gradlew test jacocoTestReport
+./gradlew :cadherin:test :cadherin:jacocoTestReport
 ```
 
 ## Architecture & Components
@@ -54,6 +60,11 @@ cadherin/
 │   │   └── platform/               # File I/O
 │   └── jsMain/kotlin/              # JS-specific (frontend)
 │       └── platform/               # Browser APIs
+├── examples/
+│   ├── jvm-cli-demo/               # JVM command-line demo
+│   ├── js-browser-demo/            # JS browser demo
+│   └── js-node-demo/               # JS Node.js demo
+└── game-samples/                   # YAML game definitions
 ```
 
 ### Technology Stack
@@ -200,14 +211,15 @@ ai_hints:
 
 ## Development Status
 
-**Current Phase**: ✅ MVP COMPLETED! (Week 1)
+**Current Phase**: ✅ MVP + SDK RESTRUCTURE COMPLETED!
 - Day 1: ✅ Kotlin Multiplatform setup + YAML parsing
 - Day 2: ✅ Player state and actions  
 - Day 3: ✅ Event system implementation (card effects)
 - Day 4: ✅ Turn management and scoring
 - Day 5: ✅ Win conditions and complete game
+- Day 1.5: ✅ SDK monorepo restructure with examples
 
-**🎉 MVP完成！** 現在有了完整可用的跨平台卡牌遊戲引擎
+**🎉 MVP完成！** 現在有了完整可用的跨平台卡牌遊戲引擎與SDK結構
 
 ## Key Files
 

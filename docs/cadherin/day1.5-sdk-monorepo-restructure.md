@@ -16,24 +16,24 @@ junction/
 │   │   ├── commonTest/
 │   │   ├── jvmMain/                 # JVM 平台特定代碼
 │   │   └── jsMain/                  # JS 平台特定代碼
-│   └── README.md                    # SDK 文檔
-├── examples/
-│   ├── jvm-cli-demo/               # JVM 命令行示例
-│   │   ├── build.gradle.kts        # 獨立項目配置
-│   │   ├── src/main/kotlin/
-│   │   └── README.md
-│   ├── js-browser-demo/            # JS 瀏覽器示例
-│   │   ├── build.gradle.kts        # 獨立項目配置
-│   │   ├── src/main/kotlin/
-│   │   ├── src/main/resources/index.html
-│   │   └── README.md
-│   └── js-node-demo/               # JS Node.js 示例
-│       ├── build.gradle.kts
-│       ├── src/main/kotlin/
-│       └── README.md
-├── game-samples/                    # YAML 遊戲範例
-│   ├── number-war.yaml
-│   └── simple-combat.yaml
+│   ├── examples/
+│   │   ├── jvm-cli-demo/           # JVM 命令行示例
+│   │   │   ├── build.gradle.kts    # 獨立項目配置
+│   │   │   ├── src/main/kotlin/
+│   │   │   └── README.md
+│   │   ├── js-browser-demo/        # JS 瀏覽器示例
+│   │   │   ├── build.gradle.kts    # 獨立項目配置
+│   │   │   ├── src/main/kotlin/
+│   │   │   ├── src/main/resources/index.html
+│   │   │   └── README.md
+│   │   └── js-node-demo/           # JS Node.js 示例
+│   │       ├── build.gradle.kts
+│   │       ├── src/main/kotlin/
+│   │       └── README.md
+│   ├── game-samples/               # YAML 遊戲範例
+│   │   ├── number-war.yaml
+│   │   └── simple-combat.yaml
+│   └── README.md                   # SDK 文檔
 ├── build.gradle.kts                # 根項目構建腳本
 ├── settings.gradle.kts             # Monorepo 項目設定
 ├── gradle.properties              # 全局 Gradle 設定
@@ -137,9 +137,9 @@ kotlin {
 rootProject.name = "junction"
 
 include(":cadherin")
-include(":examples:jvm-cli-demo")
-include(":examples:js-browser-demo") 
-include(":examples:js-node-demo")
+include(":cadherin:examples:jvm-cli-demo")
+include(":cadherin:examples:js-browser-demo") 
+include(":cadherin:examples:js-node-demo")
 ```
 
 ### 版本目錄 (libs.versions.toml)

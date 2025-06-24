@@ -22,7 +22,9 @@
       "WebFetch(domain:kotlinlang.org)",
       "Bash(pkill:*)",
       "Bash(git pull:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }
