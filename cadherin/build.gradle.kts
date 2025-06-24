@@ -15,8 +15,10 @@ kotlin {
     jvm {
         jvmToolchain(21)
         withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
+        testRuns.named("test") {
+            executionTask.configure {
+                useJUnitPlatform()
+            }
         }
     }
     
@@ -57,8 +59,8 @@ kotlin {
     }
 }
 
-// Configure TypeScript definition generation
-tasks.withType<org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValidationTask> {
+// Configure TypeScript definition generation  
+tasks.withType(org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValidationTask::class) {
     enabled = false
 }
 
