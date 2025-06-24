@@ -1,6 +1,11 @@
 [versions]
+# Service versions
 cadherin = "1.0.0"
+occludin = "1.0.0"
+
+# Language versions
 kotlin = "2.1.21"
+java = "21"
 kotlinx-serialization = "1.7.3"
 kotlinx-coroutines = "1.9.0"
 kaml = "0.66.0"

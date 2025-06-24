@@ -4,17 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Junction is an educational gaming platform featuring **Cadherin**, a Kotlin Multiplatform game engine for creating 2D card-based educational games. The platform uses YAML DSL for game definitions and is optimized for AI Agent driven game creation.
+Junction is an educational gaming platform monorepo featuring multiple services:
+
+- **Cadherin**: Kotlin Multiplatform game engine for creating 2D card-based educational games
+- **Future Services**: Occludin (Quarkus server), Phaser renderers, etc.
+
+The platform uses YAML DSL for game definitions and is optimized for AI Agent driven game creation. Each service is technology-independent with its own build system.
 
 ## Commands
 
 ### Development Commands
+
+**Monorepo Commands:**
 ```bash
-# Build all platforms (JVM + JS)
+# Build all Gradle-based services
 ./gradlew build
 
+# Show all projects in monorepo
+./gradlew projects
+```
+
+**Cadherin Service Commands:**
+```bash
+# Build Cadherin (JVM + JS)
+./gradlew :cadherin:build
+
 # Run tests
-./gradlew test
+./gradlew :cadherin:test
 
 # Run JVM command-line demo
 ./gradlew :cadherin:examples:jvm-cli-demo:run
@@ -32,6 +48,14 @@ Junction is an educational gaming platform featuring **Cadherin**, a Kotlin Mult
 ./gradlew :cadherin:jsTypeScriptDeclarations
 ```
 
+**Future Service Commands:**
+```bash
+# Occludin (Quarkus) - when added
+./gradlew :occludin:quarkusDev
+
+# Pure JS services use their own tooling (npm, etc.)
+```
+
 ### Testing Commands
 ```bash
 # Run platform-specific tests
@@ -44,7 +68,10 @@ Junction is an educational gaming platform featuring **Cadherin**, a Kotlin Mult
 
 ## Architecture & Components
 
-### Cadherin Engine (Kotlin Multiplatform)
+### Monorepo Structure
+Junction is organized as a multi-technology monorepo where each service is independent:
+
+### Cadherin Service (Kotlin Multiplatform)
 The core game engine that compiles to both JVM and JavaScript:
 
 ```
@@ -68,12 +95,23 @@ cadherin/
 ```
 
 ### Technology Stack
+
+**Monorepo Architecture:**
+- **Build Systems**: Gradle (Kotlin/Java services), npm (JS services), Maven (optional)
+- **Service Independence**: Each service uses appropriate technology stack
+- **Coordination**: Shared version catalog, unified documentation
+
+**Cadherin Service:**
 - **Core**: Kotlin Multiplatform
 - **Frontend**: Kotlin/JS compiles to TypeScript-compatible JavaScript
-- **Backend**: Kotlin/JVM with Quarkus
-- **Database**: MongoDB (stores YAML as JSON)
+- **Backend**: Kotlin/JVM 
 - **DSL Format**: YAML (AI-friendly structure)
 - **Development**: Test-driven development
+
+**Future Services:**
+- **Occludin**: Quarkus + Java + MongoDB
+- **Renderers**: Pure JS/TS + Phaser/Three.js
+- **APIs**: GraphQL, REST, WebSocket
 
 ### Data Architecture
 - **GameDefinition**: YAML-defined game rules and cards
@@ -211,15 +249,16 @@ ai_hints:
 
 ## Development Status
 
-**Current Phase**: ✅ MVP + SDK RESTRUCTURE COMPLETED!
+**Current Phase**: ✅ MVP + MONOREPO READY!
 - Day 1: ✅ Kotlin Multiplatform setup + YAML parsing
 - Day 2: ✅ Player state and actions  
 - Day 3: ✅ Event system implementation (card effects)
 - Day 4: ✅ Turn management and scoring
 - Day 5: ✅ Win conditions and complete game
 - Day 1.5: ✅ SDK monorepo restructure with examples
+- **Monorepo Config**: ✅ Multi-service ready (Kotlin, Java, JS)
 
-**🎉 MVP完成！** 現在有了完整可用的跨平台卡牌遊戲引擎與SDK結構
+**🎉 MVP完成！** 現在有了完整的多服務 monorepo 架構，準備好添加新服務
 
 ## Key Files
 
