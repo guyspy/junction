@@ -20,7 +20,8 @@
       "Bash(java:*)",
       "WebFetch(domain:www.jetbrains.com)",
       "WebFetch(domain:kotlinlang.org)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }

@@ -1,6 +1,6 @@
 plugins {
-    kotlin("multiplatform") version "1.9.20"
-    kotlin("plugin.serialization") version "1.9.20"
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
     id("maven-publish")
 }
 
@@ -12,9 +12,9 @@ repositories {
 }
 
 kotlin {
+    jvmToolchain(21)
+    
     jvm {
-        jvmToolchain(21)
-        withJava()
         testRuns.named("test") {
             executionTask.configure {
                 useJUnitPlatform()
@@ -25,43 +25,37 @@ kotlin {
     js(IR) {
         binaries.library()
         browser()
-        nodejs {
-            testTask {
-                useMocha {
-                    timeout = "5s"
-                }
-            }
-        }
+        nodejs()
+        generateTypeScriptDefinitions()
     }
     
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-                implementation("com.charleskorn.kaml:kaml:0.55.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-            }
+        commonMain.dependencies {
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kaml)
+            implementation(libs.kotlinx.coroutines.core)
         }
         
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-            }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
         
-        val jvmTest by getting {
-            dependencies {
-                implementation("org.junit.jupiter:junit-jupiter:5.10.0")
-                implementation("org.assertj:assertj-core:3.24.2")
-            }
+        jvmTest.dependencies {
+            implementation(libs.junit.jupiter)
+            implementation(libs.assertj.core)
         }
     }
 }
 
-// Configure TypeScript definition generation  
-tasks.withType(org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValidationTask::class) {
+// Configure TypeScript definition generation
+tasks.withType<org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValidationTask> {
     enabled = false
+}
+
+// Ensure TypeScript definitions are generated  
+tasks.matching { it.name.endsWith("GenerateTypeScriptDefinitions") }.configureEach {
+    dependsOn(tasks.matching { it.name.contains("compileKotlinJs") })
 }
 
 // Note: Examples are separate from the library and not included in published artifacts
