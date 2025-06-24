@@ -26,6 +26,7 @@ kotlin {
         binaries.library()
         browser()
         nodejs()
+        useEsModules()
         generateTypeScriptDefinitions()
     }
     
