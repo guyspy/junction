@@ -1,6 +1,6 @@
 rootProject.name = "junction"
 
-include(":cadherin")
-include(":cadherin:examples:jvm-cli-demo")
-include(":cadherin:examples:js-browser-demo") 
-include(":cadherin:examples:js-node-demo")
+include(":catenin")
+include(":catenin:examples:jvm-cli-demo")
+include(":catenin:examples:js-browser-demo") 
+include(":catenin:examples:js-node-demo")

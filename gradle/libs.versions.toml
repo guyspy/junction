@@ -1,6 +1,6 @@
 [versions]
 # Service versions
-cadherin = "1.0.0"
+catenin = "1.0.0"
 occludin = "1.0.0"
 
 # Language versions
@@ -13,7 +13,7 @@ junit = "5.11.4"
 assertj = "3.26.3"
 
 [libraries]
-cadherin = { module = "org.junction.cadherin:cadherin", version.ref = "cadherin" }
+catenin = { module = "org.junction.catenin:catenin", version.ref = "catenin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }

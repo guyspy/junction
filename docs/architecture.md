@@ -13,7 +13,7 @@
 
 | 組件 | 生物學對應 | 功能 |
 |------|------------|------|
-| `cadherin` | 鈣黏蛋白 | DSL 解釋器，連接創作與執行 |
+| `catenin` | 鈣黏蛋白 | DSL 解釋器，連接創作與執行 |
 | `claudin` | 緊密連接蛋白 | 安全與權限管理 |
 | `integrin` | 整合素 | 外部系統整合介面 |
 | `connexin` | 連接蛋白 | 即時通訊系統 |
@@ -37,7 +37,7 @@ graph TB
     
     subgraph "Business Services"
         direction TB
-        GE[Game Engine<br/>cadherin + kotlin]
+        GE[Game Engine<br/>catenin + kotlin]
         PS[Platform Services<br/>claudin + kotlin]
         CS[Creator Services<br/>integrin + kotlin]
         NS[Notification Service<br/>connexin + kotlin]
@@ -79,7 +79,7 @@ graph TB
 
 ## 核心服務詳細設計
 
-### 1. Game Engine Service (cadherin)
+### 1. Game Engine Service (catenin)
 
 **職責**:
 - DSL 解釋與執行
@@ -95,7 +95,7 @@ graph TB
 
 **核心組件**:
 ```
-cadherin/
+catenin/
 ├── dsl/
 │   ├── parser/          # DSL 語法解析
 │   ├── validator/       # 規則驗證

@@ -22,7 +22,7 @@ Junction is designed as a multi-technology monorepo supporting educational gamin
 
 ```
 junction/
-├── cadherin/                    # Game Engine Service (Kotlin Multiplatform)
+├── catenin/                     # Game Engine Service (Kotlin Multiplatform)
 │   ├── src/                     # Core engine code
 │   ├── examples/                # Platform-specific demos
 │   └── game-samples/            # YAML game definitions
@@ -57,8 +57,8 @@ junction/
 ### Example Service Integration
 ```kotlin
 // Root build.gradle.kts
-configure(subprojects.filter { it.name == "cadherin" }) {
-    group = "org.junction.cadherin"
+configure(subprojects.filter { it.name == "catenin" }) {
+    group = "org.junction.catenin"
 }
 
 configure(subprojects.filter { it.name == "occludin" }) {
@@ -98,12 +98,12 @@ configure(subprojects.filter { it.name == "occludin" }) {
 ## Service Communication
 
 ### Runtime Integration
-- **Cadherin** publishes game events → **Occludin** processes
+- **Catenin** publishes game events → **Occludin** processes
 - **Occludin** serves game data → **Web UI** displays
-- **AI Agent** generates games → **Cadherin** validates
+- **AI Agent** generates games → **Catenin** validates
 
 ### Build-Time Integration
-- **Cadherin** publishes to npm → **Phaser Renderer** imports
+- **Catenin** publishes to npm → **Phaser Renderer** imports
 - **Shared Types** via TypeScript definitions
 - **API Contracts** via OpenAPI specifications
 

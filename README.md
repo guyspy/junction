@@ -18,7 +18,7 @@ Junction is an educational gaming platform monorepo, inspired by cell junction b
 
 **Monorepo Design**: Multi-technology services with independent build systems
 
-- **Cadherin (Game Engine)**: Kotlin Multiplatform + YAML DSL
+- **Catenin (Game Engine)**: Kotlin Multiplatform + YAML DSL
 - **Future Occludin (Server)**: Quarkus + Java + MongoDB  
 - **Future Renderers**: Pure JavaScript + Phaser/Three.js
 - **Future AI Services**: Python + ML models
@@ -27,14 +27,14 @@ Junction is an educational gaming platform monorepo, inspired by cell junction b
 ## Service Naming Convention
 
 Based on cell junction biological concepts:
-- **`cadherin`**: Game engine SDK (Kotlin Multiplatform)
+- **`catenin`**: Game engine SDK (Kotlin Multiplatform)
 - **`occludin`**: Server platform services (Future: Quarkus + Java)
 - **Future services**: Will follow cell junction protein naming
 
 ## Development Status
 
 ### ✅ **Phase 1: Game Engine Core (COMPLETED)**
-1. **Cadherin SDK**: YAML DSL + Kotlin Multiplatform engine
+1. **Catenin SDK**: YAML DSL + Kotlin Multiplatform engine
 2. **Multi-Platform Support**: JVM + JavaScript targets  
 3. **Example Projects**: CLI, Browser, Node.js demos
 4. **Maven Publishing**: Ready for external consumption
@@ -59,7 +59,7 @@ Based on cell junction biological concepts:
 
 ```
 junction/
-├── cadherin/                        # 🎮 Game Engine SDK (Kotlin Multiplatform)
+├── catenin/                         # 🎮 Game Engine SDK (Kotlin Multiplatform)
 │   ├── src/                         # Core engine code
 │   │   ├── commonMain/kotlin/       # Shared game logic  
 │   │   ├── jvmMain/kotlin/         # JVM platform code
@@ -71,7 +71,7 @@ junction/
 │   └── game-samples/               # YAML game templates
 ├── docs/                           # 📚 Documentation
 │   ├── monorepo-architecture.md    # Monorepo design
-│   ├── cadherin/                   # Game engine docs
+│   ├── catenin/                    # Game engine docs
 │   └── overview.md                 # Project overview
 ├── gradle/                         # 🔧 Shared Gradle config
 │   ├── libs.versions.toml         # Version catalog
@@ -80,7 +80,7 @@ junction/
 ├── settings.gradle.kts            # Project structure
 └── CLAUDE.md                      # AI assistant guidance
 
-# Future services will be added as siblings to cadherin/
+# Future services will be added as siblings to catenin/
 ├── occludin/                      # 🚧 Future: Quarkus server
 ├── phaser-renderer/               # 🚧 Future: JS game renderer  
 └── ai-agent/                      # 🚧 Future: Python ML service
@@ -89,7 +89,7 @@ junction/
 ## Quick Start
 
 ### Prerequisites
-- JDK 21+ for Cadherin development
+- JDK 21+ for Catenin development
 - Node.js 18+ for JavaScript demos
 
 ### Build & Run
@@ -98,13 +98,13 @@ junction/
 ./gradlew build
 
 # Run JVM command-line demo
-./gradlew :cadherin:examples:jvm-cli-demo:run
+./gradlew :catenin:examples:jvm-cli-demo:run
 
 # Run web browser demo  
-./gradlew :cadherin:examples:js-browser-demo:jsBrowserRun
+./gradlew :catenin:examples:js-browser-demo:jsBrowserRun
 
 # Run Node.js server demo
-./gradlew :cadherin:examples:js-node-demo:jsNodeRun
+./gradlew :catenin:examples:js-node-demo:jsNodeRun
 ```
 
 ### Game Development
@@ -122,7 +122,7 @@ val gameState = engine.getGameState()
 ## Contributing
 
 See individual service documentation:
-- [Cadherin Game Engine](cadherin/README.md)
+- [Catenin Game Engine](catenin/README.md)
 - [Monorepo Architecture](docs/monorepo-architecture.md)
 - [Development Guidelines](CLAUDE.md)
 

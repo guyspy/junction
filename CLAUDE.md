@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Junction is an educational gaming platform monorepo featuring multiple services:
 
-- **Cadherin**: Kotlin Multiplatform game engine for creating 2D card-based educational games
+- **Catenin**: Kotlin Multiplatform game engine for creating 2D card-based educational games
 - **Future Services**: Occludin (Quarkus server), Phaser renderers, etc.
 
 The platform uses YAML DSL for game definitions and is optimized for AI Agent driven game creation. Each service is technology-independent with its own build system.
@@ -24,28 +24,28 @@ The platform uses YAML DSL for game definitions and is optimized for AI Agent dr
 ./gradlew projects
 ```
 
-**Cadherin Service Commands:**
+**Catenin Service Commands:**
 ```bash
-# Build Cadherin (JVM + JS)
-./gradlew :cadherin:build
+# Build Catenin (JVM + JS)
+./gradlew :catenin:build
 
 # Run tests
-./gradlew :cadherin:test
+./gradlew :catenin:test
 
 # Run JVM command-line demo
-./gradlew :cadherin:examples:jvm-cli-demo:run
+./gradlew :catenin:examples:jvm-cli-demo:run
 
 # Run JS browser demo
-./gradlew :cadherin:examples:js-browser-demo:jsBrowserRun
+./gradlew :catenin:examples:js-browser-demo:jsBrowserRun
 
 # Run JS Node.js demo
-./gradlew :cadherin:examples:js-node-demo:jsNodeRun
+./gradlew :catenin:examples:js-node-demo:jsNodeRun
 
 # Generate JavaScript module for frontend
-./gradlew :cadherin:jsBrowserDistribution
+./gradlew :catenin:jsBrowserDistribution
 
 # Generate TypeScript definitions
-./gradlew :cadherin:jsTypeScriptDeclarations
+./gradlew :catenin:jsTypeScriptDeclarations
 ```
 
 **Future Service Commands:**
@@ -59,11 +59,11 @@ The platform uses YAML DSL for game definitions and is optimized for AI Agent dr
 ### Testing Commands
 ```bash
 # Run platform-specific tests
-./gradlew :cadherin:jvmTest      # JVM tests
-./gradlew :cadherin:jsTest       # JavaScript tests
+./gradlew :catenin:jvmTest      # JVM tests
+./gradlew :catenin:jsTest       # JavaScript tests
 
 # Run with coverage
-./gradlew :cadherin:test :cadherin:jacocoTestReport
+./gradlew :catenin:test :catenin:jacocoTestReport
 ```
 
 ## Architecture & Components
@@ -71,11 +71,11 @@ The platform uses YAML DSL for game definitions and is optimized for AI Agent dr
 ### Monorepo Structure
 Junction is organized as a multi-technology monorepo where each service is independent:
 
-### Cadherin Service (Kotlin Multiplatform)
+### Catenin Service (Kotlin Multiplatform)
 The core game engine that compiles to both JVM and JavaScript:
 
 ```
-cadherin/
+catenin/
 ├── src/
 │   ├── commonMain/kotlin/           # Shared game logic
 │   │   ├── model/                   # Game data models
@@ -101,7 +101,7 @@ cadherin/
 - **Service Independence**: Each service uses appropriate technology stack
 - **Coordination**: Shared version catalog, unified documentation
 
-**Cadherin Service:**
+**Catenin Service:**
 - **Core**: Kotlin Multiplatform
 - **Frontend**: Kotlin/JS compiles to TypeScript-compatible JavaScript
 - **Backend**: Kotlin/JVM 
@@ -161,7 +161,7 @@ fire_spell:
 JavaScript compilation provides TypeScript-compatible API:
 
 ```typescript
-import { GameEngine, PlayerAction } from './cadherin-core'
+import { GameEngine, PlayerAction } from './catenin-core'
 
 // Create game from YAML
 const engine = GameEngine.fromYaml(yamlContent, playerNames)
@@ -262,12 +262,12 @@ ai_hints:
 
 ## Key Files
 
-- `/docs/cadherin/README.md` - Overall project design
-- `/docs/cadherin/day1-kotlin-multiplatform-setup.md` - Day 1 implementation
-- `/docs/cadherin/day2-player-state-and-actions.md` - Day 2 implementation  
-- `/docs/cadherin/day3-event-system.md` - Day 3 implementation
-- `/docs/cadherin/day4-turn-management-and-scoring.md` - Day 4 implementation
-- `/docs/cadherin/day5-win-conditions-and-complete-game.md` - Day 5 implementation
+- `/docs/catenin/README.md` - Overall project design
+- `/docs/catenin/day1-kotlin-multiplatform-setup.md` - Day 1 implementation
+- `/docs/catenin/day2-player-state-and-actions.md` - Day 2 implementation  
+- `/docs/catenin/day3-event-system.md` - Day 3 implementation
+- `/docs/catenin/day4-turn-management-and-scoring.md` - Day 4 implementation
+- `/docs/catenin/day5-win-conditions-and-complete-game.md` - Day 5 implementation
 - `/game-samples/` - Example YAML game definitions
 
 The project prioritizes practical functionality over architectural complexity, with a focus on creating a working cross-platform game engine that AI agents can easily understand and modify.
