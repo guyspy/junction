@@ -1,7 +1,9 @@
 package org.junction.catenin.parser
 
 import org.junction.catenin.model.GameDefinition
+import kotlin.js.JsExport
 
+@JsExport
 class GameDefinitionParser {
     private val yamlParser = YamlParser()
     
@@ -42,6 +44,7 @@ class GameDefinitionParser {
     
 }
 
+@JsExport
 sealed class ValidationResult {
     object Success : ValidationResult()
     data class Failure(val errors: List<String>) : ValidationResult()

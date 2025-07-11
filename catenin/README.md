@@ -25,29 +25,40 @@ Catenin is part of the Junction educational gaming platform. It provides a unifi
 
 ```bash
 git clone <repository-url>
-cd catenin
-./gradlew build
+cd junction  # Root of the monorepo
+./gradlew :catenin:build
 ```
 
 ### Commands
 
+**Note**: Catenin is part of the Junction monorepo. All commands should be run from the monorepo root using the `:catenin` prefix.
+
 ```bash
 # Build all platforms (JVM + JS)
-./gradlew build
+./gradlew :catenin:build
 
 # Run tests
-./gradlew test                    # All tests
-./gradlew jvmTest                # JVM tests only
-./gradlew jsNodeTest             # JavaScript tests (Node.js)
-
-# Run JVM command-line demo
-./gradlew jvmRun
+./gradlew :catenin:allTests        # All tests
+./gradlew :catenin:jvmTest         # JVM tests only
+./gradlew :catenin:jsTest          # All JavaScript tests
+./gradlew :catenin:jsNodeTest      # JavaScript tests (Node.js environment)
+./gradlew :catenin:jsBrowserTest   # JavaScript tests (Browser environment)
 
 # Generate JavaScript library
-./gradlew jsBrowserProductionLibraryDistribution
+./gradlew :catenin:jsBrowserProductionLibraryDistribution
 
 # Clean build
-./gradlew clean
+./gradlew :catenin:clean
+
+# Running Examples
+./gradlew :catenin:examples:jvm-cli-demo:run                            # JVM CLI demo
+./gradlew :catenin:examples:js-browser-demo:serve                       # JS browser demo (copies files)
+./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun           # Kotlin/JS Node.js demo
+cd catenin/examples/typescript-server-demo && npm start                 # TypeScript server demo
+
+# Note: This project uses npm (not yarn) for JavaScript dependencies.
+# If you encounter package lock issues, use:
+# ./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
 ```
 
 ## 📁 Project Structure
@@ -60,11 +71,16 @@ catenin/
 │   │   ├── parser/                  # YAML parsing
 │   │   ├── core/                    # Game engine
 │   │   └── actions/                 # Player actions
-│   ├── jvmMain/kotlin/             # JVM-specific (server)
-│   │   ├── cli/                    # Command-line interface
-│   │   └── platform/               # File I/O
-│   └── jsMain/kotlin/              # JS-specific (frontend)
-│       └── platform/               # Browser APIs
+│   └── commonTest/kotlin/           # Tests (run on both JVM & JS)
+│       ├── core/                    # Core engine tests
+│       ├── js/                      # JavaScript library tests
+│       ├── model/                   # Model tests
+│       └── parser/                  # Parser tests
+├── examples/                       # Usage examples
+│   ├── jvm-cli-demo/              # JVM command-line demo
+│   ├── js-browser-demo/           # JavaScript browser demo
+│   ├── js-node-demo/              # Kotlin/JS Node.js demo
+│   └── typescript-server-demo/    # TypeScript server demo
 ├── game-samples/                   # Example YAML games
 ├── build.gradle.kts               # Build configuration
 └── README.md                      # This file
@@ -117,6 +133,20 @@ ai_hints:
 
 ## 💻 Usage Examples
 
+Catenin is a library. To use it in your project, add it as a dependency. For local testing, see the `examples/` directory which contains runnable demo applications.
+
+### NPM Package Distribution
+
+You can also use Catenin as an npm package for JavaScript/TypeScript projects:
+
+```bash
+# Create the npm package
+./gradlew :catenin:createNpmPackage
+
+# Install in your project
+npm install /path/to/catenin/build/npm-package
+```
+
 ### JVM (Server)
 
 ```kotlin
@@ -150,6 +180,22 @@ console.log(`Game: ${definition.meta.name}`)
 console.log(`Players: ${players.map(p => p.name)}`)
 ```
 
+### TypeScript (Server)
+
+```typescript
+import { GameEngine, CardFactory, createGameEngineFromYaml } from '@junction/catenin'
+
+// Create game engine with full type safety
+const engine: GameEngine = createGameEngineFromYaml(yamlContent, ['Alice', 'Bob'])
+const players: Player[] = engine.getPlayers()
+const cardFactory: CardFactory = new CardFactory(engine.getGameDefinition())
+
+// Type-safe operations
+players.forEach((player: Player) => {
+  console.log(`${player.name}: ${player.health} HP`)
+})
+```
+
 ## 🏗️ Architecture
 
 ### Technology Stack
@@ -172,12 +218,13 @@ console.log(`Players: ${players.map(p => p.name)}`)
 ### Running Tests
 
 ```bash
+# From the monorepo root:
 # All tests
-./gradlew test
+./gradlew :catenin:allTests
 
 # Platform-specific tests
-./gradlew jvmTest      # JVM tests (fast)
-./gradlew jsNodeTest   # JavaScript tests (Node.js)
+./gradlew :catenin:jvmTest      # JVM tests (fast)
+./gradlew :catenin:jsNodeTest   # JavaScript tests (Node.js)
 ```
 
 ### Test Structure

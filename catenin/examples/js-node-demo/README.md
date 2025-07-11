@@ -4,36 +4,67 @@ This example demonstrates how to use the Catenin game engine in a Node.js server
 
 ## Features
 
-- Server-side game logic
-- File system operations
-- HTTP API implementation (simulated)
-- Multi-player game room management
+- **Real Game Engine Usage**: Uses actual `createGameEngineFromYaml()` and `CardFactory`
+- **Server-side Architecture**: Demonstrates Node.js server structure
+- **Game Room Management**: Creates and manages multiple game sessions
+- **Console Logging**: Detailed logging of server operations
+- **Actual Game Logic**: Real YAML parsing, card generation, and player management
+- **Cross-platform Logic**: Uses the same game engine that runs in browsers
 
 ## Running the Demo
 
 ```bash
-# From the root project directory
-./gradlew :catenin:examples:js-node-demo:jsNodeRun
+# From the monorepo root (/junction/)
+./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun
 
 # Or from this directory
-../../../gradlew jsNodeRun
+../../../gradlew jsNodeDevelopmentRun
+```
+
+**Note**: This project uses npm for JavaScript dependencies. If you encounter package lock issues:
+```bash
+./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
 ```
 
 ## How it Works
 
-The demo creates a simple game server that manages game rooms, processes player actions, and maintains game state. This demonstrates how the Catenin engine can be used for server-side multiplayer game logic.
+The demo:
+1. **Uses Real YAML**: Defines actual game definitions with attack and heal cards
+2. **Creates Game Engines**: Uses `createGameEngineFromYaml()` to create real game instances
+3. **Manages Game Rooms**: Creates multiple game rooms with different players
+4. **Generates Cards**: Uses `CardFactory` to create and display actual game cards
+5. **Tracks Player State**: Shows real player health, hand sizes, and game state
+6. **Demonstrates Server Logic**: Shows how to structure a multiplayer game server
+
+## Node.js Compatibility
+
+The demo works with:
+- Node.js 18+ (recommended)
+- ES6 module support
+- File system access
+- Console output for game state visualization
 
 ## Dependencies
 
 This example uses:
-- `implementation(project(":catenin"))` for development
+- `implementation(project(":catenin"))` for monorepo development
 - For external projects: `implementation("org.junction.catenin:catenin:1.0.0")`
+
+## Development
+
+The Kotlin/JS code compiles to Node.js-compatible JavaScript:
+- **Output**: CommonJS modules for Node.js
+- **TypeScript**: Auto-generated .d.ts files for IDE support
+- **Source Maps**: Full debugging support in Node.js
+- **Hot Reload**: Development server with automatic restarts
 
 ## Use Cases
 
 This server-side setup is ideal for:
-- Multiplayer game backends
-- Game state validation
-- Anti-cheat mechanisms
-- Game session management
-- Real-time game APIs
+- **Multiplayer Game Backends**: Real-time multiplayer game servers
+- **Game State Validation**: Server-side rule enforcement
+- **Anti-cheat Mechanisms**: Authoritative game logic
+- **Game Session Management**: Player matchmaking and room management
+- **Real-time APIs**: WebSocket or HTTP game APIs
+- **Game Analytics**: Server-side game event tracking
+- **Tournament Systems**: Competitive game management

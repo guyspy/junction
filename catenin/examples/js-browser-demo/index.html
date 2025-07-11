@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catenin Browser Demo - Using JS Library</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        #game-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        #game-area {
+            min-height: 300px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            background-color: #fafafa;
+        }
+        
+        #controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .yaml-section {
+            margin: 20px 0;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        
+        .game-info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .error {
+            background-color: #ffe7e7;
+            border: 1px solid #ffb3b3;
+            color: #cc0000;
+        }
+        
+        .success {
+            background-color: #e7ffe7;
+            border: 1px solid #b3ffb3;
+            color: #006600;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>🎮 Catenin JavaScript Library Demo</h1>
+        <p>This demo shows how to use the Catenin game engine as a JavaScript library in a regular HTML page.</p>
+        
+        <div class="yaml-section">
+            <h3>Game Definition (YAML)</h3>
+            <textarea id="yaml-input" placeholder="Enter YAML game definition here...">
+meta:
+  name: "Browser Demo Game"
+  target_age: [8, 12]
+  player_count: [2, 2]
+
+cards:
+  attack_card:
+    count: 8
+    properties:
+      damage: {type: int, min: 2, max: 5}
+      element: {type: enum, values: [fire, water, earth]}
+
+mechanics:
+  setup:
+    players:
+      health: 15
+      hand_size: 4
+  win_conditions:
+    - type: "health_depleted"
+      message: "{winner} wins!"
+            </textarea>
+        </div>
+        
+        <div id="controls">
+            <button onclick="loadGame()">Load Game</button>
+            <button onclick="showPlayers()">Show Players</button>
+            <button onclick="generateCards()">Generate Cards</button>
+            <button onclick="clearOutput()">Clear Output</button>
+        </div>
+        
+        <div id="game-area">
+            <p>Click "Load Game" to create a game engine from the YAML definition above.</p>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Import the Catenin library from the build directory
+        import { GameDefinitionParser, CardFactory, createGameEngineFromYaml } from '../../build/dist/js/developmentLibrary/junction-catenin.mjs';
+        
+        // Make functions available globally for button clicks
+        window.currentEngine = null;
+        window.currentDefinition = null;
+        
+        window.loadGame = async function() {
+            const yamlInput = document.getElementById('yaml-input').value;
+            const gameArea = document.getElementById('game-area');
+            
+            try {
+                // Parse YAML and create game engine
+                const parser = new GameDefinitionParser();
+                const definition = parser.parseFromString(yamlInput);
+                const engine = createGameEngineFromYaml(yamlInput, ['Alice', 'Bob']);
+                
+                window.currentEngine = engine;
+                window.currentDefinition = definition;
+                
+                gameArea.innerHTML = `
+                    <div class="game-info success">
+                        <h3>✅ Game Loaded Successfully!</h3>
+                        <p><strong>Game:</strong> ${definition.meta.name}</p>
+                        <p><strong>Players:</strong> ${engine.getPlayers().map(p => p.name).join(', ')}</p>
+                        <p><strong>Card Types:</strong> ${Object.keys(definition.cards).join(', ')}</p>
+                    </div>
+                `;
+            } catch (error) {
+                gameArea.innerHTML = `
+                    <div class="game-info error">
+                        <h3>❌ Error Loading Game</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        };
+        
+        window.showPlayers = function() {
+            const gameArea = document.getElementById('game-area');
+            
+            if (!window.currentEngine) {
+                gameArea.innerHTML = `
+                    <div class="game-info error">
+                        <p>Please load a game first!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const players = window.currentEngine.getPlayers();
+            const playersHtml = players.map(player => `
+                <div class="game-info">
+                    <h4>Player: ${player.name}</h4>
+                    <p>Health: ${player.health}</p>
+                    <p>Hand Size: ${player.hand.length}</p>
+                </div>
+            `).join('');
+            
+            gameArea.innerHTML = `
+                <h3>👥 Players</h3>
+                ${playersHtml}
+            `;
+        };
+        
+        window.generateCards = function() {
+            const gameArea = document.getElementById('game-area');
+            
+            if (!window.currentDefinition) {
+                gameArea.innerHTML = `
+                    <div class="game-info error">
+                        <p>Please load a game first!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                const cardFactory = new CardFactory(window.currentDefinition);
+                const cards = cardFactory.generateCards();
+                
+                const cardsHtml = cards.slice(0, 5).map(card => `
+                    <div class="game-info">
+                        <h4>Card: ${card.id}</h4>
+                        <p>Type: ${card.type}</p>
+                        <p>Properties: ${JSON.stringify(card.properties)}</p>
+                    </div>
+                `).join('');
+                
+                gameArea.innerHTML = `
+                    <h3>🎴 Generated Cards (showing first 5 of ${cards.length})</h3>
+                    ${cardsHtml}
+                `;
+            } catch (error) {
+                gameArea.innerHTML = `
+                    <div class="game-info error">
+                        <h3>❌ Error Generating Cards</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        };
+        
+        window.clearOutput = function() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '<p>Output cleared. Click "Load Game" to start.</p>';
+        };
+        
+        // Initialize
+        console.log('Catenin library loaded successfully!');
+    </script>
+</body>
+</html>

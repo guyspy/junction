@@ -1,0 +1,36 @@
+{
+  "name": "catenin-typescript-server-demo",
+  "version": "1.0.0",
+  "description": "TypeScript Node.js server demo for Catenin game engine",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run install:lib && node --loader ts-node/esm server.ts",
+    "build": "npm run install:lib && tsc",
+    "start": "npm run build && node dist/server.js",
+    "install:lib": "cd ../../.. && ./gradlew :catenin:createNpmPackage && cd catenin/examples/typescript-server-demo && npm install ../../../catenin/build/npm-package",
+    "clean": "rm -rf dist node_modules/@junction",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "catenin",
+    "game-engine",
+    "typescript",
+    "nodejs",
+    "server",
+    "multiplayer"
+  ],
+  "author": "Junction Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@junction/catenin": "file:../../build/npm-package"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

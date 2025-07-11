@@ -1,8 +1,10 @@
 package org.junction.catenin.model
 
 import kotlinx.serialization.Serializable
+import kotlin.js.JsExport
 
 @Serializable
+@JsExport
 data class Card(
     val id: String,
     val type: String,
@@ -24,6 +26,7 @@ data class Card(
 }
 
 @Serializable
+@JsExport
 sealed class CardPropertyValue {
     @Serializable
     data class IntValue(val value: Int) : CardPropertyValue()
@@ -35,10 +38,12 @@ sealed class CardPropertyValue {
     data class BooleanValue(val value: Boolean) : CardPropertyValue()
 }
 
+@JsExport
 data class CardFactory(private val definition: GameDefinition) {
     private var cardIdCounter = 0
     
-    fun generateCards(): List<Card> {
+    // JavaScript-friendly method that returns Array by default
+    fun generateCards(): Array<Card> {
         val allCards = mutableListOf<Card>()
         
         definition.cards.forEach { (cardType, cardDef) ->
@@ -48,7 +53,7 @@ data class CardFactory(private val definition: GameDefinition) {
             }
         }
         
-        return allCards
+        return allCards.toTypedArray()
     }
     
     private fun createCard(cardType: String, definition: CardTypeDefinition): Card {

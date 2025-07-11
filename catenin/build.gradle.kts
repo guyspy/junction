@@ -31,6 +31,10 @@ kotlin {
     }
     
     sourceSets {
+        all {
+            languageSettings.optIn("kotlin.js.ExperimentalJsExport")
+        }
+        
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kaml)
@@ -81,3 +85,39 @@ publishing {
 
 // Note: Examples are separate from the library and not included in published artifacts
 // To run examples, use them as standalone projects that depend on the published library
+
+// Create npm package for local development
+tasks.register<Copy>("createNpmPackage") {
+    dependsOn("jsBrowserDevelopmentLibraryDistribution")
+    
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    
+    from(layout.buildDirectory.dir("dist/js/developmentLibrary")) {
+        exclude("package.json") // Exclude the generated package.json
+    }
+    into(layout.buildDirectory.dir("npm-package"))
+    
+    // Copy and rename our custom npm package.json
+    from("npm-package.json") {
+        rename("npm-package.json", "package.json")
+    }
+    
+    doLast {
+        println("✅ NPM package created at: ${layout.buildDirectory.dir("npm-package").get().asFile.absolutePath}")
+        println("📦 To install in other projects: npm install ${layout.buildDirectory.dir("npm-package").get().asFile.absolutePath}")
+    }
+}
+
+// Pack the npm package for distribution
+tasks.register<Exec>("packNpmPackage") {
+    dependsOn("createNpmPackage")
+    
+    workingDir = layout.buildDirectory.dir("npm-package").get().asFile
+    commandLine("npm", "pack")
+    
+    doLast {
+        val packageFile = layout.buildDirectory.dir("npm-package").get().asFile.resolve("junction-catenin-1.0.0.tgz")
+        println("📦 NPM package packed: ${packageFile.absolutePath}")
+        println("💡 Install with: npm install ${packageFile.absolutePath}")
+    }
+}

@@ -2,8 +2,10 @@ package org.junction.catenin.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import kotlin.js.JsExport
 
 @Serializable
+@JsExport
 data class GameDefinition(
     val meta: GameMeta,
     val cards: Map<String, CardTypeDefinition>,

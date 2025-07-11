@@ -62,12 +62,12 @@ junction/
 ├── catenin/                         # 🎮 Game Engine SDK (Kotlin Multiplatform)
 │   ├── src/                         # Core engine code
 │   │   ├── commonMain/kotlin/       # Shared game logic  
-│   │   ├── jvmMain/kotlin/         # JVM platform code
-│   │   └── jsMain/kotlin/          # JavaScript platform code
+│   │   └── commonTest/kotlin/       # Cross-platform tests
 │   ├── examples/                    # Platform demos
 │   │   ├── jvm-cli-demo/           # Command-line demo
 │   │   ├── js-browser-demo/        # Web browser demo
-│   │   └── js-node-demo/           # Node.js server demo
+│   │   ├── js-node-demo/           # Kotlin/JS Node.js server demo
+│   │   └── typescript-server-demo/  # TypeScript server demo
 │   └── game-samples/               # YAML game templates
 ├── docs/                           # 📚 Documentation
 │   ├── monorepo-architecture.md    # Monorepo design
@@ -101,30 +101,34 @@ junction/
 ./gradlew :catenin:examples:jvm-cli-demo:run
 
 # Run web browser demo  
-./gradlew :catenin:examples:js-browser-demo:jsBrowserRun
+./gradlew :catenin:examples:js-browser-demo:serve
 
-# Run Node.js server demo
-./gradlew :catenin:examples:js-node-demo:jsNodeRun
+# Run Kotlin/JS Node.js server demo
+./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun
+
+# Run TypeScript server demo
+cd catenin/examples/typescript-server-demo && npm start
 ```
 
-### Game Development
-```kotlin
-// Create game from YAML
-val engine = GameEngine.fromYaml(yamlContent, playerNames)
+## Services
 
-// Process player actions
-val result = engine.processAction(playerAction)
+### 🎮 Catenin (Game Engine)
+Kotlin Multiplatform game engine for 2D card-based educational games.
+- **Status**: ✅ Complete 
+- **Documentation**: [catenin/README.md](catenin/README.md)
+- **Technology**: Kotlin Multiplatform + YAML DSL
 
-// Get game state
-val gameState = engine.getGameState()
-```
+### 🚧 Future Services
+- **Occludin**: Quarkus server for multiplayer game rooms
+- **Renderers**: JavaScript/Phaser game renderers  
+- **AI Agents**: Python ML services for game generation
 
 ## Contributing
 
 See individual service documentation:
-- [Catenin Game Engine](catenin/README.md)
-- [Monorepo Architecture](docs/monorepo-architecture.md)
-- [Development Guidelines](CLAUDE.md)
+- [Catenin Game Engine](catenin/README.md) - Detailed usage, API, troubleshooting
+- [Monorepo Architecture](docs/monorepo-architecture.md) - Technical design
+- [Development Guidelines](CLAUDE.md) - AI assistant guidance
 
 ## License
 

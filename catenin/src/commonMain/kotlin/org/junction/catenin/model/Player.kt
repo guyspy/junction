@@ -1,8 +1,10 @@
 package org.junction.catenin.model
 
 import kotlinx.serialization.Serializable
+import kotlin.js.JsExport
 
 @Serializable
+@JsExport
 data class Player(
     val id: String,
     val name: String,
