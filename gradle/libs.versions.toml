@@ -1,0 +1,28 @@
+[versions]
+# Service versions
+catenin = "1.0.0"
+occludin = "1.0.0"
+
+# Language versions
+kotlin = "2.1.21"
+java = "21"
+kotlinx-serialization = "1.7.3"
+kotlinx-coroutines = "1.9.0"
+kaml = "0.66.0"
+junit = "5.11.4"
+assertj = "3.26.3"
+
+[libraries]
+catenin = { module = "org.junction.catenin:catenin", version.ref = "catenin" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kaml = { module = "com.charleskorn.kaml:kaml", version.ref = "kaml" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

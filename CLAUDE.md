@@ -4,65 +4,133 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Junction is an educational gaming platform featuring **Cadherin**, a Kotlin Multiplatform game engine for creating 2D card-based educational games. The platform uses YAML DSL for game definitions and is optimized for AI Agent driven game creation.
+Junction is an educational gaming platform monorepo featuring multiple services:
+
+- **Catenin**: Kotlin Multiplatform game engine for creating 2D card-based educational games
+- **Future Services**: Occludin (Quarkus server), Phaser renderers, etc.
+
+The platform uses YAML DSL for game definitions and is optimized for AI Agent driven game creation. Each service is technology-independent with its own build system.
 
 ## Commands
 
 ### Development Commands
+
+**Monorepo Commands:**
 ```bash
-# Build all platforms (JVM + JS)
+# Build all Gradle-based services
 ./gradlew build
 
+# Show all projects in monorepo
+./gradlew projects
+```
+
+**Catenin Service Commands:**
+```bash
+# Build Catenin (JVM + JS)
+./gradlew :catenin:build
+
 # Run tests
-./gradlew test
+./gradlew :catenin:allTests
 
 # Run JVM command-line demo
-./gradlew jvmRun
+./gradlew :catenin:examples:jvm-cli-demo:run
 
-# Generate JavaScript module for frontend
-./gradlew jsBrowserDistribution
+# Run JS browser demo
+./gradlew :catenin:examples:js-browser-demo:serve
 
-# Generate TypeScript definitions
-./gradlew jsTypeScriptDeclarations
+# Run Kotlin/JS Node.js demo
+./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun
+
+# Run TypeScript server demo
+cd catenin/examples/typescript-server-demo && npm start
+
+# Note: This project uses npm (not yarn) for JavaScript dependencies.
+# If you encounter package lock issues, use:
+# ./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
+
+# Generate JavaScript library files
+./gradlew :catenin:jsBrowserDevelopmentLibraryDistribution
+
+# Create NPM package
+./gradlew :catenin:createNpmPackage
+
+# Pack NPM package for distribution
+./gradlew :catenin:packNpmPackage
+```
+
+**Future Service Commands:**
+```bash
+# Occludin (Quarkus) - when added
+./gradlew :occludin:quarkusDev
+
+# Pure JS services use their own tooling (npm, etc.)
 ```
 
 ### Testing Commands
 ```bash
+# Run all tests
+./gradlew :catenin:allTests
+
 # Run platform-specific tests
-./gradlew jvmTest      # JVM tests
-./gradlew jsTest       # JavaScript tests
+./gradlew :catenin:jvmTest        # JVM tests
+./gradlew :catenin:jsTest         # All JavaScript tests
+
+# Run JavaScript tests by environment
+./gradlew :catenin:jsNodeTest     # Node.js environment (library API tests)
+./gradlew :catenin:jsBrowserTest  # Browser environment (headless)
 
 # Run with coverage
-./gradlew test jacocoTestReport
+./gradlew :catenin:test :catenin:jacocoTestReport
 ```
 
 ## Architecture & Components
 
-### Cadherin Engine (Kotlin Multiplatform)
+### Monorepo Structure
+Junction is organized as a multi-technology monorepo where each service is independent:
+
+### Catenin Service (Kotlin Multiplatform)
 The core game engine that compiles to both JVM and JavaScript:
 
 ```
-cadherin/
+catenin/
 ├── src/
 │   ├── commonMain/kotlin/           # Shared game logic
 │   │   ├── model/                   # Game data models
 │   │   ├── parser/                  # YAML parsing
 │   │   ├── core/                    # Game engine
 │   │   └── actions/                 # Player actions
-│   ├── jvmMain/kotlin/             # JVM-specific (server)
-│   │   ├── cli/                    # Command-line interface
-│   │   └── platform/               # File I/O
-│   └── jsMain/kotlin/              # JS-specific (frontend)
-│       └── platform/               # Browser APIs
+│   └── commonTest/kotlin/           # Cross-platform tests
+│       ├── core/                    # Core engine tests
+│       ├── js/                      # JavaScript library tests
+│       ├── model/                   # Model tests
+│       └── parser/                  # Parser tests
+├── examples/
+│   ├── jvm-cli-demo/               # JVM command-line demo
+│   ├── js-browser-demo/            # JavaScript browser demo
+│   ├── js-node-demo/               # Kotlin/JS Node.js demo
+│   └── typescript-server-demo/     # TypeScript server demo
+├── game-samples/                   # YAML game definitions
+└── npm-package.json                # NPM package configuration
 ```
 
 ### Technology Stack
+
+**Monorepo Architecture:**
+- **Build Systems**: Gradle (Kotlin/Java services), npm (JS services), Maven (optional)
+- **Service Independence**: Each service uses appropriate technology stack
+- **Coordination**: Shared version catalog, unified documentation
+
+**Catenin Service:**
 - **Core**: Kotlin Multiplatform
 - **Frontend**: Kotlin/JS compiles to TypeScript-compatible JavaScript
-- **Backend**: Kotlin/JVM with Quarkus
-- **Database**: MongoDB (stores YAML as JSON)
+- **Backend**: Kotlin/JVM 
 - **DSL Format**: YAML (AI-friendly structure)
 - **Development**: Test-driven development
+
+**Future Services:**
+- **Occludin**: Quarkus + Java + MongoDB
+- **Renderers**: Pure JS/TS + Phaser/Three.js
+- **APIs**: GraphQL, REST, WebSocket
 
 ### Data Architecture
 - **GameDefinition**: YAML-defined game rules and cards
@@ -111,22 +179,45 @@ fire_spell:
 
 JavaScript compilation provides TypeScript-compatible API:
 
-```typescript
-import { GameEngine, PlayerAction } from './cadherin-core'
+```javascript
+// Browser/ES6 module import
+import { createGameEngineFromYaml, GameDefinitionParser, CardFactory } from './junction-catenin.mjs'
+
+// NPM package import (TypeScript/Node.js)
+import { createGameEngineFromYaml, GameDefinitionParser, CardFactory } from '@junction/catenin'
 
 // Create game from YAML
-const engine = GameEngine.fromYaml(yamlContent, playerNames)
+const engine = createGameEngineFromYaml(yamlContent, ['Alice', 'Bob'])
 
-// Process player actions  
-const result = engine.processAction({
-  type: 'PlayCard',
-  playerId: 'player_0', 
-  cardId: 'fire_spell_1'
-})
+// Parse game definition
+const parser = new GameDefinitionParser()
+const definition = parser.parseFromString(yamlContent)
 
-// Get UI state for rendering
-const uiState = engine.getUIState()
+// Generate cards
+const cardFactory = new CardFactory(definition)
+const cards = cardFactory.generateCards()  // Returns JavaScript Array
+
+// Get players
+const players = engine.getPlayers()  // Returns JavaScript Array
+
+// All methods return JavaScript-friendly Arrays by default
+players.map(p => p.name)  // Works perfectly!
+cards.filter(c => c.type === 'spell')  // Standard Array methods!
 ```
+
+### JavaScript API Design Principles
+
+1. **Arrays Instead of Lists**: All exported methods that return collections return JavaScript Arrays by default, not Kotlin Lists. This ensures JavaScript developers can use standard Array methods (map, filter, slice) without issues.
+
+2. **@JsExport Usage**: All classes and functions that need to be available in JavaScript must use the `@JsExport` annotation with proper import:
+   ```kotlin
+   import kotlin.js.JsExport
+   
+   @JsExport
+   class GameEngine { ... }
+   ```
+
+3. **Factory Functions**: Since companion object methods aren't directly accessible in JavaScript, we provide top-level factory functions like `createGameEngineFromYaml()`.
 
 ## Backend Integration
 
@@ -197,26 +288,59 @@ ai_hints:
 - **Integration Tests**: Test complete game flows
 - **Cross-Platform**: Same tests run on JVM and JS
 - **Game Scenarios**: Test actual gameplay sequences
+- **JavaScript Library Tests**: Validate browser/HTML demo compatibility
+
+### JavaScript Library Testing
+
+The `JavaScriptLibraryTest` ensures that the JavaScript exports work correctly:
+
+```bash
+# Run JavaScript tests specifically
+./gradlew :catenin:jsNodeTest    # Node.js environment
+./gradlew :catenin:jsBrowserTest # Browser environment (headless)
+```
+
+**Test Coverage:**
+- `createGameEngineFromYaml()` factory function
+- JavaScript Array compatibility for `getPlayers()` and `generateCards()`
+- Complete HTML demo workflow simulation
+- Error handling scenarios
+- YAML parsing and game definition validation
+
+**Key Benefits:**
+- Validates that JavaScript exports work in real browser/Node.js environments
+- Tests the exact API used by the HTML demo
+- Ensures Array methods (map, filter, slice) work correctly
+- Catches JavaScript-specific issues early in development
 
 ## Development Status
 
-**Current Phase**: ✅ MVP COMPLETED! (Week 1)
-- Day 1: ✅ Kotlin Multiplatform setup + YAML parsing
-- Day 2: ✅ Player state and actions  
-- Day 3: ✅ Event system implementation (card effects)
-- Day 4: ✅ Turn management and scoring
-- Day 5: ✅ Win conditions and complete game
+**Current Phase**: ✅ MVP + MONOREPO READY + OVER-DELIVERED!
+- Day 1: ✅ Kotlin Multiplatform setup + YAML parsing + JavaScript ecosystem
+- Day 1.5: ✅ SDK monorepo restructure with examples + TypeScript demo
+- Day 2: ⏳ Player state and actions (NEXT)
+- Day 3: ⏳ Event system implementation (card effects)
+- Day 4: ⏳ Turn management and scoring
+- Day 5: ⏳ Win conditions and complete game
+- **Monorepo Config**: ✅ Multi-service ready (Kotlin, Java, JS, TypeScript)
 
-**🎉 MVP完成！** 現在有了完整可用的跨平台卡牌遊戲引擎
+**🎉 OVER-DELIVERED!** 
+- 26 tests (100% pass rate)
+- 4 working demos (JVM CLI, Browser, Node.js, TypeScript)
+- NPM package distribution
+- TypeScript support with .d.ts files
+- Modern JavaScript ecosystem integration
+
+**📋 Important**: See `/docs/catenin/delivery-report.md` for complete analysis of what was delivered vs planned
 
 ## Key Files
 
-- `/docs/cadherin/README.md` - Overall project design
-- `/docs/cadherin/day1-kotlin-multiplatform-setup.md` - Day 1 implementation
-- `/docs/cadherin/day2-player-state-and-actions.md` - Day 2 implementation  
-- `/docs/cadherin/day3-event-system.md` - Day 3 implementation
-- `/docs/cadherin/day4-turn-management-and-scoring.md` - Day 4 implementation
-- `/docs/cadherin/day5-win-conditions-and-complete-game.md` - Day 5 implementation
+- `/docs/catenin/README.md` - Overall project design
+- `/docs/catenin/day1-kotlin-multiplatform-setup.md` - Day 1 implementation
+- `/docs/catenin/day2-player-state-and-actions.md` - Day 2 implementation  
+- `/docs/catenin/day3-event-system.md` - Day 3 implementation
+- `/docs/catenin/day4-turn-management-and-scoring.md` - Day 4 implementation
+- `/docs/catenin/day5-win-conditions-and-complete-game.md` - Day 5 implementation
 - `/game-samples/` - Example YAML game definitions
 
 The project prioritizes practical functionality over architectural complexity, with a focus on creating a working cross-platform game engine that AI agents can easily understand and modify.

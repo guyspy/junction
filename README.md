@@ -1,67 +1,135 @@
-# Junction - 教學遊戲互動平台
+# Junction - Educational Gaming Platform
 
-## 專案概述
+## Project Overview
 
-Junction 是一個教學遊戲互動平台，以 cell junction 生物概念為命名靈感，讓教育者能夠透過 AI 協助創作線上 2D 卡牌桌遊，並提供完整的遊戲生態系統。
+Junction is an educational gaming platform monorepo, inspired by cell junction biological concepts. It enables educators to create online 2D card-based games with AI assistance and provides a complete gaming ecosystem.
 
-## 核心功能
+**Current Status**: 🎉 **MVP Complete + Multi-Service Monorepo Ready**
 
-- **遊戲創作引擎**: 透過 DSL 和 AI 協助創作卡牌桌遊
-- **遊戲遊玩平台**: 線上多人 2D 卡牌桌遊
-- **社群功能**: 評價系統、分享機制
-- **群眾募資**: 維持平台運作
-- **公益功能**: 待用額度系統，幫助弱勢孩童
+## Core Features
 
-## 技術架構
+- **Game Creation Engine**: YAML DSL with AI-assisted card game creation  
+- **Multi-Platform Gaming**: Cross-platform game engine (JVM + JavaScript)
+- **Community Features**: Rating systems, sharing mechanisms
+- **Crowdfunding**: Platform sustainability
+- **Social Good**: Charitable credit system for underprivileged children
 
-- **後端**: Kotlin + Quarkus
-- **前端**: TypeScript
-- **資料庫**: MongoDB
-- **開發方法**: Test Driven Development
+## Technology Architecture
 
-## 命名規範
+**Monorepo Design**: Multi-technology services with independent build systems
 
-基於 cell junction 生物概念：
-- `cadherin`: DSL 解釋器 (server & client 共用)
-- 其他組件將沿用細胞連接相關命名
+- **Catenin (Game Engine)**: Kotlin Multiplatform + YAML DSL
+- **Future Occludin (Server)**: Quarkus + Java + MongoDB  
+- **Future Renderers**: Pure JavaScript + Phaser/Three.js
+- **Future AI Services**: Python + ML models
+- **Development Method**: Test-driven development
 
-## 開發計劃概覽
+## Service Naming Convention
 
-### Phase 1: 遊戲引擎核心 (優先開發)
-1. **DSL 設計與實作** (`cadherin`)
-2. **遊戲規則引擎**
-3. **卡牌系統基礎設施**
+Based on cell junction biological concepts:
+- **`catenin`**: Game engine SDK (Kotlin Multiplatform)
+- **`occludin`**: Server platform services (Future: Quarkus + Java)
+- **Future services**: Will follow cell junction protein naming
 
-### Phase 2: 平台基礎設施
-1. **使用者管理系統**
-2. **遊戲房間管理**
-3. **即時通訊系統**
+## Development Status
 
-### Phase 3: 創作工具
-1. **遊戲編輯器**
-2. **AI 輔助創作**
-3. **素材管理系統**
+### ✅ **Phase 1: Game Engine Core (COMPLETED)**
+1. **Catenin SDK**: YAML DSL + Kotlin Multiplatform engine
+2. **Multi-Platform Support**: JVM + JavaScript targets  
+3. **Example Projects**: CLI, Browser, Node.js demos
+4. **Maven Publishing**: Ready for external consumption
 
-### Phase 4: 社群與商業模式
-1. **評價與分享系統**
-2. **群眾募資功能**
-3. **待用額度系統**
+### 🚧 **Phase 2: Platform Infrastructure (PLANNED)**
+1. **Occludin Server**: Quarkus + MongoDB backend
+2. **User Management System**: Authentication & authorization
+3. **Game Room Management**: Real-time multiplayer
+4. **Communication System**: WebSocket + event streaming
 
-## 目錄結構
+### 📋 **Phase 3: Creation Tools (PLANNED)**
+1. **Game Editor**: Web-based YAML editor
+2. **AI-Assisted Creation**: Game generation with LLMs
+3. **Asset Management**: Card art and audio system
+
+### 💰 **Phase 4: Community & Business (PLANNED)**
+1. **Rating & Sharing System**: Community features
+2. **Crowdfunding Features**: Platform sustainability  
+3. **Charitable Credit System**: Social impact features
+
+## Monorepo Structure
 
 ```
 junction/
-├── docs/                     # 所有開發計劃文檔
-│   ├── overview.md           # 總體規劃
-│   ├── architecture.md       # 技術架構設計
-│   ├── cadherin/            # DSL 相關文檔
-│   ├── game-engine/         # 遊戲引擎計劃
-│   ├── platform/            # 平台基礎設施計劃  
-│   ├── creator-tools/       # 創作工具計劃
-│   └── community/           # 社群功能計劃
-├── cadherin/                # DSL 解釋器
-├── game-engine/             # 遊戲引擎核心
-├── platform-services/      # 平台微服務
-├── creator-tools/           # 創作工具
-└── web-client/             # 前端應用
+├── catenin/                         # 🎮 Game Engine SDK (Kotlin Multiplatform)
+│   ├── src/                         # Core engine code
+│   │   ├── commonMain/kotlin/       # Shared game logic  
+│   │   └── commonTest/kotlin/       # Cross-platform tests
+│   ├── examples/                    # Platform demos
+│   │   ├── jvm-cli-demo/           # Command-line demo
+│   │   ├── js-browser-demo/        # Web browser demo
+│   │   ├── js-node-demo/           # Kotlin/JS Node.js server demo
+│   │   └── typescript-server-demo/  # TypeScript server demo
+│   └── game-samples/               # YAML game templates
+├── docs/                           # 📚 Documentation
+│   ├── monorepo-architecture.md    # Monorepo design
+│   ├── catenin/                    # Game engine docs
+│   └── overview.md                 # Project overview
+├── gradle/                         # 🔧 Shared Gradle config
+│   ├── libs.versions.toml         # Version catalog
+│   └── wrapper/                    # Gradle wrapper
+├── build.gradle.kts               # Root build configuration
+├── settings.gradle.kts            # Project structure
+└── CLAUDE.md                      # AI assistant guidance
+
+# Future services will be added as siblings to catenin/
+├── occludin/                      # 🚧 Future: Quarkus server
+├── phaser-renderer/               # 🚧 Future: JS game renderer  
+└── ai-agent/                      # 🚧 Future: Python ML service
 ```
+
+## Quick Start
+
+### Prerequisites
+- JDK 21+ for Catenin development
+- Node.js 18+ for JavaScript demos
+
+### Build & Run
+```bash
+# Build entire monorepo
+./gradlew build
+
+# Run JVM command-line demo
+./gradlew :catenin:examples:jvm-cli-demo:run
+
+# Run web browser demo  
+./gradlew :catenin:examples:js-browser-demo:serve
+
+# Run Kotlin/JS Node.js server demo
+./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun
+
+# Run TypeScript server demo
+cd catenin/examples/typescript-server-demo && npm start
+```
+
+## Services
+
+### 🎮 Catenin (Game Engine)
+Kotlin Multiplatform game engine for 2D card-based educational games.
+- **Status**: ✅ Complete 
+- **Documentation**: [catenin/README.md](catenin/README.md)
+- **Technology**: Kotlin Multiplatform + YAML DSL
+
+### 🚧 Future Services
+- **Occludin**: Quarkus server for multiplayer game rooms
+- **Renderers**: JavaScript/Phaser game renderers  
+- **AI Agents**: Python ML services for game generation
+
+## Contributing
+
+See individual service documentation:
+- [Catenin Game Engine](catenin/README.md) - Detailed usage, API, troubleshooting
+- [Monorepo Architecture](docs/monorepo-architecture.md) - Technical design
+- [Development Guidelines](CLAUDE.md) - AI assistant guidance
+
+## License
+
+MIT License - see individual service licenses for details.
