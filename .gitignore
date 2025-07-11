@@ -10,6 +10,10 @@ build/
 # Kotlin/JS
 kotlin-js-store/
 *.js.map
+.kotlin/
+
+# Claude Code
+.claude/
 
 # Java
 *.class
