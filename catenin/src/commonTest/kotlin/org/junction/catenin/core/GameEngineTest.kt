@@ -249,24 +249,7 @@ class GameEngineTest {
         assertTrue(result3.validationErrors.any { it.contains("not found in") || it.contains("Card not in hand") })
     }
     
-    @Test
-    fun testDrawCardWhenDeckEmpty() {
-        val engine = GameEngine.fromYaml(createTestGameYaml(), listOf("Alice", "Bob"))
-        val player = engine.getCurrentPlayer()
-        
-        // Draw all cards from deck
-        repeat(12) { // 12 cards remaining in deck
-            val action = PlayerAction.DrawCard(player.id)
-            val result = engine.processAction(action)
-            if (!result.success) return // Stop if deck becomes empty
-        }
-        
-        // Try to draw when deck is empty
-        val action = PlayerAction.DrawCard(player.id)
-        val result = engine.processAction(action)
-        assertFalse(result.success)
-        assertTrue(result.validationErrors.any { it.contains("Deck is empty") })
-    }
+    // Removed testDrawCardWhenDeckEmpty - covered by GameEngineQueryTest.testCanPlayerDrawCardWithEmptyDeck
     
     @Test
     fun testHandLimit() {
@@ -289,18 +272,7 @@ class GameEngineTest {
         }
     }
     
-    @Test
-    fun testUIState() {
-        val engine = GameEngine.fromYaml(createTestGameYaml(), listOf("Alice", "Bob"))
-        val uiState = engine.getUIState()
-        
-        assertEquals(2, uiState.players.size)
-        assertEquals("player_0", uiState.currentPlayerId)
-        assertEquals("PLAYING", uiState.gamePhase)
-        assertEquals(1, uiState.turnNumber)
-        assertEquals(12, uiState.deckSize)
-        assertEquals(0, uiState.discardPileSize)
-    }
+    // Removed testUIState - covered by GameEngineQueryTest.testQueryMethodConsistencyWithUIState
     
     @Test
     fun testValidationResult() {
@@ -336,7 +308,7 @@ class GameEngineTest {
         
         // Test with effects
         val effect = GameEffect(EffectType.CARD_DRAWN, "player_0", description = "Test effect")
-        val withEffects = ActionResult.withEffects(ActionType.DRAW_CARD, arrayOf(effect))
+        val withEffects = ActionResult.success(ActionType.DRAW_CARD, arrayOf(effect))
         assertTrue(withEffects.success)
         assertEquals(ActionType.DRAW_CARD, withEffects.type)
         assertEquals(1, withEffects.effects.size)

@@ -124,20 +124,32 @@ fun displayPlayerHand(player: Player) {
 
 fun handlePlayerTurn(engine: GameEngine) {
     val currentPlayer = engine.getCurrentPlayer()
-    println("${currentPlayer.name}'s turn")
-    println("Choose action:")
-    println("1) Draw card")
-    println("2) Play card") 
-    println("3) End turn")
-    print("Enter choice (1-3): ")
     
-    when (readLine()) {
-        "1" -> handleDrawCard(engine, currentPlayer)
-        "2" -> handlePlayCard(engine, currentPlayer)
-        "3" -> handleEndTurn(engine, currentPlayer)
-        else -> {
-            println("Invalid choice, try again")
-            handlePlayerTurn(engine)
+    while (true) {
+        println("${currentPlayer.name}'s turn")
+        println("Choose action:")
+        println("1) Draw card")
+        println("2) Play card") 
+        println("3) End turn")
+        print("Enter choice (1-3): ")
+        
+        when (readLine()) {
+            "1" -> {
+                handleDrawCard(engine, currentPlayer)
+                return
+            }
+            "2" -> {
+                handlePlayCard(engine, currentPlayer)
+                return
+            }
+            "3" -> {
+                handleEndTurn(engine, currentPlayer)
+                return
+            }
+            else -> {
+                println("Invalid choice, try again")
+                // Continue the loop
+            }
         }
     }
 }

@@ -1,20 +1,51 @@
 # Catenin Examples
 
-This directory contains examples demonstrating how to use the Catenin game engine across different platforms.
+This directory contains examples demonstrating how to use the Catenin game engine across different platforms and technology stacks.
 
-## Structure
+## Demo Comparison
 
-- **`jvm-cli-demo/`** - JVM command-line demo showing basic library usage
-- **`js-browser-demo/`** - Web browser demo with DOM manipulation
-- **`js-node-demo/`** - Node.js server demo for multiplayer scenarios
+| Demo | Language | Target | Build System | Use Case |
+|------|----------|--------|--------------|----------|
+| `jvm-cli-demo` | Kotlin | JVM | Gradle | Command-line tools, backend services |
+| `js-browser-demo` | Kotlin/JS | Browser | Gradle | Web frontends, client-side games |
+| `kotlin-js-node-demo` | Kotlin | Node.js | Gradle | Kotlin-first server development |
+| `typescript-node-demo` | TypeScript | Node.js | npm/tsc | TypeScript-first server development |
+
+## Technology Stacks
+
+### JVM Ecosystem
+- **`jvm-cli-demo/`** - Pure Kotlin targeting JVM
+  - ✅ Native Kotlin development experience
+  - ✅ Full JVM ecosystem access
+  - ✅ Ideal for server applications and CLI tools
+
+### Browser Ecosystem  
+- **`js-browser-demo/`** - Kotlin/JS targeting browser
+  - ✅ Write Kotlin, run in browser
+  - ✅ DOM manipulation with Kotlin
+  - ✅ Shared logic with server-side Kotlin
+
+### Node.js Ecosystem - Two Approaches
+
+#### Kotlin-First Approach
+- **`kotlin-js-node-demo/`** - Kotlin → Kotlin/JS → Node.js
+  - ✅ Stay in Kotlin ecosystem
+  - ✅ Share code between JVM and Node.js
+  - ✅ Kotlin type safety and tooling
+  - ✅ Ideal for Kotlin teams
+
+#### TypeScript-First Approach  
+- **`typescript-node-demo/`** - TypeScript → JavaScript → Node.js
+  - ✅ Standard npm package consumption
+  - ✅ TypeScript type safety via .d.ts files
+  - ✅ Integrate with existing TypeScript projects
+  - ✅ Ideal for TypeScript/JavaScript teams
 
 ## Running Examples
 
-These examples are **part of the monorepo** and use the local Catenin library directly via project dependencies.
-
 ### Prerequisites
-- JDK 21+ for JVM demos
-- Node.js 18+ for JavaScript demos
+- **JDK 21+** for JVM and Kotlin/JS demos
+- **Node.js 18+** for JavaScript demos
 
 ### Commands
 
@@ -24,63 +55,113 @@ Run from the **monorepo root** (`/junction/`):
 # JVM command-line demo
 ./gradlew :catenin:examples:jvm-cli-demo:run
 
-# JavaScript browser demo (opens dev server)
-./gradlew :catenin:examples:js-browser-demo:jsBrowserDevelopmentRun
+# JavaScript browser demo
+./gradlew :catenin:examples:js-browser-demo:serve
 
-# JavaScript Node.js demo
-./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun
+# Kotlin/JS Node.js demo
+./gradlew :catenin:examples:kotlin-js-node-demo:jsNodeDevelopmentRun
+
+# TypeScript Node.js demo (uses NPM package)
+cd catenin/examples/typescript-node-demo && npm start
 ```
 
-**Note**: This project uses npm for JavaScript dependencies. If you encounter package lock issues:
+**Note**: For package lock issues with Kotlin/JS demos:
 ```bash
-./gradlew :catenin:examples:js-browser-demo:jsBrowserDevelopmentRun -x kotlinStorePackageLock
-./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
+./gradlew :catenin:examples:js-browser-demo:serve -x kotlinStorePackageLock
+./gradlew :catenin:examples:kotlin-js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
 ```
 
-## Example Usage
+## Architecture Patterns
 
-### JVM (Server/CLI)
+### Shared Game Logic
+All demos use the **same Catenin game engine**, demonstrating true cross-platform development:
+
 ```kotlin
-import org.junction.catenin.core.GameEngine
-
-// Create game from YAML
-val engine = GameEngine.fromYaml(yamlContent, listOf("Alice", "Bob"))
-
-// Process player actions
+// Same API across all platforms
+val engine = GameEngine.fromYaml(yamlContent, playerNames)
 val result = engine.processAction(playerAction)
-
-// Get game state
 val gameState = engine.getGameState()
 ```
 
-### JavaScript (Browser/Node.js)
-```javascript
-import { GameEngine } from './catenin-core.js'
+### Platform-Specific APIs
 
-// Create game from YAML
-const engine = GameEngine.fromYaml(yamlContent, ['Alice', 'Bob'])
+**JVM (Kotlin)**:
+```kotlin
+import org.junction.catenin.core.GameEngine
 
-// Process player actions  
-const result = engine.processAction(playerAction)
-
-// Get UI state for rendering
-const uiState = engine.getUIState()
+val engine = GameEngine.fromYaml(yamlContent, listOf("Alice", "Bob"))
+val players = engine.getPlayers()  // Returns Array<Player>
 ```
 
-## External Usage
+**JavaScript (Kotlin/JS)**:
+```javascript
+import { createGameEngineFromYaml } from './catenin-core.js'
 
-To use Catenin in your own projects:
+const engine = createGameEngineFromYaml(yamlContent, ['Alice', 'Bob'])
+const players = engine.getPlayers()  // Returns JavaScript Array
+```
 
-1. **Build and publish locally**:
-   ```bash
-   ./gradlew publishToMavenLocal
-   ```
+**TypeScript (NPM Package)**:
+```typescript
+import { createGameEngineFromYaml, Player } from '@junction/catenin'
 
-2. **Add dependency** to your `build.gradle.kts`:
+const engine = createGameEngineFromYaml(yamlContent, ['Alice', 'Bob'])
+const players: Player[] = engine.getPlayers()  // Full type safety
+```
+
+## Development Workflows
+
+### Monorepo Development
+For internal development, all examples use project dependencies:
+```kotlin
+dependencies {
+    implementation(project(":catenin"))
+}
+```
+
+### External Usage
+For using Catenin in your own projects:
+
+1. **JVM Projects**: Add Maven dependency
    ```kotlin
    dependencies {
        implementation("org.junction.catenin:catenin:1.0.0")
    }
    ```
 
-3. **Use the same API** as shown in the examples above
+2. **TypeScript Projects**: Install NPM package
+   ```bash
+   npm install @junction/catenin
+   ```
+
+## Example Features Demonstrated
+
+### Core Game Engine
+- ✅ YAML game definition parsing
+- ✅ Player state management  
+- ✅ Card generation and properties
+- ✅ Action processing (draw, play, end turn)
+- ✅ Game state tracking and validation
+
+### Platform Integration
+- ✅ **JVM**: File I/O, console interaction
+- ✅ **Browser**: DOM manipulation, event handling
+- ✅ **Kotlin/JS Node**: Server architecture, room management
+- ✅ **TypeScript**: Type safety, npm ecosystem integration
+
+### Development Experience
+- ✅ **Hot reload** in development
+- ✅ **Source maps** for debugging
+- ✅ **Type safety** across platforms
+- ✅ **Modern tooling** integration
+
+## Next Steps
+
+1. **Run the demos** to understand different approaches
+2. **Choose your stack** based on team preferences and project requirements
+3. **Copy patterns** from the most relevant demo for your use case
+4. **Integrate Catenin** into your project using the appropriate method
+
+---
+
+**Choose Your Adventure**: Whether you're building with Kotlin, TypeScript, or need browser compatibility, there's a demo that matches your technology preferences! 🎮

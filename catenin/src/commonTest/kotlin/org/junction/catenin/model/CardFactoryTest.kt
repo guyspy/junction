@@ -59,4 +59,27 @@ class CardFactoryTest {
         assertEquals(null, card.getIntProperty("element")) // Wrong type access
         assertEquals(null, card.getStringProperty("damage")) // Wrong type access
     }
+    
+    @Test
+    fun testCreateCardFactoryFunction() {
+        // Test the top-level factory function for JavaScript compatibility
+        val gameDefinition = GameDefinition(
+            meta = GameMeta(name = "Test Game", targetAge = listOf(8, 12)),
+            cards = mapOf(
+                "test_card" to CardTypeDefinition(
+                    count = 2,
+                    properties = mapOf("value" to PropertyDefinition(type = "int", min = 1, max = 3))
+                )
+            )
+        )
+        
+        val factory = createCardFactory(gameDefinition)
+        assertNotNull(factory)
+        
+        val cards = factory.generateCards()
+        assertEquals(2, cards.size)
+        cards.forEach { card ->
+            assertEquals("test_card", card.type)
+        }
+    }
 }

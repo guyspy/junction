@@ -46,7 +46,7 @@ class YamlParserTest {
         assertEquals(2, attackCard.properties.size)
         
         val validation = parser.validate(definition)
-        assertTrue(validation is ValidationResult.Success)
+        assertTrue(validation is ParseResult.Success)
     }
     
     @Test
@@ -63,7 +63,7 @@ class YamlParserTest {
         val definition = parser.parseFromString(yaml)
         val validation = parser.validate(definition)
         
-        assertTrue(validation is ValidationResult.Failure)
+        assertTrue(validation is ParseResult.Failure)
         assertTrue(validation.errors.contains("Game name cannot be empty"))
         assertTrue(validation.errors.contains("Game must define at least one card type"))
     }

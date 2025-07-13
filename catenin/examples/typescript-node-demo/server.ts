@@ -1,4 +1,4 @@
-import { GameEngine, CardFactory, createGameEngineFromYaml, Player, Card, GameDefinition } from '@junction/catenin';
+import { GameEngine, CardFactory, createGameEngineFromYaml, createCardFactory, Player, Card, GameDefinition } from '@junction/catenin';
 
 interface GameRoom {
     id: string;
@@ -93,7 +93,7 @@ mechanics:
             });
             
             // Generate and display cards
-            const cardFactory: CardFactory = new CardFactory(definition);
+            const cardFactory: CardFactory = createCardFactory(definition);
             const cards: Card[] = cardFactory.generateCards();
             console.log(`🎴 Generated ${cards.length} cards:`);
             

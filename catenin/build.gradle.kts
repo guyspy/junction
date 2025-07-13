@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
+    id("org.jetbrains.kotlinx.kover") version "0.8.3"
     id("maven-publish")
 }
 
@@ -85,6 +86,29 @@ publishing {
 
 // Note: Examples are separate from the library and not included in published artifacts
 // To run examples, use them as standalone projects that depend on the published library
+
+// Kover configuration for test coverage (JVM only)
+kover {
+    reports {
+        filters {
+            excludes {
+                // Exclude examples from coverage
+                packages("org.junction.catenin.examples.*")
+            }
+        }
+        
+        total {
+            html {
+                onCheck = false
+                htmlDir = layout.buildDirectory.dir("reports/kover/html")
+            }
+            xml {
+                onCheck = false
+                xmlFile = layout.buildDirectory.file("reports/kover/result.xml")
+            }
+        }
+    }
+}
 
 // Create npm package for local development
 tasks.register<Copy>("createNpmPackage") {

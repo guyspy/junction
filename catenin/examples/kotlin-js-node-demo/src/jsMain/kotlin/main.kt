@@ -82,7 +82,7 @@ class GameServer {
             }
             
             // Generate and show cards
-            val cardFactory = CardFactory(definition)
+            val cardFactory = CardFactory.fromDefinition(definition)
             val cards = cardFactory.generateCards()
             console.log("🎴 Generated ${cards.size} cards:")
             

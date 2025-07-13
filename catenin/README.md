@@ -53,12 +53,12 @@ cd junction  # Root of the monorepo
 # Running Examples
 ./gradlew :catenin:examples:jvm-cli-demo:run                            # JVM CLI demo
 ./gradlew :catenin:examples:js-browser-demo:serve                       # JS browser demo (copies files)
-./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun           # Kotlin/JS Node.js demo
-cd catenin/examples/typescript-server-demo && npm start                 # TypeScript server demo
+./gradlew :catenin:examples:kotlin-js-node-demo:jsNodeDevelopmentRun    # Kotlin/JS Node.js demo
+cd catenin/examples/typescript-node-demo && npm start                   # TypeScript Node.js demo
 
 # Note: This project uses npm (not yarn) for JavaScript dependencies.
 # If you encounter package lock issues, use:
-# ./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
+# ./gradlew :catenin:examples:kotlin-js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
 ```
 
 ## 📁 Project Structure
@@ -79,8 +79,8 @@ catenin/
 ├── examples/                       # Usage examples
 │   ├── jvm-cli-demo/              # JVM command-line demo
 │   ├── js-browser-demo/           # JavaScript browser demo
-│   ├── js-node-demo/              # Kotlin/JS Node.js demo
-│   └── typescript-server-demo/    # TypeScript server demo
+│   ├── kotlin-js-node-demo/       # Kotlin/JS Node.js demo
+│   └── typescript-node-demo/      # TypeScript Node.js demo
 ├── game-samples/                   # Example YAML games
 ├── build.gradle.kts               # Build configuration
 └── README.md                      # This file

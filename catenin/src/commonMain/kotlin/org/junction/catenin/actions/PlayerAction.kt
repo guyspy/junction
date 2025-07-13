@@ -35,9 +35,6 @@ data class ActionResult(
         
         fun failure(type: ActionType, errors: Array<String>): ActionResult =
             ActionResult(false, type, emptyArray(), errors)
-        
-        fun withEffects(type: ActionType, effects: Array<GameEffect>): ActionResult =
-            ActionResult(true, type, effects, emptyArray())
     }
 }
 

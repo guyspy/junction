@@ -24,7 +24,6 @@ class GameEngine private constructor(
             return GameEngine(gameState)
         }
         
-        fun loadGameStateFromJson(json: String): GameEngine = loadGameState(json)
         
         private fun initializeGame(definition: GameDefinition, playerNames: List<String>): GameState {
             // Generate all cards
@@ -111,10 +110,6 @@ class GameEngine private constructor(
         }
     }
     
-    private fun validateDrawCard(player: Player): ValidationResult {
-        return validateDrawCardStructured(player).toLegacy()
-    }
-    
     private fun validateDrawCardStructured(player: Player): StructuredValidationResult {
         // TODO: Move to YAML config - deck behavior rules 
         if (gameState.getDeckSize() == 0) {
@@ -127,10 +122,6 @@ class GameEngine private constructor(
             )
         }
         return StructuredValidationResult.valid()
-    }
-    
-    private fun validatePlayCard(player: Player, cardId: String): ValidationResult {
-        return validatePlayCardStructured(player, cardId).toLegacy()
     }
     
     private fun validatePlayCardStructured(player: Player, cardId: String): StructuredValidationResult {
@@ -284,7 +275,6 @@ class GameEngine private constructor(
         return kotlinx.serialization.json.Json.encodeToString(GameState.serializer(), gameState)
     }
     
-    fun saveGameStateToJson(): String = saveGameState()
 }
 
 @JsExport
