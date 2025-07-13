@@ -12,7 +12,7 @@ class GameDefinitionParser {
     }
     
     
-    fun validate(definition: GameDefinition): ValidationResult {
+    fun validate(definition: GameDefinition): ParseResult {
         val errors = mutableListOf<String>()
         
         // Basic validation
@@ -36,17 +36,17 @@ class GameDefinitionParser {
         }
         
         return if (errors.isEmpty()) {
-            ValidationResult.Success
+            ParseResult.Success
         } else {
-            ValidationResult.Failure(errors)
+            ParseResult.Failure(errors)
         }
     }
     
 }
 
 @JsExport
-sealed class ValidationResult {
-    object Success : ValidationResult()
-    data class Failure(val errors: List<String>) : ValidationResult()
+sealed class ParseResult {
+    object Success : ParseResult()
+    data class Failure(val errors: List<String>) : ParseResult()
 }
 

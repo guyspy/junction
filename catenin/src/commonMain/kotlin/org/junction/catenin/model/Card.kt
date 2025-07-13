@@ -1,6 +1,7 @@
 package org.junction.catenin.model
 
 import kotlinx.serialization.Serializable
+import org.junction.catenin.utils.GameRandom
 import kotlin.js.JsExport
 
 @Serializable
@@ -39,8 +40,14 @@ sealed class CardPropertyValue {
 }
 
 @JsExport
-data class CardFactory(private val definition: GameDefinition) {
+class CardFactory private constructor(private val definition: GameDefinition) {
     private var cardIdCounter = 0
+    
+    companion object {
+        fun fromDefinition(definition: GameDefinition): CardFactory {
+            return CardFactory(definition)
+        }
+    }
     
     // JavaScript-friendly method that returns Array by default
     fun generateCards(): Array<Card> {
@@ -73,12 +80,12 @@ data class CardFactory(private val definition: GameDefinition) {
             "int" -> {
                 val min = definition.min ?: 1
                 val max = definition.max ?: 10
-                val value = (min..max).random()
+                val value = GameRandom.nextInt(min, max)
                 CardPropertyValue.IntValue(value)
             }
             "enum" -> {
                 val values = definition.values ?: listOf("default")
-                val value = values.random()
+                val value = GameRandom.choose(values) ?: "default"
                 CardPropertyValue.StringValue(value)
             }
             "string" -> {
@@ -87,4 +94,10 @@ data class CardFactory(private val definition: GameDefinition) {
             else -> CardPropertyValue.StringValue("unknown")
         }
     }
+}
+
+// Top-level factory function for JavaScript compatibility
+@JsExport
+fun createCardFactory(definition: GameDefinition): CardFactory {
+    return CardFactory.fromDefinition(definition)
 }

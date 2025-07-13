@@ -1,6 +1,20 @@
-# TypeScript Server Demo
+# TypeScript Node.js Demo
 
-This example demonstrates how to use the Catenin game engine in a TypeScript Node.js server application with full type safety.
+**Technology Stack**: TypeScript → JavaScript → Node.js
+
+This example demonstrates how to write **TypeScript code** that consumes Catenin as an NPM package with full type safety.
+
+## What This Is
+- ✅ Write your server code in **TypeScript**
+- ✅ Import Catenin via NPM package (`@junction/catenin`)
+- ✅ Full type safety with auto-generated .d.ts files
+- ✅ Standard TypeScript/Node.js development workflow
+
+## When to Use This
+- You prefer TypeScript for server development
+- You're integrating with existing TypeScript/Node.js projects
+- You want standard npm package management
+- You need enterprise-grade type safety and tooling
 
 ## Features
 
@@ -20,7 +34,7 @@ This example demonstrates how to use the Catenin game engine in a TypeScript Nod
 
 ```bash
 # Navigate to this directory
-cd catenin/examples/typescript-server-demo
+cd catenin/examples/typescript-node-demo
 
 # Install dependencies
 npm install
@@ -43,7 +57,7 @@ npm run type-check
 ## Project Structure
 
 ```
-typescript-server-demo/
+typescript-node-demo/
 ├── server.ts           # TypeScript server implementation
 ├── package.json        # Dependencies and scripts
 ├── tsconfig.json       # TypeScript configuration

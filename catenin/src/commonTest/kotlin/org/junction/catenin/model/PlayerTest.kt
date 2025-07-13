@@ -18,7 +18,7 @@ class PlayerTest {
         assertEquals(15, player.health)
         assertEquals(0, player.score)
         assertTrue(player.isAlive())
-        assertTrue(player.hand.isEmpty())
+        assertEquals(0, player.hand.size)
     }
     
     @Test
@@ -30,40 +30,56 @@ class PlayerTest {
             properties = mapOf("damage" to CardPropertyValue.IntValue(3))
         )
         
-        // Add card
-        player.addCard(card)
-        assertEquals(1, player.hand.size)
-        assertTrue(player.hasCard("card_1"))
-        assertFalse(player.hasCard("card_2"))
+        // Add card (immutable)
+        val playerWithCard = player.addCard(card)
+        assertEquals(1, playerWithCard.hand.size)
+        assertTrue(playerWithCard.hasCard("card_1"))
+        assertFalse(playerWithCard.hasCard("card_2"))
         
-        // Remove card
-        val removedCard = player.removeCard("card_1")
+        // Original player unchanged
+        assertEquals(0, player.hand.size)
+        
+        // Remove card (immutable)
+        val (playerWithoutCard, removedCard) = playerWithCard.removeCard("card_1")
         assertNotNull(removedCard)
         assertEquals("card_1", removedCard.id)
-        assertTrue(player.hand.isEmpty())
+        assertEquals(0, playerWithoutCard.hand.size)
+        
+        // Original player with card unchanged
+        assertEquals(1, playerWithCard.hand.size)
         
         // Try to remove non-existent card
-        val nonExistentCard = player.removeCard("card_2")
+        val (unchangedPlayer, nonExistentCard) = playerWithCard.removeCard("card_2")
         assertNull(nonExistentCard)
+        assertEquals(playerWithCard, unchangedPlayer) // Should be same player
     }
     
     @Test
     fun testHealthManagement() {
         val player = Player(id = "player_1", name = "Alice", health = 10)
         
-        // Take damage
-        player.takeDamage(3)
-        assertEquals(7, player.health)
-        assertTrue(player.isAlive())
+        // Take damage (immutable)
+        val damagedPlayer = player.takeDamage(3)
+        assertEquals(7, damagedPlayer.health)
+        assertTrue(damagedPlayer.isAlive())
+        
+        // Original player unchanged
+        assertEquals(10, player.health)
         
         // Take fatal damage
-        player.takeDamage(10)
-        assertEquals(0, player.health)
-        assertFalse(player.isAlive())
+        val deadPlayer = damagedPlayer.takeDamage(10)
+        assertEquals(0, deadPlayer.health)
+        assertFalse(deadPlayer.isAlive())
+        
+        // Damaged player unchanged
+        assertEquals(7, damagedPlayer.health)
         
         // Heal
-        player.heal(5)
-        assertEquals(5, player.health)
-        assertTrue(player.isAlive())
+        val healedPlayer = deadPlayer.heal(5)
+        assertEquals(5, healedPlayer.health)
+        assertTrue(healedPlayer.isAlive())
+        
+        // Dead player unchanged
+        assertEquals(0, deadPlayer.health)
     }
 }

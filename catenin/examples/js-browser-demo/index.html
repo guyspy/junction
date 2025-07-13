@@ -117,8 +117,10 @@ mechanics:
         
         <div id="controls">
             <button onclick="loadGame()">Load Game</button>
-            <button onclick="showPlayers()">Show Players</button>
-            <button onclick="generateCards()">Generate Cards</button>
+            <button onclick="showGameState()">Show Game State</button>
+            <button onclick="drawCard()">Draw Card</button>
+            <button onclick="playCard()">Play Card</button>
+            <button onclick="endTurn()">End Turn</button>
             <button onclick="clearOutput()">Clear Output</button>
         </div>
         
@@ -130,6 +132,9 @@ mechanics:
     <script type="module">
         // Import the Catenin library from the build directory
         import { GameDefinitionParser, CardFactory, createGameEngineFromYaml } from '../../build/dist/js/developmentLibrary/junction-catenin.mjs';
+        
+        // Import PlayerAction for Day 2 functionality
+        import { PlayerAction } from '../../build/dist/js/developmentLibrary/junction-catenin.mjs';
         
         // Make functions available globally for button clicks
         window.currentEngine = null;
@@ -148,12 +153,15 @@ mechanics:
                 window.currentEngine = engine;
                 window.currentDefinition = definition;
                 
+                // Show initial game state
+                const uiState = engine.getUIState();
                 gameArea.innerHTML = `
                     <div class="game-info success">
                         <h3>✅ Game Loaded Successfully!</h3>
                         <p><strong>Game:</strong> ${definition.meta.name}</p>
                         <p><strong>Players:</strong> ${engine.getPlayers().map(p => p.name).join(', ')}</p>
-                        <p><strong>Card Types:</strong> ${Object.keys(definition.cards).join(', ')}</p>
+                        <p><strong>Current Turn:</strong> ${uiState.turnNumber} (${uiState.currentPlayerId})</p>
+                        <p><strong>Deck:</strong> ${uiState.deckSize} cards, <strong>Discard:</strong> ${uiState.discardPileSize} cards</p>
                     </div>
                 `;
             } catch (error) {
@@ -166,7 +174,7 @@ mechanics:
             }
         };
         
-        window.showPlayers = function() {
+        window.showGameState = function() {
             const gameArea = document.getElementById('game-area');
             
             if (!window.currentEngine) {
@@ -178,54 +186,135 @@ mechanics:
                 return;
             }
             
-            const players = window.currentEngine.getPlayers();
-            const playersHtml = players.map(player => `
-                <div class="game-info">
-                    <h4>Player: ${player.name}</h4>
-                    <p>Health: ${player.health}</p>
-                    <p>Hand Size: ${player.hand.length}</p>
-                </div>
-            `).join('');
+            const uiState = window.currentEngine.getUIState();
+            const gameState = window.currentEngine.getGameState();
+            
+            const playersHtml = uiState.players.map(player => {
+                const isCurrent = player.id === uiState.currentPlayerId;
+                const marker = isCurrent ? '👉' : '  ';
+                return `
+                    <div class="game-info ${isCurrent ? 'success' : ''}">
+                        <h4>${marker} ${player.name} (${player.id})</h4>
+                        <p>Health: ${player.health}</p>
+                        <p>Hand: ${player.hand.length} cards</p>
+                        ${isCurrent ? `<p><strong>Current turn</strong></p>` : ''}
+                    </div>
+                `;
+            }).join('');
             
             gameArea.innerHTML = `
-                <h3>👥 Players</h3>
+                <h3>🎮 Game State</h3>
+                <div class="game-info">
+                    <p><strong>Turn:</strong> ${uiState.turnNumber}</p>
+                    <p><strong>Phase:</strong> ${uiState.gamePhase}</p>
+                    <p><strong>Deck:</strong> ${uiState.deckSize} cards remaining</p>
+                    <p><strong>Discard:</strong> ${uiState.discardPileSize} cards</p>
+                </div>
+                <h4>Players:</h4>
                 ${playersHtml}
             `;
         };
         
-        window.generateCards = function() {
+        window.drawCard = function() {
             const gameArea = document.getElementById('game-area');
             
-            if (!window.currentDefinition) {
-                gameArea.innerHTML = `
-                    <div class="game-info error">
-                        <p>Please load a game first!</p>
-                    </div>
-                `;
+            if (!window.currentEngine) {
+                gameArea.innerHTML = `<div class="game-info error"><p>Please load a game first!</p></div>`;
                 return;
             }
             
-            try {
-                const cardFactory = new CardFactory(window.currentDefinition);
-                const cards = cardFactory.generateCards();
-                
-                const cardsHtml = cards.slice(0, 5).map(card => `
-                    <div class="game-info">
-                        <h4>Card: ${card.id}</h4>
-                        <p>Type: ${card.type}</p>
-                        <p>Properties: ${JSON.stringify(card.properties)}</p>
-                    </div>
-                `).join('');
-                
+            const currentPlayer = window.currentEngine.getCurrentPlayer();
+            const action = new PlayerAction.DrawCard(currentPlayer.id);
+            const result = window.currentEngine.processAction(action);
+            
+            if (result.success) {
                 gameArea.innerHTML = `
-                    <h3>🎴 Generated Cards (showing first 5 of ${cards.length})</h3>
-                    ${cardsHtml}
+                    <div class="game-info success">
+                        <h3>✅ Card Drawn Successfully!</h3>
+                        <p><strong>Player:</strong> ${currentPlayer.name}</p>
+                        <p><strong>Effect:</strong> ${result.effects[0]?.description || 'Drew a card'}</p>
+                        <p><strong>New hand size:</strong> ${currentPlayer.hand.length}</p>
+                    </div>
                 `;
-            } catch (error) {
+            } else {
                 gameArea.innerHTML = `
                     <div class="game-info error">
-                        <h3>❌ Error Generating Cards</h3>
-                        <p>${error.message}</p>
+                        <h3>❌ Draw Card Failed</h3>
+                        <p><strong>Errors:</strong> ${result.validationErrors.join(', ')}</p>
+                    </div>
+                `;
+            }
+        };
+        
+        window.playCard = function() {
+            const gameArea = document.getElementById('game-area');
+            
+            if (!window.currentEngine) {
+                gameArea.innerHTML = `<div class="game-info error"><p>Please load a game first!</p></div>`;
+                return;
+            }
+            
+            const currentPlayer = window.currentEngine.getCurrentPlayer();
+            
+            if (currentPlayer.hand.length === 0) {
+                gameArea.innerHTML = `<div class="game-info error"><p>No cards in hand to play!</p></div>`;
+                return;
+            }
+            
+            // Play the first card in hand
+            const cardToPlay = currentPlayer.hand[0];
+            const action = new PlayerAction.PlayCard(currentPlayer.id, cardToPlay.id);
+            const result = window.currentEngine.processAction(action);
+            
+            if (result.success) {
+                gameArea.innerHTML = `
+                    <div class="game-info success">
+                        <h3>✅ Card Played Successfully!</h3>
+                        <p><strong>Player:</strong> ${currentPlayer.name}</p>
+                        <p><strong>Card:</strong> ${cardToPlay.id} (${cardToPlay.type})</p>
+                        <p><strong>Effect:</strong> ${result.effects[0]?.description || 'Played a card'}</p>
+                        <p><strong>New hand size:</strong> ${currentPlayer.hand.length}</p>
+                    </div>
+                `;
+            } else {
+                gameArea.innerHTML = `
+                    <div class="game-info error">
+                        <h3>❌ Play Card Failed</h3>
+                        <p><strong>Errors:</strong> ${result.validationErrors.join(', ')}</p>
+                    </div>
+                `;
+            }
+        };
+        
+        window.endTurn = function() {
+            const gameArea = document.getElementById('game-area');
+            
+            if (!window.currentEngine) {
+                gameArea.innerHTML = `<div class="game-info error"><p>Please load a game first!</p></div>`;
+                return;
+            }
+            
+            const currentPlayer = window.currentEngine.getCurrentPlayer();
+            const action = new PlayerAction.EndTurn(currentPlayer.id);
+            const result = window.currentEngine.processAction(action);
+            
+            if (result.success) {
+                const newCurrentPlayer = window.currentEngine.getCurrentPlayer();
+                const uiState = window.currentEngine.getUIState();
+                
+                gameArea.innerHTML = `
+                    <div class="game-info success">
+                        <h3>✅ Turn Ended Successfully!</h3>
+                        <p><strong>Previous player:</strong> ${currentPlayer.name}</p>
+                        <p><strong>Current player:</strong> ${newCurrentPlayer.name}</p>
+                        <p><strong>Turn:</strong> ${uiState.turnNumber}</p>
+                    </div>
+                `;
+            } else {
+                gameArea.innerHTML = `
+                    <div class="game-info error">
+                        <h3>❌ End Turn Failed</h3>
+                        <p><strong>Errors:</strong> ${result.validationErrors.join(', ')}</p>
                     </div>
                 `;
             }

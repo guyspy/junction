@@ -1,10 +1,11 @@
 import org.junction.catenin.core.GameEngine
 import org.junction.catenin.core.createGameEngineFromYaml
+import org.junction.catenin.actions.PlayerAction
 import org.junction.catenin.parser.GameDefinitionParser
 import org.junction.catenin.model.CardFactory
 
 fun main() {
-    console.log("🎮 Catenin Node.js Demo Starting...")
+    console.log("🎮 Catenin Node.js Demo - Day 2 Interactive Server...")
     
     // Create a real game server using Catenin library
     val gameServer = GameServer()
@@ -81,7 +82,7 @@ class GameServer {
             }
             
             // Generate and show cards
-            val cardFactory = CardFactory(definition)
+            val cardFactory = CardFactory.fromDefinition(definition)
             val cards = cardFactory.generateCards()
             console.log("🎴 Generated ${cards.size} cards:")
             
@@ -112,7 +113,7 @@ class GameServer {
     }
     
     private fun demonstrateGameplay(roomId: String) {
-        console.log("🎯 Demonstrating gameplay in room: $roomId")
+        console.log("🎯 Demonstrating Day 2 gameplay in room: $roomId")
         
         val gameEngine = games[roomId]
         if (gameEngine == null) {
@@ -120,17 +121,65 @@ class GameServer {
             return
         }
         
-        val players = gameEngine.getPlayers()
-        console.log("🔄 Current game state:")
-        players.forEach { player ->
-            console.log("  - ${player.name}: ${player.health} HP, ${player.hand.size} cards in hand")
+        // Show initial state
+        displayGameState(gameEngine, "Initial State")
+        
+        // Simulate some player actions
+        val alice = gameEngine.getPlayers()[0]
+        val bob = gameEngine.getPlayers()[1]
+        
+        console.log("🎮 Simulating player actions...")
+        
+        // Alice draws a card
+        val drawAction = PlayerAction.DrawCard(alice.id)
+        val drawResult = gameEngine.processAction(drawAction)
+        console.log("📥 Alice draws card: ${if (drawResult.success) "✅ Success" else "❌ Failed"}")
+        if (!drawResult.success) {
+            console.log("   Errors: ${drawResult.validationErrors.joinToString(", ")}")
         }
         
-        // In a real server, this would process actual player actions
-        console.log("📊 Game state management working correctly!")
-        console.log("🏆 Server demo completed successfully!")
+        // Alice plays a card
+        if (alice.hand.isNotEmpty()) {
+            val cardToPlay = alice.hand[0]
+            val playAction = PlayerAction.PlayCard(alice.id, cardToPlay.id)
+            val playResult = gameEngine.processAction(playAction)
+            console.log("🎴 Alice plays ${cardToPlay.id}: ${if (playResult.success) "✅ Success" else "❌ Failed"}")
+            if (!playResult.success) {
+                console.log("   Errors: ${playResult.validationErrors.joinToString(", ")}")
+            }
+        }
         
-        // Show total games managed
+        // Alice ends turn
+        val endTurnAction = PlayerAction.EndTurn(alice.id)
+        val endResult = gameEngine.processAction(endTurnAction)
+        console.log("⏭️ Alice ends turn: ${if (endResult.success) "✅ Success" else "❌ Failed"}")
+        
+        // Show updated state
+        displayGameState(gameEngine, "After Alice's Turn")
+        
+        // Bob's turn - draw a card
+        val bobDrawAction = PlayerAction.DrawCard(bob.id)
+        val bobDrawResult = gameEngine.processAction(bobDrawAction)
+        console.log("📥 Bob draws card: ${if (bobDrawResult.success) "✅ Success" else "❌ Failed"}")
+        
+        // Show final state
+        displayGameState(gameEngine, "After Bob's Action")
+        
+        console.log("📊 Day 2 action system working correctly!")
+        console.log("🏆 Server demo completed successfully!")
         console.log("🎮 Total active games: ${games.size}")
+    }
+    
+    private fun displayGameState(gameEngine: GameEngine, label: String) {
+        console.log("📋 $label:")
+        val uiState = gameEngine.getUIState()
+        console.log("   Turn: ${uiState.turnNumber}, Current Player: ${uiState.currentPlayerId}")
+        console.log("   Deck: ${uiState.deckSize} cards, Discard: ${uiState.discardPileSize} cards")
+        
+        uiState.players.forEach { player ->
+            val marker = if (player.id == uiState.currentPlayerId) "👉" else "  "
+            console.log("   $marker ${player.name}: ${player.health} HP, ${player.hand.size} cards")
+        }
+        console.log("")
     }
 }

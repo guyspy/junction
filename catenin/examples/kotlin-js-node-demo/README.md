@@ -1,6 +1,20 @@
-# JS Node.js Demo
+# Kotlin/JS Node.js Demo
 
-This example demonstrates how to use the Catenin game engine in a Node.js server-side application.
+**Technology Stack**: Kotlin → Kotlin/JS → Node.js
+
+This example demonstrates how to write **Kotlin code** that compiles to Node.js using Kotlin/JS compilation.
+
+## What This Is
+- ✅ Write your server code in **Kotlin**
+- ✅ Compile to Node.js using Kotlin/JS
+- ✅ Deploy as standard Node.js application
+- ✅ Same language for game logic and server logic
+
+## When to Use This
+- You prefer Kotlin over TypeScript/JavaScript
+- You want to share code between JVM and Node.js deployments  
+- You're building in a Kotlin-first environment
+- You want type safety with Kotlin's type system
 
 ## Features
 
@@ -15,7 +29,7 @@ This example demonstrates how to use the Catenin game engine in a Node.js server
 
 ```bash
 # From the monorepo root (/junction/)
-./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun
+./gradlew :catenin:examples:kotlin-js-node-demo:jsNodeDevelopmentRun
 
 # Or from this directory
 ../../../gradlew jsNodeDevelopmentRun
@@ -23,7 +37,7 @@ This example demonstrates how to use the Catenin game engine in a Node.js server
 
 **Note**: This project uses npm for JavaScript dependencies. If you encounter package lock issues:
 ```bash
-./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
+./gradlew :catenin:examples:kotlin-js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
 ```
 
 ## How it Works

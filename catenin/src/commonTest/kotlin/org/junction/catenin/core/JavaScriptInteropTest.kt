@@ -126,7 +126,7 @@ class JavaScriptInteropTest {
         val definition = parser.parseFromString(vocabGameYaml)
         
         // Test JavaScript-friendly card generation
-        val cardFactory = CardFactory(definition)
+        val cardFactory = CardFactory.fromDefinition(definition)
         val cards = cardFactory.generateCards()
         
         // Verify JavaScript Array operations
@@ -227,7 +227,7 @@ class JavaScriptInteropTest {
         assertTrue(modifications.containsKey("harder"))
         
         // Generate cards to test the game content
-        val cardFactory = CardFactory(definition)
+        val cardFactory = CardFactory.fromDefinition(definition)
         val cards = cardFactory.generateCards()
         
         assertEquals(40, cards.size)
@@ -286,7 +286,7 @@ class JavaScriptInteropTest {
         """.trimIndent()
         
         val engine = createGameEngineFromYaml(simpleGameYaml, arrayOf("Player1", "Player2"))
-        val cardFactory = CardFactory(engine.getGameDefinition())
+        val cardFactory = CardFactory.fromDefinition(engine.getGameDefinition())
         
         // Test that these return JavaScript Arrays (not Kotlin Lists)
         val players = engine.getPlayers()

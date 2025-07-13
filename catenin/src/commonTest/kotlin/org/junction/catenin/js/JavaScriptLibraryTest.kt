@@ -106,7 +106,7 @@ class JavaScriptLibraryTest {
         // Test that CardFactory.generateCards() returns Array, not List
         val parser = GameDefinitionParser()
         val definition = parser.parseFromString(validGameYaml)
-        val cardFactory = CardFactory(definition)
+        val cardFactory = CardFactory.fromDefinition(definition)
         
         val cards = cardFactory.generateCards()
         
@@ -174,7 +174,7 @@ class JavaScriptLibraryTest {
         // Test that card arrays support JavaScript Array operations
         val parser = GameDefinitionParser()
         val definition = parser.parseFromString(validGameYaml)
-        val cardFactory = CardFactory(definition)
+        val cardFactory = CardFactory.fromDefinition(definition)
         val cards = cardFactory.generateCards()
         
         // Test Array.size
@@ -218,11 +218,11 @@ class JavaScriptLibraryTest {
         players.forEach { player ->
             assertNotNull(player.name)
             assertEquals(15, player.health)
-            assertEquals(0, player.hand.size)  // Initially empty hand
+            assertEquals(4, player.hand.size)  // Players dealt 4 cards as per hand_size: 4
         }
         
         // Step 4: Test generating cards (like generateCards() function)
-        val cardFactory = CardFactory(definition)
+        val cardFactory = CardFactory.fromDefinition(definition)
         val cards = cardFactory.generateCards()
         assertEquals(8, cards.size)
         
@@ -292,7 +292,7 @@ class JavaScriptLibraryTest {
         
         players.forEach { player ->
             // Test hand.length property used in HTML
-            assertEquals(0, player.hand.size)  // Initially empty
+            assertEquals(4, player.hand.size)  // Players dealt 4 cards as per hand_size: 4
             
             // Test other properties displayed in HTML
             assertEquals(15, player.health)
