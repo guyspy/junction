@@ -1,6 +1,8 @@
 package org.junction.catenin.universal
 
 import org.junction.catenin.model.*
+import org.junction.catenin.core.TriggerEngine
+import org.junction.catenin.core.GameWorld
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -221,7 +223,7 @@ class TriggerMatchingTest {
         assertFalse(triggerMatches(trigger, card, "states.tapped", PropertyValue.BoolValue(true), PropertyValue.BoolValue(false)))
     }
 
-    // Placeholder method - will be implemented in actual TriggerEngine class
+    // Use real TriggerEngine implementation
     private fun triggerMatches(
         trigger: TriggerDefinition,
         obj: GameObject,
@@ -229,6 +231,8 @@ class TriggerMatchingTest {
         oldValue: PropertyValue?,
         newValue: PropertyValue
     ): Boolean {
-        TODO("TriggerEngine.triggerMatches not implemented yet")
+        val triggerEngine = TriggerEngine()
+        val gameWorld = GameWorld()
+        return triggerEngine.triggerMatches(trigger, obj, changedProperty, oldValue, newValue, gameWorld)
     }
 }

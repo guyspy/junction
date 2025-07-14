@@ -1,6 +1,8 @@
 package org.junction.catenin.universal
 
 import org.junction.catenin.model.*
+import org.junction.catenin.core.*
+import org.junction.catenin.parser.UniversalGameParser
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -273,13 +275,17 @@ class EffectExecutionTest {
         )
     }
 
-    // Placeholder methods - will be implemented in actual classes
+    // Use real implementations
     private fun executeEffect(
         effect: EffectDefinition,
         gameWorld: GameWorld,
         actingPlayerId: String
     ): GameWorld {
-        TODO("EffectEngine.executeEffect not implemented yet")
+        val testGameDef = createTestGameDefinition()
+        val objectFactory = ObjectFactory(testGameDef)
+        val targetResolver = TargetResolver()
+        val effectEngine = EffectEngine(targetResolver, objectFactory)
+        return effectEngine.executeEffect(effect, gameWorld, actingPlayerId)
     }
 
     private fun resolveTargets(
@@ -287,11 +293,39 @@ class EffectExecutionTest {
         gameWorld: GameWorld,
         actingPlayerId: String
     ): List<GameObject> {
-        TODO("TargetResolver.resolveTargets not implemented yet")
+        val targetResolver = TargetResolver()
+        return targetResolver.resolveTargets(target, gameWorld, actingPlayerId)
     }
 
-    // Placeholder data class for game world state
-    data class GameWorld(
-        val objects: Map<String, GameObject>
-    )
+    private fun createTestGameDefinition(): UniversalGameDefinition {
+        // Create definition programmatically to avoid YAML serialization issues
+        return UniversalGameDefinition(
+            meta = GameMeta(
+                name = "Test Game",
+                targetAge = listOf(8, 12),
+                participantCount = listOf(2, 4)
+            ),
+            objectTypes = mapOf(
+                "player" to ObjectDefinition(
+                    properties = mapOf(
+                        "health" to PropertyDefinition(PropertyType.INT, PropertyValue.IntValue(20)),
+                        "mana" to PropertyDefinition(PropertyType.INT, PropertyValue.IntValue(5)),
+                        "participant_id" to PropertyDefinition(PropertyType.INT)
+                    )
+                ),
+                "card" to ObjectDefinition(
+                    properties = mapOf(
+                        "name" to PropertyDefinition(PropertyType.STRING),
+                        "cost" to PropertyDefinition(PropertyType.INT),
+                        "attack" to PropertyDefinition(PropertyType.INT)
+                    )
+                ),
+                "container" to ObjectDefinition(
+                    properties = mapOf(
+                        "name" to PropertyDefinition(PropertyType.STRING)
+                    )
+                )
+            )
+        )
+    }
 }

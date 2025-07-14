@@ -45,7 +45,7 @@ data class PropertyChangeEvent(
     val propertyPath: String, // e.g., "properties.health" or "states.tapped"
     val oldValue: PropertyValue?,
     val newValue: PropertyValue,
-    val timestamp: Long = 0L // for ordering/replay
+    val timestamp: Int = 0 // for ordering/replay - using Int instead of Long for JS compatibility
 )
 
 /**
