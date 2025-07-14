@@ -88,7 +88,38 @@ catenin/
 
 ## 🎮 Game Definition Format
 
-Games are defined using YAML with a structured format:
+Games are defined using YAML with a structured format. The engine provides both low-level generic actions and high-level convenience actions for common game patterns.
+
+### Player Attributes System
+
+Players have a generic `attributes` map that can store any numeric values. The engine provides built-in support for common attributes:
+
+| Attribute | Type | Description | Default | Range |
+|-----------|------|-------------|---------|-------|
+| `health` | int | Player's life points | Defined in YAML | 0 to max |
+| `score` | int | Player's points/score | 0 | 0 to max |
+
+Game designers can add custom attributes (like `mana`, `energy`) by simply referencing them in card events - they will be automatically created with value 0 when first used.
+
+### Built-in Actions
+
+| Action | Parameters | Description |
+|--------|------------|-------------|
+| `deal_damage` | `target`, `amount` | Reduces target player's health attribute |
+| `heal` | `target`, `amount` | Increases target player's health attribute |
+| `add_score` | `target`, `amount` | Increases target player's score attribute |
+
+**Note**: These actions automatically ensure the required attributes exist. If a player doesn't have the attribute, it starts at 0.
+
+### Target Types
+
+| Target | Description |
+|--------|-------------|
+| `self` | The player who triggered the action |
+| `opponent` | A single opponent (first non-self player) |
+| `all_opponents` | All players except the one who triggered the action |
+
+### Example Usage
 
 ```yaml
 meta:
@@ -98,37 +129,57 @@ meta:
 
 cards:
   attack_card:
-    count: 10
+    count: 8
     properties:
       damage:
         type: int
         min: 2
         max: 5
-      element:
-        type: enum
-        values: [fire, water, earth]
     events:
       on_play:
         action: "deal_damage"
         target: "opponent"
         amount: "{damage}"
+  
+  heal_card:
+    count: 4
+    properties:
+      healing:
+        type: int
+        min: 2
+        max: 4
+    events:
+      on_play:
+        action: "heal"
+        target: "self"
+        amount: "{healing}"
+  
+  score_card:
+    count: 3
+    properties:
+      points:
+        type: int
+        min: 1
+        max: 3
+    events:
+      on_play:
+        action: "add_score"
+        target: "self"
+        amount: "{points}"
 
 mechanics:
   setup:
     players:
-      health: 20
-      hand_size: 5
-  win_conditions:
-    - type: "health_depleted"
-      message: "{winner} wins by defeating all opponents!"
+      health: 15
+      hand_size: 4
 
 ai_hints:
   difficulty_factors: 
     - "cards.attack_card.properties.damage.max"
     - "mechanics.setup.players.health"
   common_modifications:
-    easier: {damage_max: 3, health: 25}
-    harder: {damage_max: 7, health: 15}
+    easier: {damage_max: 3, health: 20}
+    harder: {damage_max: 6, health: 12}
 ```
 
 ## 💻 Usage Examples

@@ -1,15 +1,14 @@
 package org.junction.catenin.parser
 
 import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlConfiguration
-import org.junction.catenin.model.*
+import kotlinx.serialization.serializer
+import org.junction.catenin.model.UniversalGameDefinition
 
 class YamlParser {
-    private val yaml = Yaml.default
     
-    fun parseGameDefinition(yamlContent: String): GameDefinition {
+    inline fun <reified T> parseFromString(yamlContent: String): T {
         try {
-            return yaml.decodeFromString(GameDefinition.serializer(), yamlContent)
+            return Yaml.default.decodeFromString(serializer<T>(), yamlContent)
         } catch (e: Exception) {
             throw GameDefinitionParseException("Failed to parse YAML: ${e.message}", e)
         }
