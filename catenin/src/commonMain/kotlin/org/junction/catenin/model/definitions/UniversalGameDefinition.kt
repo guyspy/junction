@@ -1,84 +1,8 @@
-package org.junction.catenin.model
+package org.junction.catenin.model.definitions
 
+import org.junction.catenin.model.objects.ObjectInstance
+import org.junction.catenin.model.triggers.TriggerDefinition
 import kotlin.js.JsExport
-
-/**
- * Game metadata and configuration
- */
-@JsExport
-data class GameMeta(
-    val name: String,
-    val targetAge: IntArray,
-    val participantCount: IntArray
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as GameMeta
-
-        if (name != other.name) return false
-        if (!targetAge.contentEquals(other.targetAge)) return false
-        if (!participantCount.contentEquals(other.participantCount)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = name.hashCode()
-        result = 31 * result + targetAge.contentHashCode()
-        result = 31 * result + participantCount.contentHashCode()
-        return result
-    }
-}
-
-/**
- * Predefined object instance with specific property values
- */
-@JsExport
-data class ObjectInstance(
-    val template: String,
-    val properties: Map<String, String> = emptyMap(),
-    val states: Map<String, String> = emptyMap()
-)
-
-/**
- * Trigger condition for when a trigger should fire
- */
-@JsExport
-data class TriggerCondition(
-    val objectType: String? = null,
-    val propertyChanged: String? = null,
-    val newValue: String? = null,
-    val condition: String? = null
-)
-
-/**
- * Effect to execute when trigger fires
- */
-@JsExport
-sealed class EffectDefinition
-
-@JsExport
-data class LogEffect(val message: String) : EffectDefinition()
-
-@JsExport
-data class ModifyPropertyEffect(
-    val target: String,
-    val property: String,
-    val delta: String? = null,
-    val value: String? = null
-) : EffectDefinition()
-
-/**
- * Trigger definition with condition and effects
- */
-@JsExport
-data class TriggerDefinition(
-    val name: String? = null,
-    val `when`: TriggerCondition,
-    val effects: List<EffectDefinition>
-)
 
 /**
  * Complete universal game definition parsed from YAML
@@ -86,7 +10,7 @@ data class TriggerDefinition(
 @JsExport
 data class UniversalGameDefinition(
     val meta: GameMeta,
-    val objectTypes: Map<String, ObjectDefinition>,
+    val objectTypes: Map<String, ObjectTypeDefinition>,
     val instances: Map<String, ObjectInstance> = emptyMap(),
     val triggers: List<TriggerDefinition> = emptyList()
 ) {
@@ -94,7 +18,7 @@ data class UniversalGameDefinition(
     /**
      * Create a new UniversalGameDefinition with an additional object type
      */
-    fun withObjectType(name: String, definition: ObjectDefinition): UniversalGameDefinition {
+    fun withObjectType(name: String, definition: ObjectTypeDefinition): UniversalGameDefinition {
         return copy(objectTypes = objectTypes + (name to definition))
     }
     
@@ -129,7 +53,7 @@ data class UniversalGameDefinition(
     /**
      * Get object type definition by name
      */
-    fun getObjectType(name: String): ObjectDefinition? {
+    fun getObjectType(name: String): ObjectTypeDefinition? {
         return objectTypes[name]
     }
     

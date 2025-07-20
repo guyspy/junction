@@ -1,12 +1,14 @@
-package org.junction.catenin.model
+package org.junction.catenin.model.definitions
 
+import org.junction.catenin.model.values.PropertyValue
+import org.junction.catenin.model.objects.GameObject
 import kotlin.js.JsExport
 
 /**
  * Defines an object type with its properties and states schema
  */
 @JsExport
-data class ObjectDefinition(
+data class ObjectTypeDefinition(
     val properties: Map<String, PropertyDefinition> = emptyMap(),
     val states: Map<String, PropertyDefinition> = emptyMap()
 ) {
@@ -14,28 +16,28 @@ data class ObjectDefinition(
     /**
      * Create a new ObjectDefinition with an additional property
      */
-    fun withProperty(name: String, definition: PropertyDefinition): ObjectDefinition {
+    fun withProperty(name: String, definition: PropertyDefinition): ObjectTypeDefinition {
         return copy(properties = properties + (name to definition))
     }
     
     /**
      * Create a new ObjectDefinition with an additional state
      */
-    fun withState(name: String, definition: PropertyDefinition): ObjectDefinition {
+    fun withState(name: String, definition: PropertyDefinition): ObjectTypeDefinition {
         return copy(states = states + (name to definition))
     }
     
     /**
      * Create a new ObjectDefinition with a property removed
      */
-    fun withoutProperty(name: String): ObjectDefinition {
+    fun withoutProperty(name: String): ObjectTypeDefinition {
         return copy(properties = properties - name)
     }
     
     /**
      * Create a new ObjectDefinition with a state removed
      */
-    fun withoutState(name: String): ObjectDefinition {
+    fun withoutState(name: String): ObjectTypeDefinition {
         return copy(states = states - name)
     }
     

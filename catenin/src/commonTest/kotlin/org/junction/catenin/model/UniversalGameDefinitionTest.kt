@@ -1,5 +1,10 @@
 package org.junction.catenin.model
 
+import org.junction.catenin.model.definitions.*
+import org.junction.catenin.model.objects.*
+import org.junction.catenin.model.triggers.*
+import org.junction.catenin.model.values.*
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -17,8 +22,8 @@ class UniversalGameDefinitionTest {
         )
     }
     
-    private fun createBasicObjectDefinition(): ObjectDefinition {
-        return ObjectDefinition(
+    private fun createBasicObjectTypeDefinition(): ObjectTypeDefinition {
+        return ObjectTypeDefinition(
             properties = mapOf(
                 "health" to PropertyDefinition(PropertyType.INT, IntValue(100)),
                 "name" to PropertyDefinition(PropertyType.STRING, StringValue("Default"))
@@ -32,7 +37,7 @@ class UniversalGameDefinitionTest {
     @Test
     fun testBasicGameDefinition() {
         val meta = createBasicGameMeta()
-        val objectTypes = mapOf("creature" to createBasicObjectDefinition())
+        val objectTypes = mapOf("creature" to createBasicObjectTypeDefinition())
         
         val definition = UniversalGameDefinition(
             meta = meta,
@@ -59,7 +64,7 @@ class UniversalGameDefinitionTest {
         val meta = createBasicGameMeta()
         val definition = UniversalGameDefinition(meta, emptyMap())
         
-        val creatureType = createBasicObjectDefinition()
+        val creatureType = createBasicObjectTypeDefinition()
         val newDefinition = definition.withObjectType("creature", creatureType)
         
         // Original should be unchanged
@@ -75,11 +80,11 @@ class UniversalGameDefinitionTest {
     @Test
     fun testWithInstance() {
         val meta = createBasicGameMeta()
-        val objectTypes = mapOf("creature" to createBasicObjectDefinition())
+        val objectTypes = mapOf("creature" to createBasicObjectTypeDefinition())
         val definition = UniversalGameDefinition(meta, objectTypes)
         
         val instance = ObjectInstance(
-            template = "creature",
+            objectType = "creature",
             properties = mapOf("name" to "Goblin"),
             states = mapOf("activated" to "true")
         )
@@ -99,7 +104,7 @@ class UniversalGameDefinitionTest {
     @Test
     fun testWithTrigger() {
         val meta = createBasicGameMeta()
-        val objectTypes = mapOf("creature" to createBasicObjectDefinition())
+        val objectTypes = mapOf("creature" to createBasicObjectTypeDefinition())
         val definition = UniversalGameDefinition(meta, objectTypes)
         
         val trigger = TriggerDefinition(
@@ -125,8 +130,8 @@ class UniversalGameDefinitionTest {
     fun testWithoutObjectType() {
         val meta = createBasicGameMeta()
         val objectTypes = mapOf(
-            "creature" to createBasicObjectDefinition(),
-            "spell" to ObjectDefinition()
+            "creature" to createBasicObjectTypeDefinition(),
+            "spell" to ObjectTypeDefinition()
         )
         val definition = UniversalGameDefinition(meta, objectTypes)
         
@@ -145,7 +150,7 @@ class UniversalGameDefinitionTest {
     @Test
     fun testWithoutInstance() {
         val meta = createBasicGameMeta()
-        val objectTypes = mapOf("creature" to createBasicObjectDefinition())
+        val objectTypes = mapOf("creature" to createBasicObjectTypeDefinition())
         val instances = mapOf(
             "goblin" to ObjectInstance("creature"),
             "orc" to ObjectInstance("creature")
@@ -168,8 +173,8 @@ class UniversalGameDefinitionTest {
     fun testGetTriggersForObjectType() {
         val meta = createBasicGameMeta()
         val objectTypes = mapOf(
-            "creature" to createBasicObjectDefinition(),
-            "spell" to ObjectDefinition()
+            "creature" to createBasicObjectTypeDefinition(),
+            "spell" to ObjectTypeDefinition()
         )
         
         val triggers = listOf(
@@ -210,7 +215,7 @@ class UniversalGameDefinitionTest {
     @Test
     fun testGetTriggersForPropertyChange() {
         val meta = createBasicGameMeta()
-        val objectTypes = mapOf("creature" to createBasicObjectDefinition())
+        val objectTypes = mapOf("creature" to createBasicObjectTypeDefinition())
         
         val triggers = listOf(
             TriggerDefinition(
@@ -267,12 +272,12 @@ class UniversalGameDefinitionTest {
     @Test
     fun testObjectInstance() {
         val instance = ObjectInstance(
-            template = "creature",
+            objectType = "creature",
             properties = mapOf("name" to "Goblin", "health" to "50"),
             states = mapOf("activated" to "true")
         )
         
-        assertEquals("creature", instance.template)
+        assertEquals("creature", instance.objectType)
         assertEquals("Goblin", instance.properties["name"])
         assertEquals("50", instance.properties["health"])
         assertEquals("true", instance.states["activated"])

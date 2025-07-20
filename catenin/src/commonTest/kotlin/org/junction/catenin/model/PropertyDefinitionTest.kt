@@ -1,5 +1,8 @@
 package org.junction.catenin.model
 
+import org.junction.catenin.model.definitions.*
+import org.junction.catenin.model.values.*
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

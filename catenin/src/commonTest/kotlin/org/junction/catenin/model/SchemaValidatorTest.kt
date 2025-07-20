@@ -1,5 +1,11 @@
 package org.junction.catenin.model
 
+import org.junction.catenin.model.definitions.*
+import org.junction.catenin.model.objects.*
+import org.junction.catenin.model.triggers.*
+import org.junction.catenin.model.values.*
+import org.junction.catenin.model.validation.*
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -17,8 +23,8 @@ class SchemaValidatorTest {
         )
     }
     
-    private fun createValidObjectDefinition(): ObjectDefinition {
-        return ObjectDefinition(
+    private fun createValidObjectTypeDefinition(): ObjectTypeDefinition {
+        return ObjectTypeDefinition(
             properties = mapOf(
                 "health" to PropertyDefinition(PropertyType.INT, IntValue(100), IntValue(0), IntValue(200)),
                 "name" to PropertyDefinition(PropertyType.STRING, StringValue("Default"))
@@ -32,7 +38,7 @@ class SchemaValidatorTest {
     private fun createValidGameDefinition(): UniversalGameDefinition {
         return UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition())
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition())
         )
     }
     
@@ -50,7 +56,7 @@ class SchemaValidatorTest {
     @Test
     fun testInvalidMetaEmptyName() {
         val meta = GameMeta("", intArrayOf(8, 12), intArrayOf(2, 4))
-        val definition = UniversalGameDefinition(meta, mapOf("test" to ObjectDefinition()))
+        val definition = UniversalGameDefinition(meta, mapOf("test" to ObjectTypeDefinition()))
         
         val result = validator.validate(definition)
         
@@ -62,7 +68,7 @@ class SchemaValidatorTest {
     @Test
     fun testInvalidMetaTargetAge() {
         val meta = GameMeta("Test", intArrayOf(12, 8), intArrayOf(2, 4)) // min > max
-        val definition = UniversalGameDefinition(meta, mapOf("test" to ObjectDefinition()))
+        val definition = UniversalGameDefinition(meta, mapOf("test" to ObjectTypeDefinition()))
         
         val result = validator.validate(definition)
         
@@ -73,7 +79,7 @@ class SchemaValidatorTest {
     @Test
     fun testInvalidMetaParticipantCount() {
         val meta = GameMeta("Test", intArrayOf(8, 12), intArrayOf(0, 4)) // min = 0
-        val definition = UniversalGameDefinition(meta, mapOf("test" to ObjectDefinition()))
+        val definition = UniversalGameDefinition(meta, mapOf("test" to ObjectTypeDefinition()))
         
         val result = validator.validate(definition)
         
@@ -84,7 +90,7 @@ class SchemaValidatorTest {
     @Test
     fun testInvalidMetaArraySizes() {
         val meta = GameMeta("Test", intArrayOf(8), intArrayOf(2, 4, 6)) // wrong array sizes
-        val definition = UniversalGameDefinition(meta, mapOf("test" to ObjectDefinition()))
+        val definition = UniversalGameDefinition(meta, mapOf("test" to ObjectTypeDefinition()))
         
         val result = validator.validate(definition)
         
@@ -105,7 +111,7 @@ class SchemaValidatorTest {
     
     @Test
     fun testEmptyObjectType() {
-        val emptyObjectType = ObjectDefinition()
+        val emptyObjectType = ObjectTypeDefinition()
         val definition = UniversalGameDefinition(
             createValidGameMeta(),
             mapOf("empty" to emptyObjectType)
@@ -121,9 +127,9 @@ class SchemaValidatorTest {
     fun testInstanceWithInvalidTemplate() {
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             instances = mapOf(
-                "invalid_instance" to ObjectInstance(template = "unknown_type")
+                "invalid_instance" to ObjectInstance(objectType = "unknown_type")
             )
         )
         
@@ -139,10 +145,10 @@ class SchemaValidatorTest {
     fun testInstanceWithInvalidProperty() {
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             instances = mapOf(
                 "test_instance" to ObjectInstance(
-                    template = "creature",
+                    objectType = "creature",
                     properties = mapOf("unknown_prop" to "value")
                 )
             )
@@ -160,10 +166,10 @@ class SchemaValidatorTest {
     fun testInstanceWithInvalidPropertyValue() {
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             instances = mapOf(
                 "test_instance" to ObjectInstance(
-                    template = "creature",
+                    objectType = "creature",
                     properties = mapOf("health" to "invalid_number")
                 )
             )
@@ -181,10 +187,10 @@ class SchemaValidatorTest {
     fun testInstanceWithInvalidState() {
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             instances = mapOf(
                 "test_instance" to ObjectInstance(
-                    template = "creature",
+                    objectType = "creature",
                     states = mapOf("unknown_state" to "value")
                 )
             )
@@ -209,7 +215,7 @@ class SchemaValidatorTest {
         
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             triggers = triggers
         )
         
@@ -235,7 +241,7 @@ class SchemaValidatorTest {
         
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             triggers = triggers
         )
         
@@ -258,7 +264,7 @@ class SchemaValidatorTest {
         
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             triggers = triggers
         )
         
@@ -281,7 +287,7 @@ class SchemaValidatorTest {
         
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             triggers = triggers
         )
         
@@ -310,7 +316,7 @@ class SchemaValidatorTest {
         
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             triggers = triggers
         )
         
@@ -340,7 +346,7 @@ class SchemaValidatorTest {
         
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             triggers = triggers
         )
         
@@ -368,7 +374,7 @@ class SchemaValidatorTest {
         
         val definition = UniversalGameDefinition(
             meta = createValidGameMeta(),
-            objectTypes = mapOf("creature" to createValidObjectDefinition()),
+            objectTypes = mapOf("creature" to createValidObjectTypeDefinition()),
             triggers = triggers
         )
         

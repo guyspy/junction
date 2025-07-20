@@ -1,5 +1,6 @@
-package org.junction.catenin.model
+package org.junction.catenin.model.objects
 
+import org.junction.catenin.model.values.PropertyValue
 import kotlin.js.JsExport
 
 /**

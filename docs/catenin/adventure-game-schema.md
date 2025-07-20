@@ -308,7 +308,7 @@ object_types:
 
 instances:
   old_lantern:
-    template: item
+    object_type: item
     properties:
       name: "Old Brass Lantern"
       carryable: "true"
@@ -394,7 +394,7 @@ object_types:
 
 instances:
   wizard_greeting:
-    template: dialogue_node
+    object_type: dialogue_node
     properties:
       speaker: "old_wizard"
       text: "Ah, a visitor! How rare these days."

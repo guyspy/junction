@@ -1,4 +1,4 @@
-package org.junction.catenin.model
+package org.junction.catenin.model.values
 
 import kotlin.js.JsExport
 
@@ -49,36 +49,4 @@ sealed class PropertyValue : Comparable<PropertyValue> {
         if (this !is ObjectRefValue) throw IllegalStateException("PropertyValue is not an ObjectRefValue")
         return this.objectId
     }
-}
-
-/**
- * Integer property value
- */
-@JsExport
-data class IntValue(val value: Int) : PropertyValue() {
-    override fun toString(): String = value.toString()
-}
-
-/**
- * String property value
- */
-@JsExport
-data class StringValue(val value: String) : PropertyValue() {
-    override fun toString(): String = value
-}
-
-/**
- * Boolean property value
- */
-@JsExport
-data class BoolValue(val value: Boolean) : PropertyValue() {
-    override fun toString(): String = value.toString()
-}
-
-/**
- * Reference to another object by ID
- */
-@JsExport
-data class ObjectRefValue(val objectId: String) : PropertyValue() {
-    override fun toString(): String = objectId
 }

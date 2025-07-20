@@ -50,11 +50,11 @@ meta:
 
 ### `object_types` (Required)
 
-Defines templates for object types using Map[String, ObjectDefinition].
+Defines templates for object types using Map[String, ObjectTypeDefinition].
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `<object_type_name>` | ObjectDefinition | Yes | User-defined object type name (arbitrary) |
+| `<object_type_name>` | ObjectTypeDefinition | Yes | User-defined object type name (arbitrary) |
 | `properties` | Map[String, PropertyDefinition] | | Static properties with constraints |
 | `states` | Map[String, StateDefinition] | | Dynamic state properties |
 | `triggers` | Array[TriggerDefinition] | | Type-specific triggers |
@@ -73,6 +73,15 @@ object_types:
         type: BOOL           # 🔧 SYSTEM: Required type field
         initial: false       # 🔧 SYSTEM: Required initial value
 ```
+
+### `ObjectTypeDefinition`
+
+Defines the schema for an object type, including its properties and states.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `properties` | Map[String, PropertyDefinition] | | Static properties with constraints |
+| `states` | Map[String, PropertyDefinition] | | Dynamic state properties |
 
 ### `PropertyDefinition`
 
@@ -123,7 +132,7 @@ Predefined object instances with specific property values using Map[String, Obje
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `<instance_name>` | ObjectInstance | Yes | User-defined instance name (arbitrary) |
-| `template` | String | Yes | Object type to instantiate |
+| `object_type` | String | Yes | Object type to instantiate |
 | `properties` | Map[String, String] | | Property overrides (as strings) |
 | `states` | Map[String, String] | | State overrides (as strings) |
 | `triggers` | Array[TriggerDefinition] | | Instance-specific triggers |
@@ -132,7 +141,7 @@ Predefined object instances with specific property values using Map[String, Obje
 ```yaml
 instances:
   lightning_bolt:               # 🎮 USER: Arbitrary instance name
-    template: spell             # 🔧 SYSTEM: Required object type reference
+    object_type: spell          # 🔧 SYSTEM: Required object type reference
     properties:                 # 🔧 SYSTEM: Properties container
       name: "Lightning Bolt"    # 🎮 USER: Property name (from object type)
       damage: "3"               # 🎮 USER: Property value (as string)
@@ -154,7 +163,7 @@ setup:
   world_initialization:
     - create_objects:
         count: 1
-        template: "game_board"
+        object_type: "game_board"
         properties:
           width: "10"
           height: "10"
@@ -162,7 +171,7 @@ setup:
   participant_initialization:
     - create_objects:
         count: 1
-        template: "player_state"
+        object_type: "player_state"
         properties:
           participant_id: "{participant_id}"
           name: "{participant_name}"
@@ -183,7 +192,7 @@ Rule for creating objects.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `count` | Int | Yes | Number of objects to create |
-| `template` | String | Yes | Object type to instantiate |
+| `object_type` | String | Yes | Object type to instantiate |
 | `properties` | Map[String, String] | | Property overrides (as strings) |
 | `instance_source` | String | | Use predefined instance instead of template |
 | `parent` | String | | Parent object ID pattern |
@@ -196,7 +205,7 @@ Rule for creating objects.
 ```yaml
 - create_objects:
     count: 3
-    template: "card"
+    object_type: "card"
     instance_source: "lightning_bolt"
     parent: "deck_{participant_id}"
 ```
@@ -220,7 +229,7 @@ runtime_spawning:
       new_value: "true"
     effects:
       - create_object:
-          template: "enemy"
+          object_type: "enemy"
           properties:
             x: "0"
             y: "5"

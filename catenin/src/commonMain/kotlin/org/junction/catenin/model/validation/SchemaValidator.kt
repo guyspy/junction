@@ -1,59 +1,21 @@
-package org.junction.catenin.model
+package org.junction.catenin.model.validation
 
+import org.junction.catenin.model.definitions.UniversalGameDefinition
+import org.junction.catenin.model.definitions.ObjectTypeDefinition
+import org.junction.catenin.model.definitions.PropertyDefinition
+import org.junction.catenin.model.definitions.PropertyType
+import org.junction.catenin.model.definitions.GameMeta
+import org.junction.catenin.model.values.PropertyValue
+import org.junction.catenin.model.values.IntValue
+import org.junction.catenin.model.values.StringValue
+import org.junction.catenin.model.values.BoolValue
+import org.junction.catenin.model.values.ObjectRefValue
+import org.junction.catenin.model.objects.ObjectInstance
+import org.junction.catenin.model.triggers.TriggerDefinition
+import org.junction.catenin.model.triggers.EffectDefinition
+import org.junction.catenin.model.triggers.LogEffect
+import org.junction.catenin.model.triggers.ModifyPropertyEffect
 import kotlin.js.JsExport
-
-/**
- * Validation error with details
- */
-@JsExport
-data class ValidationError(
-    val message: String,
-    val path: String? = null,
-    val severity: ValidationSeverity = ValidationSeverity.ERROR
-)
-
-/**
- * Severity levels for validation issues
- */
-@JsExport
-enum class ValidationSeverity {
-    WARNING,
-    ERROR
-}
-
-/**
- * Result of validation containing errors and warnings
- */
-@JsExport
-data class ValidationResult(
-    val issues: List<ValidationError>,
-    val isValid: Boolean = issues.none { it.severity == ValidationSeverity.ERROR }
-) {
-    
-    /**
-     * Get only the error-level validation issues
-     */
-    fun getErrors(): List<ValidationError> {
-        return issues.filter { it.severity == ValidationSeverity.ERROR }
-    }
-    
-    /**
-     * Get only the warning-level validation issues
-     */
-    fun getWarnings(): List<ValidationError> {
-        return issues.filter { it.severity == ValidationSeverity.WARNING }
-    }
-    
-    companion object {
-        fun valid(): ValidationResult = ValidationResult(emptyList())
-        
-        fun error(message: String, path: String? = null): ValidationResult =
-            ValidationResult(listOf(ValidationError(message, path, ValidationSeverity.ERROR)))
-            
-        fun warning(message: String, path: String? = null): ValidationResult =
-            ValidationResult(listOf(ValidationError(message, path, ValidationSeverity.WARNING)))
-    }
-}
 
 /**
  * Validates universal game definitions for correctness and consistency
@@ -119,7 +81,7 @@ class SchemaValidator {
         return errors
     }
     
-    private fun validateObjectTypes(objectTypes: Map<String, ObjectDefinition>): List<ValidationError> {
+    private fun validateObjectTypes(objectTypes: Map<String, ObjectTypeDefinition>): List<ValidationError> {
         val errors = mutableListOf<ValidationError>()
         
         if (objectTypes.isEmpty()) {
@@ -167,7 +129,7 @@ class SchemaValidator {
         return errors
     }
     
-    private fun validateInstances(instances: Map<String, ObjectInstance>, objectTypes: Map<String, ObjectDefinition>): List<ValidationError> {
+    private fun validateInstances(instances: Map<String, ObjectInstance>, objectTypes: Map<String, ObjectTypeDefinition>): List<ValidationError> {
         val errors = mutableListOf<ValidationError>()
         
         for ((instanceName, instance) in instances) {
@@ -177,12 +139,13 @@ class SchemaValidator {
             }
             
             // Validate template reference
-            if (!objectTypes.containsKey(instance.template)) {
-                errors.add(ValidationError("Instance '$instanceName' references unknown object type '${instance.template}'", "instances.$instanceName.template"))
+            if (!objectTypes.containsKey(instance.objectType)) {
+                errors.add(ValidationError("Instance '$instanceName' references unknown object type '${instance.objectType}'", "instances.$instanceName.objectType"))
                 continue
             }
             
-            val objectType = objectTypes[instance.template]!!
+            val objectType = objectTypes[instance.objectType]
+                ?: continue // Skip validation if object type not found (error already added above)
             
             // Validate property overrides
             for ((propName, propValue) in instance.properties) {
@@ -190,7 +153,8 @@ class SchemaValidator {
                     errors.add(ValidationError("Instance '$instanceName' overrides unknown property '$propName'", "instances.$instanceName.properties.$propName"))
                 } else {
                     // Try to parse the value according to the property type
-                    val propDef = objectType.getPropertyDefinition(propName)!!
+                    val propDef = objectType.getPropertyDefinition(propName)
+                        ?: continue // Skip if property definition not found (shouldn't happen after hasProperty check)
                     val validationResult = validatePropertyValue(propValue, propDef)
                     if (!validationResult.isValid) {
                         errors.add(ValidationError("Instance '$instanceName' has invalid value for property '$propName': ${validationResult.issues.first().message}", "instances.$instanceName.properties.$propName"))
@@ -204,7 +168,8 @@ class SchemaValidator {
                     errors.add(ValidationError("Instance '$instanceName' overrides unknown state '$stateName'", "instances.$instanceName.states.$stateName"))
                 } else {
                     // Try to parse the value according to the state type
-                    val stateDef = objectType.getStateDefinition(stateName)!!
+                    val stateDef = objectType.getStateDefinition(stateName)
+                        ?: continue // Skip if state definition not found (shouldn't happen after hasState check)
                     val validationResult = validatePropertyValue(stateValue, stateDef)
                     if (!validationResult.isValid) {
                         errors.add(ValidationError("Instance '$instanceName' has invalid value for state '$stateName': ${validationResult.issues.first().message}", "instances.$instanceName.states.$stateName"))
@@ -216,7 +181,7 @@ class SchemaValidator {
         return errors
     }
     
-    private fun validateTriggers(triggers: List<TriggerDefinition>, objectTypes: Map<String, ObjectDefinition>): List<ValidationError> {
+    private fun validateTriggers(triggers: List<TriggerDefinition>, objectTypes: Map<String, ObjectTypeDefinition>): List<ValidationError> {
         val errors = mutableListOf<ValidationError>()
         
         for ((index, trigger) in triggers.withIndex()) {
@@ -234,7 +199,7 @@ class SchemaValidator {
                 val objectType = objectTypes[trigger.`when`.objectType]
                 if (objectType != null) {
                     val propName = trigger.`when`.propertyChanged
-                    if (!objectType.hasProperty(propName!!) && !objectType.hasState(propName)) {
+                    if (!objectType.hasProperty(propName) && !objectType.hasState(propName)) {
                         errors.add(ValidationError("Trigger references unknown property/state '$propName' on object type '${trigger.`when`.objectType}'", "$path.when.property_changed"))
                     }
                 }
@@ -253,7 +218,7 @@ class SchemaValidator {
         return errors
     }
     
-    private fun validateEffect(effect: EffectDefinition, path: String, objectTypes: Map<String, ObjectDefinition>): List<ValidationError> {
+    private fun validateEffect(effect: EffectDefinition, path: String, objectTypes: Map<String, ObjectTypeDefinition>): List<ValidationError> {
         val errors = mutableListOf<ValidationError>()
         
         when (effect) {

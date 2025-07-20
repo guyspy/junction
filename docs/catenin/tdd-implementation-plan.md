@@ -62,14 +62,14 @@ data class GameObject(
 **Goal**: YAML-defined object schemas
 
 #### TDD Tasks:
-1. **ObjectDefinition Tests** - Test object type definitions from YAML
+1. **ObjectTypeDefinition Tests** - Test object type definitions from YAML
 2. **UniversalGameDefinition Tests** - Test complete game definition parsing
 3. **Validation Tests** - Test schema validation rules
 
 #### Implementation Order:
 ```kotlin
-// 1. ObjectDefinition
-data class ObjectDefinition(
+// 1. ObjectTypeDefinition
+data class ObjectTypeDefinition(
     val properties: Map<String, PropertyDefinition>,
     val states: Map<String, PropertyDefinition>
 )
@@ -77,7 +77,7 @@ data class ObjectDefinition(
 // 2. UniversalGameDefinition
 data class UniversalGameDefinition(
     val meta: GameMeta,
-    val objectTypes: Map<String, ObjectDefinition>,
+    val objectTypes: Map<String, ObjectTypeDefinition>,
     val instances: Map<String, ObjectInstance>,
     val triggers: List<TriggerDefinition>
 )
@@ -235,6 +235,7 @@ class GameEngine {
 1. **PlayerAction Tests** - Test action validation and execution
 2. **GameController Tests** - Test turn/phase management
 3. **ActionValidator Tests** - Test action legality checking
+4. **ThreadSafeGameEngine Tests** - Test coordinated state updates with immutable world
 
 #### Implementation Order:
 ```kotlin
@@ -253,9 +254,50 @@ class GameController {
     fun processAction(participantId: String, action: PlayerAction): ActionResult
     fun advanceTurn(): GameWorld
 }
+
+// 4. ThreadSafeGameEngine (coordination layer)
+class ThreadSafeGameEngine {
+    @Volatile private var currentWorld: GameWorld
+    private val coordinator = GameCoordinator()
+    
+    fun processAction(action: PlayerAction): ActionResult
+    fun getCurrentWorld(): GameWorld  // Thread-safe read
+}
 ```
 
 **Success Criteria**: Players can perform actions, turns advance correctly, invalid actions are rejected.
+
+**🔒 Threading & Coordination Note for Day 7:**
+While GameWorld immutability provides memory safety and eliminates data corruption, we still need coordination logic for:
+- **Business logic consistency**: Ensuring actions don't violate game rules
+- **Resource conflicts**: Managing shared resources (deck, shared objects)
+- **Turn order enforcement**: Preventing out-of-turn actions
+- **Atomic operations**: Multi-step game actions that must complete together
+
+Implementation approach:
+1. **Immutable GameWorld**: Handles memory safety (already implemented ✅)
+2. **Coordination Layer**: Handles logical consistency and sequencing
+3. **Action Validation**: Ensures actions are legal before applying
+4. **Atomic Updates**: Use synchronized blocks for multi-step operations
+
+Example coordination patterns:
+```kotlin
+// Turn-based coordination
+synchronized(turnManager) {
+    if (isPlayerTurn(playerId)) {
+        currentWorld = currentWorld.applyAction(action)
+        advanceTurn()
+    }
+}
+
+// Resource conflict resolution
+synchronized(resourceLock) {
+    val available = world.getSharedResource("deck").quantity
+    if (available >= action.requestedAmount) {
+        world = world.consumeResource("deck", action.requestedAmount)
+    }
+}
+```
 
 ## Phase 3: High-Level Schemas (Week 3)
 
@@ -276,7 +318,7 @@ interface SchemaCompiler<T> {
 
 // 2. CompilerContext
 class CompilerContext {
-    fun addObjectType(name: String, definition: ObjectDefinition)
+    fun addObjectType(name: String, definition: ObjectTypeDefinition)
     fun addTrigger(trigger: TriggerDefinition)
     fun addInstance(id: String, instance: ObjectInstance)
 }
@@ -339,8 +381,29 @@ class BoardGameCompiler : SchemaCompiler<BoardGameDefinition> {
 1. **JSON Schema Tests** - Test schema validation using JSON Schema libs
 2. **ValidationEngine Tests** - Test comprehensive game definition validation
 3. **ErrorReporting Tests** - Test clear error messages with line numbers
+4. **Annotation-Based Documentation** - Add Swagger/OpenAPI annotations to model classes for comprehensive field documentation and automatic JSON Schema generation
 
 **Success Criteria**: Clear validation errors, schema violations caught early.
+
+**📝 Note for Day 12 Implementation:**
+Consider adding Swagger/OpenAPI annotations (`@Schema`) to all model classes for:
+- Self-documenting code with rich field descriptions
+- Automatic JSON Schema generation from annotations  
+- Integration with validation pipeline
+- API documentation generation
+
+Example approach:
+```kotlin
+@Schema(description = "Game metadata and configuration")
+data class GameMeta(
+    @Schema(description = "Display name shown to players", example = "Wizard's Quest", minLength = 1, maxLength = 100)
+    val name: String,
+    @Schema(description = "Target age range [min, max]", example = "[8, 12]")
+    val targetAge: IntArray
+)
+```
+
+Dependency: `io.swagger.core.v3:swagger-annotations:2.2.15`
 
 ### Day 13: Performance and Optimization
 **Goal**: Production performance
@@ -349,8 +412,28 @@ class BoardGameCompiler : SchemaCompiler<BoardGameDefinition> {
 1. **Performance Tests** - Test large game performance (1000+ objects)
 2. **Memory Tests** - Test memory usage for complex games
 3. **Trigger Performance Tests** - Test trigger evaluation speed
+4. **Concurrent Performance Tests** - Test thread safety and coordination overhead
 
 **Success Criteria**: Can handle complex games with good performance.
+
+**🏁 Threading Performance Note for Day 13:**
+Test the performance characteristics of our immutable + coordination approach:
+- **Immutable copy overhead**: Measure cost of creating new GameWorld instances
+- **Lock contention**: Test coordination bottlenecks under concurrent load
+- **Memory efficiency**: Verify structural sharing reduces memory usage
+- **Throughput**: Compare single-threaded vs multi-threaded action processing
+
+Benchmark scenarios:
+```kotlin
+// High-frequency updates (many small actions)
+@Test fun testHighFrequencyActions() { ... }
+
+// Concurrent players (multiplayer simulation)
+@Test fun testConcurrentPlayers() { ... }
+
+// Memory growth (long-running games)
+@Test fun testMemoryGrowth() { ... }
+```
 
 ### Day 14: Cross-Platform and Examples
 **Goal**: Complete delivery

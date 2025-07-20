@@ -1,5 +1,9 @@
 package org.junction.catenin.model
 
+import org.junction.catenin.model.definitions.*
+import org.junction.catenin.model.objects.GameObject
+import org.junction.catenin.model.values.*
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -7,11 +11,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class ObjectDefinitionTest {
+class ObjectTypeDefinitionTest {
     
     @Test
-    fun testEmptyObjectDefinition() {
-        val definition = ObjectDefinition()
+    fun testEmptyObjectTypeDefinition() {
+        val definition = ObjectTypeDefinition()
         
         assertEquals(0, definition.properties.size)
         assertEquals(0, definition.states.size)
@@ -20,11 +24,11 @@ class ObjectDefinitionTest {
     }
     
     @Test
-    fun testObjectDefinitionWithProperties() {
+    fun testObjectTypeDefinitionWithProperties() {
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100), IntValue(0), IntValue(200))
         val nameProp = PropertyDefinition(PropertyType.STRING, StringValue("Default"))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             properties = mapOf(
                 "health" to healthProp,
                 "name" to nameProp
@@ -45,11 +49,11 @@ class ObjectDefinitionTest {
     }
     
     @Test
-    fun testObjectDefinitionWithStates() {
+    fun testObjectTypeDefinitionWithStates() {
         val activatedState = PropertyDefinition(PropertyType.BOOL, BoolValue(false))
         val statusState = PropertyDefinition(PropertyType.STRING, StringValue("normal"))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             states = mapOf(
                 "activated" to activatedState,
                 "status" to statusState
@@ -71,7 +75,7 @@ class ObjectDefinitionTest {
     
     @Test
     fun testWithProperty() {
-        val definition = ObjectDefinition()
+        val definition = ObjectTypeDefinition()
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100))
         
         val newDefinition = definition.withProperty("health", healthProp)
@@ -88,7 +92,7 @@ class ObjectDefinitionTest {
     
     @Test
     fun testWithState() {
-        val definition = ObjectDefinition()
+        val definition = ObjectTypeDefinition()
         val activatedState = PropertyDefinition(PropertyType.BOOL, BoolValue(false))
         
         val newDefinition = definition.withState("activated", activatedState)
@@ -108,7 +112,7 @@ class ObjectDefinitionTest {
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100))
         val nameProp = PropertyDefinition(PropertyType.STRING, StringValue("Default"))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             properties = mapOf(
                 "health" to healthProp,
                 "name" to nameProp
@@ -132,7 +136,7 @@ class ObjectDefinitionTest {
         val activatedState = PropertyDefinition(PropertyType.BOOL, BoolValue(false))
         val statusState = PropertyDefinition(PropertyType.STRING, StringValue("normal"))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             states = mapOf(
                 "activated" to activatedState,
                 "status" to statusState
@@ -156,7 +160,7 @@ class ObjectDefinitionTest {
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100), IntValue(0), IntValue(200))
         val activatedState = PropertyDefinition(PropertyType.BOOL, BoolValue(false))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             properties = mapOf("health" to healthProp),
             states = mapOf("activated" to activatedState)
         )
@@ -176,7 +180,7 @@ class ObjectDefinitionTest {
     fun testValidateObjectWithInvalidProperty() {
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100), IntValue(0), IntValue(200))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             properties = mapOf("health" to healthProp)
         )
         
@@ -195,7 +199,7 @@ class ObjectDefinitionTest {
     fun testValidateObjectWithMissingProperty() {
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100), IntValue(0), IntValue(200))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             properties = mapOf("health" to healthProp)
         )
         
@@ -214,7 +218,7 @@ class ObjectDefinitionTest {
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100), IntValue(0), IntValue(200))
         val activatedState = PropertyDefinition(PropertyType.BOOL, BoolValue(false))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             properties = mapOf("health" to healthProp),
             states = mapOf("activated" to activatedState)
         )
@@ -232,7 +236,7 @@ class ObjectDefinitionTest {
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100), IntValue(0), IntValue(200))
         val activatedState = PropertyDefinition(PropertyType.BOOL, BoolValue(false))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             properties = mapOf("health" to healthProp),
             states = mapOf("activated" to activatedState)
         )
@@ -254,7 +258,7 @@ class ObjectDefinitionTest {
     fun testCreateObjectWithAdditionalOverrides() {
         val healthProp = PropertyDefinition(PropertyType.INT, IntValue(100))
         
-        val definition = ObjectDefinition(
+        val definition = ObjectTypeDefinition(
             properties = mapOf("health" to healthProp)
         )
         
