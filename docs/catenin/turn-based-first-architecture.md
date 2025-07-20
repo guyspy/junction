@@ -77,6 +77,20 @@ sequence: 12847
 - ❌ Real-time networking concerns
 - ❌ Frame rate considerations
 
+### Schema Hierarchy
+Our improved discrete action hierarchy:
+```
+DiscreteActionSchema
+├── TurnBasedSchema (explicit turns, turn order matters)
+│   ├── TabletopGameSchema (chess, MTG, monopoly, hearthstone)
+│   ├── BattleGameSchema (RPG combat, XCOM, tactical games)
+│   └── StrategyGameSchema (Civilization, 4X games)
+└── NarrativeSchema (story-driven, action order less rigid)
+    ├── AdventureGameSchema (point-and-click, text adventures)
+    ├── RPGExplorationSchema (overworld, dialogue, inventory)
+    └── InteractiveFictionSchema (choose-your-own-adventure)
+```
+
 ### YAML Schema Impact
 Our game definitions stay clean:
 ```yaml

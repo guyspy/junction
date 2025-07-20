@@ -9,7 +9,7 @@ Catenin is a universal game engine that uses a powerful object/property/trigger 
 - **[High-Level Game Schemas](./high-level-game-schemas.md)** - Layered architecture with game-specific abstractions
 
 ### Specific Game Schemas
-- **[BoardGameSchema](./board-game-schema.md)** - For board games and card games (Chess, Magic: The Gathering, etc.)
+- **[TabletopGameSchema](./tabletop-game-schema.md)** - For board games and card games (Chess, Magic: The Gathering, Monopoly, Hearthstone, etc.)
 - **[AdventureGameSchema](./adventure-game-schema.md)** - For narrative games (Monkey Island, Zork, etc.)
 
 ### Architecture Decisions
@@ -37,11 +37,15 @@ Following Roblox's design philosophy:
 ### Layered Architecture
 ```
 UniversalGameSchema (base - pure objects/properties/triggers)
-├── TurnBasedSchema (adds turn/phase management)
-│   ├── BoardGameSchema (grids, pieces, zones)
-│   └── AdventureGameSchema (rooms, items, dialogue)
-├── TimedSchema (real-time mechanics)
-└── NarrativeSchema (story and choice systems)
+└── DiscreteActionSchema (action-driven games)
+    ├── TurnBasedSchema (explicit turns, turn order matters)
+    │   ├── TabletopGameSchema (chess, MTG, monopoly, hearthstone)
+    │   ├── BattleGameSchema (RPG combat, XCOM, tactical games)
+    │   └── StrategyGameSchema (Civilization, 4X games)
+    └── NarrativeSchema (story-driven, action order less rigid)
+        ├── AdventureGameSchema (point-and-click, text adventures)
+        ├── RPGExplorationSchema (overworld, dialogue, inventory)
+        └── InteractiveFictionSchema (choose-your-own-adventure)
 ```
 
 ### Transpilation Strategy
@@ -54,10 +58,11 @@ High-level schemas compile down to universal primitives:
 
 Each schema includes validation against classic games:
 
-**BoardGameSchema:**
+**TabletopGameSchema:**
 - ✅ Chess (complex pieces, capture rules)
 - ✅ Magic: The Gathering (zones, mana, creatures)
 - ✅ Monopoly (track movement, properties)
+- ✅ Hearthstone (digital card game with positioning)
 
 **AdventureGameSchema:**
 - ✅ Monkey Island (point-and-click, inventory)
