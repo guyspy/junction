@@ -4,6 +4,8 @@
 
 This document outlines a Test-Driven Development (TDD) approach to implementing the universal game schema from the ground up. We start with a clean slate: only Kotlin Multiplatform infrastructure and YAML parsing.
 
+**IMPORTANT: Turn-Based Games First** - This implementation focuses exclusively on turn-based games. Real-time games with tick systems are explicitly out of scope for Phases 1-4. See `turn-based-first-architecture.md` for the complete rationale.
+
 ## Implementation Philosophy
 
 ### TDD Approach
@@ -14,9 +16,10 @@ This document outlines a Test-Driven Development (TDD) approach to implementing 
 
 ### Incremental Strategy
 - Start with core primitives (objects, properties, values)
-- Add trigger system layer by layer
-- Build effect system incrementally
+- Add trigger system layer by layer (action-driven, not time-based)
+- Build effect system incrementally (discrete state changes)
 - Add high-level schema compilers last
+- **No real-time features**: No tick systems, timers, or continuous updates
 
 ## Phase 1: Data Models (Week 1)
 

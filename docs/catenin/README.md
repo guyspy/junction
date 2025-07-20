@@ -12,6 +12,10 @@ Catenin is a universal game engine that uses a powerful object/property/trigger 
 - **[BoardGameSchema](./board-game-schema.md)** - For board games and card games (Chess, Magic: The Gathering, etc.)
 - **[AdventureGameSchema](./adventure-game-schema.md)** - For narrative games (Monkey Island, Zork, etc.)
 
+### Architecture Decisions
+- **[Turn-Based First Architecture](./turn-based-first-architecture.md)** - Why we focus on turn-based games first
+- **[TDD Implementation Plan](./tdd-implementation-plan.md)** - Phased development approach
+
 ### Integration
 - **[Cadherin Integration](./cadherin-integration.md)** - How the UI layer connects to game logic
 
