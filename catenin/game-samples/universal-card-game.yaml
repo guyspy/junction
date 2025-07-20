@@ -68,6 +68,73 @@ instances:
       defense: 4
       text: "A fearsome creature"
 
+# Generic initialization system - no hardcoded game concepts
+setup:
+  # Server startup - create initial world state
+  world_initialization:
+    - create_objects:
+        count: 1
+        template: "container"
+        properties:
+          name: "battlefield"
+          visibility: "public"
+    
+    - create_objects:
+        count: 1  
+        template: "container"
+        properties:
+          name: "graveyard"
+          visibility: "public"
+
+  # Per-participant setup - happens when each participant joins
+  participant_initialization:
+    - create_objects:
+        count: 1
+        template: "container"
+        properties:
+          name: "deck_{participant_id}"
+          owner: "{participant_id}"
+          visibility: "owner"
+    
+    - create_objects:
+        count: 1
+        template: "container"
+        properties:
+          name: "hand_{participant_id}"
+          owner: "{participant_id}"
+          visibility: "owner"
+    
+    - create_objects:
+        count: 3
+        template: "card"
+        instance_source: "lightning_bolt"
+        parent: "deck_{participant_id}"
+    
+    - create_objects:
+        count: 2
+        template: "card"
+        instance_source: "healing_potion"
+        parent: "deck_{participant_id}"
+    
+    - create_objects:
+        count: 1
+        template: "card"
+        instance_source: "giant_spider"
+        parent: "deck_{participant_id}"
+
+# Generic runtime spawning - property-driven creation
+runtime_spawning:
+  - name: "spawn_from_template"
+    when:
+      property_changed: "spawn_requested"
+      new_value: "true"
+    effects:
+      - create_object:
+          template: "{this.properties.requested_template}"
+          parent: "{this.properties.target_parent}"
+          properties:
+            created_by: "{this.properties.participant_id}"
+
 # Universal trigger system
 triggers:
   # When a card is played (moved to battlefield container)

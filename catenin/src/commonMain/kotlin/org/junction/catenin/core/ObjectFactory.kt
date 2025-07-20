@@ -23,7 +23,7 @@ class ObjectFactory(private val definition: UniversalGameDefinition) {
         // Initialize properties with defaults from definition
         val properties = mutableMapOf<String, PropertyValue>()
         objectDef.properties.forEach { (name, propDef) ->
-            propDef.initial?.let { properties[name] = it }
+            propDef.getInitialValue()?.let { properties[name] = it }
         }
         // Override with custom properties
         properties.putAll(customProperties)
@@ -31,7 +31,7 @@ class ObjectFactory(private val definition: UniversalGameDefinition) {
         // Initialize states with defaults from definition
         val states = mutableMapOf<String, PropertyValue>()
         objectDef.states.forEach { (name, stateDef) ->
-            states[name] = stateDef.initial
+            states[name] = stateDef.getInitialValue()
         }
         
         return GameObject(
@@ -49,7 +49,10 @@ class ObjectFactory(private val definition: UniversalGameDefinition) {
         val instanceDef = definition.instances[instanceId] 
             ?: throw IllegalArgumentException("Unknown instance: $instanceId")
         
-        return createObject(instanceDef.template, instanceDef.properties)
+        val baseObject = createObject(instanceDef.template, convertStringMapToPropertyValues(instanceDef.template, instanceDef.properties))
+        
+        // Override the generated ID with the instance ID
+        return baseObject.copy(id = instanceId)
     }
     
     /**
@@ -64,18 +67,18 @@ class ObjectFactory(private val definition: UniversalGameDefinition) {
             // Initialize properties with defaults from object definition
             val properties = mutableMapOf<String, PropertyValue>()
             objectDef.properties.forEach { (name, propDef) ->
-                propDef.initial?.let { properties[name] = it }
+                propDef.getInitialValue()?.let { properties[name] = it }
             }
             // Override with instance-specific properties
-            properties.putAll(instanceDef.properties)
+            properties.putAll(convertStringMapToPropertyValues(instanceDef.template, instanceDef.properties))
             
             // Initialize states with defaults from object definition
             val states = mutableMapOf<String, PropertyValue>()
             objectDef.states.forEach { (name, stateDef) ->
-                states[name] = stateDef.initial
+                states[name] = stateDef.getInitialValue()
             }
-            // Override with instance-specific states
-            states.putAll(instanceDef.states)
+            // Override with instance-specific states  
+            states.putAll(convertStringMapToPropertyValuesForStates(instanceDef.template, instanceDef.states))
             
             GameObject(
                 id = id,
@@ -87,31 +90,124 @@ class ObjectFactory(private val definition: UniversalGameDefinition) {
     }
     
     /**
-     * Create objects for initial game setup based on meta configuration
+     * Create objects for initial game setup based on setup configuration
      * Note: participantNames represent abstract participants/seats, not necessarily player objects
      */
     fun createInitialSetup(participantNames: List<String>): List<GameObject> {
         val objects = mutableListOf<GameObject>()
         
-        // Create player objects if player object type is defined (optional)
-        // These represent in-game player characters/avatars linked to abstract participants
-        if ("player" in definition.objectTypes) {
-            participantNames.forEachIndexed { index, name ->
-                val playerObject = createObject("player", mapOf(
-                    "name" to PropertyValue.StringValue(name),
-                    "participant_id" to PropertyValue.IntValue(index)
-                ))
-                objects.add(playerObject)
-            }
+        val setup = definition.setup 
+            ?: throw IllegalStateException("Game definition must have setup configuration")
+        
+        // Execute world initialization
+        setup.worldInitialization.forEach { instruction ->
+            objects.addAll(executeCreateObjectsInstruction(instruction.createObjects))
         }
         
-        // Create all predefined instances
-        objects.addAll(createAllInstances())
+        // Execute participant initialization for each participant
+        participantNames.forEachIndexed { index, name ->
+            setup.participantInitialization.forEach { instruction ->
+                objects.addAll(executeCreateObjectsInstruction(
+                    instruction.createObjects,
+                    participantId = index,
+                    participantName = name
+                ))
+            }
+        }
         
         return objects
     }
     
+    /**
+     * Execute a create objects instruction, optionally with participant context
+     */
+    private fun executeCreateObjectsInstruction(
+        rule: CreateObjectsRule,
+        participantId: Int? = null,
+        participantName: String? = null
+    ): List<GameObject> {
+        val objects = mutableListOf<GameObject>()
+        
+        repeat(rule.count) {
+            val obj = if (rule.instanceSource != null) {
+                // Create from predefined instance
+                createFromInstance(rule.instanceSource)
+            } else {
+                // Create from template with custom properties
+                val customProperties = convertStringMapToPropertyValues(rule.template, rule.properties)
+                createObject(rule.template, customProperties)
+            }
+            
+            // Handle parent assignment with participant substitution
+            rule.parent?.let { parentPattern ->
+                val resolvedParent = resolveParticipantPattern(parentPattern, participantId, participantName)
+                // TODO: Implement parent assignment logic when we have containment system
+            }
+            
+            objects.add(obj)
+        }
+        
+        return objects
+    }
+    
+    /**
+     * Resolve participant patterns like "deck_{participant_id}" to actual values
+     */
+    private fun resolveParticipantPattern(
+        pattern: String,
+        participantId: Int?,
+        participantName: String?
+    ): String {
+        return pattern
+            .replace("{participant_id}", participantId?.toString() ?: "")
+            .replace("{participant_name}", participantName ?: "")
+    }
+    
     private fun generateId(type: String): String {
         return "${type}_${nextId++}"
+    }
+    
+    /**
+     * Convert string map to PropertyValue map using object type definitions
+     */
+    private fun convertStringMapToPropertyValues(objectType: String, stringMap: Map<String, String>): Map<String, PropertyValue> {
+        val objectDef = definition.objectTypes[objectType] ?: return emptyMap()
+        val result = mutableMapOf<String, PropertyValue>()
+        
+        stringMap.forEach { (name, value) ->
+            val propDef = objectDef.properties[name]
+            if (propDef != null) {
+                result[name] = when (propDef.type) {
+                    PropertyType.INT -> PropertyValue.IntValue(value.toInt())
+                    PropertyType.STRING -> PropertyValue.StringValue(value)
+                    PropertyType.BOOL -> PropertyValue.BoolValue(value.toBoolean())
+                    PropertyType.OBJECT_REF -> PropertyValue.ObjectRefValue(value)
+                }
+            }
+        }
+        
+        return result
+    }
+    
+    /**
+     * Convert string map to PropertyValue map for states using state definitions
+     */
+    private fun convertStringMapToPropertyValuesForStates(objectType: String, stringMap: Map<String, String>): Map<String, PropertyValue> {
+        val objectDef = definition.objectTypes[objectType] ?: return emptyMap()
+        val result = mutableMapOf<String, PropertyValue>()
+        
+        stringMap.forEach { (name, value) ->
+            val stateDef = objectDef.states[name]
+            if (stateDef != null) {
+                result[name] = when (stateDef.type) {
+                    PropertyType.INT -> PropertyValue.IntValue(value.toInt())
+                    PropertyType.STRING -> PropertyValue.StringValue(value)
+                    PropertyType.BOOL -> PropertyValue.BoolValue(value.toBoolean())
+                    PropertyType.OBJECT_REF -> PropertyValue.ObjectRefValue(value)
+                }
+            }
+        }
+        
+        return result
     }
 }

@@ -104,6 +104,7 @@ object_types:
   container:
     properties:
       name: {type: STRING}
+      owner: {type: STRING}
       max_size: {type: INT, initial: -1}  # -1 = unlimited
       visibility: {type: STRING, initial: "public"}
 
@@ -118,7 +119,7 @@ object_types:
       tapped: {type: BOOL, initial: false}
       face_up: {type: BOOL, initial: true}
 
-# Predefined object instances
+# Predefined object instances - templates to spawn from
 instances:
   lightning_bolt:
     template: card
@@ -128,6 +129,53 @@ instances:
       attack: 3
       defense: 0
       text: "Deal 3 damage to target"
+
+# Generic initialization system - no hardcoded game concepts
+setup:
+  # Server startup - create initial world state
+  world_initialization:
+    - create_objects:
+        count: 1
+        template: "container"
+        properties:
+          name: "shared_space"
+          visibility: "public"
+    
+    - create_objects:
+        count: 1  
+        template: "container"
+        properties:
+          name: "storage_area"
+          visibility: "hidden"
+
+  # Per-participant setup - happens when each participant joins
+  participant_initialization:
+    - create_objects:
+        count: 1
+        template: "container"
+        properties:
+          name: "private_space_{participant_id}"
+          owner: "{participant_id}"
+          visibility: "owner"
+    
+    - create_objects:
+        count: 5
+        template: "card"
+        instance_source: "lightning_bolt"
+        parent: "private_space_{participant_id}"
+
+# Generic runtime spawning - property-driven creation
+runtime_spawning:
+  - name: "spawn_from_template"
+    when:
+      property_changed: "spawn_requested"
+      new_value: "true"
+    effects:
+      - create_object:
+          template: "{this.properties.requested_template}"
+          parent: "{this.properties.target_parent}"
+          properties:
+            created_by: "{this.properties.participant_id}"
 
 # Universal trigger system
 triggers:

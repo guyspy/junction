@@ -1,0 +1,236 @@
+# Tower Defense Game Example
+# Proves the universal object system can handle non-card games
+
+meta:
+  name: "Tower Defense Game"
+  target_age: [10, 16]
+  participant_count: [1, 1]  # Single player
+
+# Universal object types - no hardcoded concepts
+object_types:
+  # Game field with spatial coordinates
+  field:
+    properties:
+      width: {type: INT, initial: 20}
+      height: {type: INT, initial: 15}
+      name: {type: STRING}
+    states:
+      wave_active: {type: BOOL, initial: false}
+      wave_number: {type: INT, initial: 1}
+
+  # Player resources and state
+  commander:
+    properties:
+      gold: {type: INT, initial: 100, min: 0}
+      lives: {type: INT, initial: 20, min: 0}
+      score: {type: INT, initial: 0, min: 0}
+      participant_id: {type: INT}
+    states:
+      game_over: {type: BOOL, initial: false}
+
+  # Defensive towers
+  tower:
+    properties:
+      x: {type: INT, min: 0, max: 19}
+      y: {type: INT, min: 0, max: 14}
+      damage: {type: INT, min: 1}
+      range: {type: INT, min: 1}
+      cost: {type: INT, min: 1}
+      tower_type: {type: STRING}
+    states:
+      cooldown: {type: INT, initial: 0, min: 0}
+      target_id: {type: STRING, initial: "none"}
+
+  # Enemy units
+  enemy:
+    properties:
+      x: {type: INT, min: 0, max: 19}
+      y: {type: INT, min: 0, max: 14}
+      health: {type: INT, min: 0}
+      max_health: {type: INT, min: 1}
+      speed: {type: INT, min: 1}
+      reward: {type: INT, min: 1}
+      enemy_type: {type: STRING}
+    states:
+      path_progress: {type: INT, initial: 0, min: 0}
+      stunned: {type: BOOL, initial: false}
+
+# Predefined instances
+instances:
+  game_field:
+    template: field
+    properties:
+      width: 20
+      height: 15
+      name: "Battle Arena"
+
+  basic_tower:
+    template: tower
+    properties:
+      damage: 10
+      range: 3
+      cost: 50
+      tower_type: "basic"
+
+  cannon_tower:
+    template: tower
+    properties:
+      damage: 25
+      range: 2
+      cost: 100
+      tower_type: "cannon"
+
+  basic_enemy:
+    template: enemy
+    properties:
+      health: 50
+      max_health: 50
+      speed: 2
+      reward: 10
+      enemy_type: "basic"
+
+  tank_enemy:
+    template: enemy
+    properties:
+      health: 150
+      max_health: 150
+      speed: 1
+      reward: 25
+      enemy_type: "tank"
+
+# Game initialization
+setup:
+  world_initialization:
+    - create_objects:
+        count: 1
+        template: "field"
+        instance_source: "game_field"
+
+  participant_initialization:
+    - create_objects:
+        count: 1
+        template: "commander"
+        properties:
+          gold: 100
+          lives: 20
+          score: 0
+          participant_id: "{participant_id}"
+
+# Runtime spawning for wave mechanics
+runtime_spawning:
+  - name: "spawn_wave"
+    when:
+      property_changed: "wave_spawn_requested"
+      new_value: "true"
+    effects:
+      - create_object:
+          template: "enemy"
+          instance_source: "{this.properties.enemy_type}"
+          properties:
+            x: 0
+            y: 7
+
+# Universal trigger system for tower defense mechanics
+triggers:
+  # Enemy movement
+  - name: "enemy_movement"
+    when:
+      object_type: enemy
+      property_changed: "move_tick"
+      new_value: "true"
+    effects:
+      - modify_property:
+          target: {id: "this"}
+          property: "x"
+          delta: "+1"
+      - modify_property:
+          target: {id: "this"}
+          property: "path_progress"
+          delta: "+1"
+
+  # Enemy reaches end
+  - name: "enemy_escape"
+    when:
+      object_type: enemy
+      property_changed: "x"
+      new_value: "20"
+    effects:
+      - modify_property:
+          target: {type: commander, relation: self}
+          property: "lives"
+          delta: "-1"
+      - destroy_object:
+          target: {id: "this"}
+
+  # Tower targeting
+  - name: "tower_acquire_target"
+    when:
+      object_type: tower
+      property_changed: "scan_for_targets"
+      new_value: "true"
+    effects:
+      - modify_property:
+          target: {id: "this"}
+          property: "target_id"
+          value: "{nearest_enemy_in_range}"
+
+  # Tower shooting
+  - name: "tower_attack"
+    when:
+      object_type: tower
+      property_changed: "fire_requested"
+      new_value: "true"
+      condition: "this.states.cooldown == 0 && this.states.target_id != 'none'"
+    effects:
+      - modify_property:
+          target: {id: "{this.states.target_id}"}
+          property: "health"
+          delta: "-{this.properties.damage}"
+      - modify_property:
+          target: {id: "this"}
+          property: "cooldown"
+          value: "3"
+
+  # Enemy death
+  - name: "enemy_death"
+    when:
+      object_type: enemy
+      property_changed: "health"
+      new_value: "0"
+    effects:
+      - modify_property:
+          target: {type: commander, relation: self}
+          property: "gold"
+          delta: "+{this.properties.reward}"
+      - modify_property:
+          target: {type: commander, relation: self}
+          property: "score"
+          delta: "+{this.properties.reward}"
+      - destroy_object:
+          target: {id: "this"}
+
+  # Game over condition
+  - name: "game_over"
+    when:
+      object_type: commander
+      property_changed: "lives"
+      new_value: "0"
+    effects:
+      - modify_property:
+          target: {id: "this"}
+          property: "game_over"
+          value: "true"
+      - log: "Game Over! Final Score: {this.properties.score}"
+
+  # Tower cooldown reduction
+  - name: "tower_cooldown_tick"
+    when:
+      object_type: tower
+      property_changed: "cooldown_tick"
+      new_value: "true"
+      condition: "this.states.cooldown > 0"
+    effects:
+      - modify_property:
+          target: {id: "this"}
+          property: "cooldown"
+          delta: "-1"

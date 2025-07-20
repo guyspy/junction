@@ -14,8 +14,7 @@ data class GameObject(
     val type: String, // references ObjectDefinition
     val properties: Map<String, PropertyValue> = emptyMap(),
     val states: Map<String, PropertyValue> = emptyMap(),
-    val parentId: String? = null, // for containment hierarchy
-    val zoneIds: Map<String, String> = emptyMap() // zone name -> zone object id
+    val parentId: String? = null // for containment hierarchy
 ) {
     
     fun getProperty(name: String): PropertyValue? = properties[name]
