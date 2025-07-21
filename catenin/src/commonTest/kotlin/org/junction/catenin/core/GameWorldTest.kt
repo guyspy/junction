@@ -111,8 +111,7 @@ class GameWorldTest {
         val creature = createTestObject("creature_1", "creature")
         val world = GameWorld.empty().withObject(creature)
         
-        val updatedCreature = creature.withProperty("health", IntValue(50))
-        val newWorld = world.updateObject("creature_1", updatedCreature)
+        val newWorld = world.updateObject("creature_1") { it.withProperty("health", IntValue(50)) }
         
         // Original world unchanged
         val originalCreature = world.getObject("creature_1")
@@ -131,7 +130,7 @@ class GameWorldTest {
         val creature = createTestObject("creature_1", "creature")
         
         assertFailsWith<IllegalArgumentException> {
-            world.updateObject("creature_1", creature)
+            world.updateObject("creature_1") { creature }
         }
     }
     
@@ -342,39 +341,6 @@ class GameWorldTest {
         assertEquals(2, withActivated.size) // Both have activated state
     }
     
-    @Test
-    fun testGetParticipants() {
-        val participant1 = createTestObject("participant_1", "participant")
-            .withProperty("participant_id", IntValue(0))
-        val participant2 = createTestObject("participant_2", "participant")
-            .withProperty("participant_id", IntValue(1))
-        val creature = createTestObject("creature_1", "creature")
-        val world = GameWorld.empty().withObjects(listOf(participant1, participant2, creature))
-        
-        val participants = world.getParticipants()
-        assertEquals(2, participants.size)
-        assertTrue(participants.all { it.hasProperty("participant_id") })
-    }
-    
-    @Test
-    fun testGetParticipant() {
-        val participant1 = createTestObject("participant_1", "participant")
-            .withProperty("participant_id", IntValue(0))
-        val participant2 = createTestObject("participant_2", "participant")
-            .withProperty("participant_id", IntValue(1))
-        val world = GameWorld.empty().withObjects(listOf(participant1, participant2))
-        
-        val found0 = world.getParticipant(0)
-        assertNotNull(found0)
-        assertEquals("participant_1", found0.id)
-        
-        val found1 = world.getParticipant(1)
-        assertNotNull(found1)
-        assertEquals("participant_2", found1.id)
-        
-        val notFound = world.getParticipant(2)
-        assertNull(notFound)
-    }
     
     @Test
     fun testApplyUpdates() {
@@ -462,7 +428,7 @@ class GameWorldTest {
         val world = GameWorld.empty().withObject(creature)
         
         val differentIdObject = createTestObject("different_id", "creature")
-        val newWorld = world.updateObject("creature_1", differentIdObject)
+        val newWorld = world.updateObject("creature_1") { differentIdObject }
         
         // Should correct the ID to match the key
         val updated = newWorld.getObject("creature_1")

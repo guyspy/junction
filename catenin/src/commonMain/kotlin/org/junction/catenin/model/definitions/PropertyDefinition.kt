@@ -1,11 +1,13 @@
 package org.junction.catenin.model.definitions
 
 import org.junction.catenin.model.values.*
+import kotlinx.serialization.Serializable
 import kotlin.js.JsExport
 
 /**
  * Definition of a property with type constraints and default values
  */
+@Serializable
 @JsExport
 data class PropertyDefinition(
     val type: PropertyType,
@@ -68,12 +70,10 @@ data class PropertyDefinition(
     /**
      * Get the default value for this property
      */
-    fun getDefaultValue(): PropertyValue {
-        return initial ?: when (type) {
-            PropertyType.INT -> IntValue(0)
-            PropertyType.STRING -> StringValue("")
-            PropertyType.BOOL -> BoolValue(false)
-            PropertyType.OBJECT_REF -> ObjectRefValue("")
-        }
+    fun getDefaultValue(): PropertyValue = initial ?: when (type) {
+        PropertyType.INT -> IntValue(0)
+        PropertyType.STRING -> StringValue("")
+        PropertyType.BOOL -> BoolValue(false)
+        PropertyType.OBJECT_REF -> ObjectRefValue("")
     }
 }

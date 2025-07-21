@@ -1,10 +1,13 @@
 package org.junction.catenin.model.values
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlin.js.JsExport
 
 /**
  * Represents all possible property values in the universal game system
  */
+@Serializable
 @JsExport
 sealed class PropertyValue : Comparable<PropertyValue> {
     

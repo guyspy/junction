@@ -2,11 +2,13 @@ package org.junction.catenin.model.definitions
 
 import org.junction.catenin.model.values.PropertyValue
 import org.junction.catenin.model.objects.GameObject
+import kotlinx.serialization.Serializable
 import kotlin.js.JsExport
 
 /**
  * Defines an object type with its properties and states schema
  */
+@Serializable
 @JsExport
 data class ObjectTypeDefinition(
     val properties: Map<String, PropertyDefinition> = emptyMap(),
@@ -16,72 +18,52 @@ data class ObjectTypeDefinition(
     /**
      * Create a new ObjectDefinition with an additional property
      */
-    fun withProperty(name: String, definition: PropertyDefinition): ObjectTypeDefinition {
-        return copy(properties = properties + (name to definition))
-    }
+    fun withProperty(name: String, definition: PropertyDefinition): ObjectTypeDefinition = copy(properties = properties + (name to definition))
     
     /**
      * Create a new ObjectDefinition with an additional state
      */
-    fun withState(name: String, definition: PropertyDefinition): ObjectTypeDefinition {
-        return copy(states = states + (name to definition))
-    }
+    fun withState(name: String, definition: PropertyDefinition): ObjectTypeDefinition = copy(states = states + (name to definition))
     
     /**
      * Create a new ObjectDefinition with a property removed
      */
-    fun withoutProperty(name: String): ObjectTypeDefinition {
-        return copy(properties = properties - name)
-    }
+    fun withoutProperty(name: String): ObjectTypeDefinition = copy(properties = properties - name)
     
     /**
      * Create a new ObjectDefinition with a state removed
      */
-    fun withoutState(name: String): ObjectTypeDefinition {
-        return copy(states = states - name)
-    }
+    fun withoutState(name: String): ObjectTypeDefinition = copy(states = states - name)
     
     /**
      * Get property definition by name
      */
-    fun getPropertyDefinition(name: String): PropertyDefinition? {
-        return properties[name]
-    }
+    fun getPropertyDefinition(name: String): PropertyDefinition? = properties[name]
     
     /**
      * Get state definition by name
      */
-    fun getStateDefinition(name: String): PropertyDefinition? {
-        return states[name]
-    }
+    fun getStateDefinition(name: String): PropertyDefinition? = states[name]
     
     /**
      * Check if object type has a specific property definition
      */
-    fun hasProperty(name: String): Boolean {
-        return properties.containsKey(name)
-    }
+    fun hasProperty(name: String): Boolean = properties.containsKey(name)
     
     /**
      * Check if object type has a specific state definition
      */
-    fun hasState(name: String): Boolean {
-        return states.containsKey(name)
-    }
+    fun hasState(name: String): Boolean = states.containsKey(name)
     
     /**
      * Get all property names as a list
      */
-    fun getAllPropertyNames(): List<String> {
-        return properties.keys.toList()
-    }
+    fun getAllPropertyNames(): List<String> = properties.keys.toList()
     
     /**
      * Get all state names as a list
      */
-    fun getAllStateNames(): List<String> {
-        return states.keys.toList()
-    }
+    fun getAllStateNames(): List<String> = states.keys.toList()
     
     /**
      * Validate a GameObject against this object definition

@@ -233,9 +233,9 @@ class GameEngine {
 
 #### TDD Tasks:
 1. **PlayerAction Tests** - Test action validation and execution
-2. **GameController Tests** - Test turn/phase management
-3. **ActionValidator Tests** - Test action legality checking
-4. **ThreadSafeGameEngine Tests** - Test coordinated state updates with immutable world
+2. **ActionValidator Tests** - Test action legality checking  
+3. **GameFlow Tests** - Test turn/phase management logic
+4. **ActionApplication Tests** - Test applying actions to GameWorld
 
 #### Implementation Order:
 ```kotlin
@@ -249,30 +249,54 @@ class ActionValidator {
     fun validateAction(action: PlayerAction, world: GameWorld): ValidationResult
 }
 
-// 3. GameController
-class GameController {
-    fun processAction(participantId: String, action: PlayerAction): ActionResult
-    fun advanceTurn(): GameWorld
+// 3. GameWorld action application
+fun GameWorld.applyAction(action: PlayerAction): GameWorld {
+    // Pure function - no coordination concerns
 }
 
-// 4. ThreadSafeGameEngine (coordination layer)
-class ThreadSafeGameEngine {
-    @Volatile private var currentWorld: GameWorld
-    private val coordinator = GameCoordinator()
-    
-    fun processAction(action: PlayerAction): ActionResult
-    fun getCurrentWorld(): GameWorld  // Thread-safe read
+// 4. Turn management (pure game logic)
+fun GameWorld.advanceTurn(): GameWorld {
+    // Game rule logic only
 }
 ```
 
 **Success Criteria**: Players can perform actions, turns advance correctly, invalid actions are rejected.
 
-**🔒 Threading & Coordination Note for Day 7:**
-While GameWorld immutability provides memory safety and eliminates data corruption, we still need coordination logic for:
-- **Business logic consistency**: Ensuring actions don't violate game rules
-- **Resource conflicts**: Managing shared resources (deck, shared objects)
-- **Turn order enforcement**: Preventing out-of-turn actions
-- **Atomic operations**: Multi-step game actions that must complete together
+**🎯 Catenin Scope for Day 7:**
+Catenin focuses on **pure game logic** - NOT coordination or system integration:
+
+**✅ Catenin's Responsibility:**
+- Action validation (game rules)
+- State transitions (immutable world updates)
+- Turn management logic (whose turn, phase advancement)
+- Game rule enforcement (valid moves, win conditions)
+
+**❌ NOT Catenin's Responsibility:**
+- Thread coordination (users choose: locks, database transactions, etc.)
+- Persistence strategy (users choose: MongoDB, PostgreSQL, memory, etc.)
+- Network synchronization (users implement based on their architecture)
+- Multiplayer session management (application-level concern)
+
+**🏗️ Benefits for System Integrators:**
+Catenin's immutable design enables users to choose their coordination approach:
+
+**Backend Systems can use:**
+- Database atomic operations for coordination
+- Optimistic concurrency with version control
+- Event sourcing patterns
+- CQRS architectures
+
+**Frontend Systems can use:**
+- Direct memory operations (single-threaded)
+- Local state management
+- Network sync strategies
+- Offline-first approaches
+
+**Discrete Action Benefits:**
+- Each PlayerAction is atomic and well-defined
+- Clear state transitions with no partial states
+- Easy integration with any coordination strategy
+- System integrators choose their own conflict resolution
 
 Implementation approach:
 1. **Immutable GameWorld**: Handles memory safety (already implemented ✅)

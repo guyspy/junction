@@ -1,10 +1,12 @@
 package org.junction.catenin.model.definitions
 
+import kotlinx.serialization.Serializable
 import kotlin.js.JsExport
 
 /**
  * Game metadata and configuration
  */
+@Serializable
 @JsExport
 data class GameMeta(
     val name: String,

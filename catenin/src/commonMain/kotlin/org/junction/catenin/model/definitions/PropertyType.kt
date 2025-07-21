@@ -1,11 +1,13 @@
 package org.junction.catenin.model.definitions
 
 import org.junction.catenin.model.values.*
+import kotlinx.serialization.Serializable
 import kotlin.js.JsExport
 
 /**
  * Defines the type and constraints for a property
  */
+@Serializable
 @JsExport
 enum class PropertyType {
     INT,
