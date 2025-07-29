@@ -119,11 +119,15 @@ fun createSampleGameSchema(): UniversalGameSchema {
             ),
             "phase" to PropertyDefinition(
                 type = PropertyType.STRING,
-                initial = StringValue("setup")
+                initial = StringValue("playing")
             ),
-            "current_player" to PropertyDefinition(
-                type = PropertyType.OBJECT_REF,
-                initial = ObjectRefValue("")
+            "current_player_index" to PropertyDefinition(
+                type = PropertyType.INT,
+                initial = IntValue(0)
+            ),
+            "total_players" to PropertyDefinition(
+                type = PropertyType.INT,
+                initial = IntValue(0)
             )
         )
     )

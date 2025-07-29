@@ -2,6 +2,7 @@ package org.junction.catenin
 
 import org.junction.catenin.core.*
 import org.junction.catenin.engine.GameEngine
+import org.junction.catenin.model.objects.GameObject
 import org.junction.catenin.model.values.*
 
 fun main() {
@@ -34,6 +35,12 @@ fun main() {
         // Initialize game with schema's initialization configuration
         val engine = GameEngine.fromSchema(schema, schema.initialization).initializeGame(playerIds)
         
+        // Initialize game state with total players
+        val gameState = engine.getWorld().getObject("game_state")
+        if (gameState != null) {
+            engine.updateProperty("game_state", "total_players", IntValue(playerIds.size))
+        }
+        
         println("\n✅ Game initialized!")
         println("Players: ${playerIds.joinToString(", ")}")
         println()
@@ -53,7 +60,13 @@ fun gameLoop(engine: GameEngine) {
     while (running) {
         displayGameState(engine)
         
-        println("\nActions:")
+        val currentPlayer = getCurrentPlayer(engine)
+        if (currentPlayer == null) {
+            println("❌ Error: Could not determine current player!")
+            break
+        }
+        
+        println("\nActions for ${currentPlayer.id}'s turn:")
         println("1) Create a unit")
         println("2) Cast a spell")
         println("3) Attack with unit")
@@ -65,9 +78,9 @@ fun gameLoop(engine: GameEngine) {
         print("Choose action: ")
         
         when (readLine()) {
-            "1" -> createUnit(engine)
+            "1" -> createUnit(engine, currentPlayer)
             "2" -> castSpell(engine)
-            "3" -> attackWithUnit(engine)
+            "3" -> attackWithUnit(engine, currentPlayer)
             "4" -> viewAllObjects(engine)
             "5" -> viewTriggers(engine)
             "6" -> endTurn(engine)
@@ -82,29 +95,22 @@ fun gameLoop(engine: GameEngine) {
     }
 }
 
-fun createUnit(engine: GameEngine) {
+fun getCurrentPlayer(engine: GameEngine): GameObject? {
     val world = engine.getWorld()
+    val gameState = world.getObject("game_state") ?: return null
     val participants = world.getObjectsByType("participant")
     
-    if (participants.isEmpty()) {
-        println("No participants found!")
-        return
+    val currentIndex = (gameState.getProperty("current_player_index") as? IntValue)?.value ?: 0
+    
+    return if (currentIndex in participants.indices) {
+        participants[currentIndex]
+    } else {
+        null
     }
-    
-    println("\nCreate unit for which participant?")
-    participants.forEachIndexed { index, participant ->
-        println("$index) ${participant.id}")
-    }
-    
-    print("Choose participant: ")
-    val participantIndex = readLine()?.toIntOrNull() ?: return
-    
-    if (participantIndex !in participants.indices) {
-        println("Invalid choice")
-        return
-    }
-    
-    val owner = participants[participantIndex]
+}
+
+fun createUnit(engine: GameEngine, currentPlayer: GameObject) {
+    val owner = currentPlayer
     
     println("\nUnit types:")
     println("1) Warrior (10 health, 3 attack)")
@@ -214,41 +220,57 @@ fun castSpell(engine: GameEngine) {
     }
 }
 
-fun attackWithUnit(engine: GameEngine) {
+fun attackWithUnit(engine: GameEngine, currentPlayer: GameObject) {
     val world = engine.getWorld()
-    val units = world.getObjectsByType("unit")
+    val allUnits = world.getObjectsByType("unit")
     
-    if (units.size < 2) {
-        println("Need at least 2 units for combat!")
+    // Get only the current player's units for attacking
+    val myUnits = allUnits.filter { unit ->
+        val owner = (unit.getProperty("owner") as? ObjectRefValue)?.objectId
+        owner == currentPlayer.id
+    }
+    
+    if (myUnits.isEmpty()) {
+        println("You have no units to attack with!")
         return
     }
     
-    println("\nAttack with which unit?")
-    displayUnits(units)
+    // Get enemy units
+    val enemyUnits = allUnits.filter { unit ->
+        val owner = (unit.getProperty("owner") as? ObjectRefValue)?.objectId
+        owner != currentPlayer.id
+    }
+    
+    if (enemyUnits.isEmpty()) {
+        println("No enemy units to attack!")
+        return
+    }
+    
+    println("\nAttack with which of your units?")
+    displayUnits(myUnits)
     
     print("Choose attacker: ")
     val attackerIndex = readLine()?.toIntOrNull() ?: return
     
-    if (attackerIndex !in units.indices) {
+    if (attackerIndex !in myUnits.indices) {
         println("Invalid attacker")
         return
     }
     
-    val attacker = units[attackerIndex]
+    val attacker = myUnits[attackerIndex]
     
-    println("\nAttack which unit?")
-    val targets = units.filterIndexed { index, _ -> index != attackerIndex }
-    displayUnits(targets)
+    println("\nAttack which enemy unit?")
+    displayUnits(enemyUnits)
     
     print("Choose target: ")
     val targetIndex = readLine()?.toIntOrNull() ?: return
     
-    if (targetIndex !in targets.indices) {
+    if (targetIndex !in enemyUnits.indices) {
         println("Invalid target")
         return
     }
     
-    val target = targets[targetIndex]
+    val target = enemyUnits[targetIndex]
     val attackPower = (attacker.getProperty("attack") as? IntValue)?.value ?: 0
     val targetArmor = (target.getProperty("armor") as? IntValue)?.value ?: 0
     val damage = maxOf(1, attackPower - targetArmor)
@@ -268,14 +290,26 @@ fun attackWithUnit(engine: GameEngine) {
 
 fun endTurn(engine: GameEngine) {
     val world = engine.getWorld()
+    val gameState = world.getObject("game_state") ?: return
     val participants = world.getObjectsByType("participant")
     
-    if (participants.isNotEmpty()) {
-        val currentTurn = (participants[0].getState("turn_count") as? IntValue)?.value ?: 0
-        participants.forEach { participant ->
-            engine.updateState(participant.id, "turn_count", IntValue(currentTurn + 1))
-        }
-        println("Turn ${currentTurn + 1} ended. Starting turn ${currentTurn + 2}.")
+    val currentIndex = (gameState.getProperty("current_player_index") as? IntValue)?.value ?: 0
+    val totalPlayers = (gameState.getProperty("total_players") as? IntValue)?.value ?: participants.size
+    val turnNumber = (gameState.getProperty("turn_number") as? IntValue)?.value ?: 1
+    
+    // Advance to next player
+    val nextIndex = (currentIndex + 1) % totalPlayers
+    engine.updateProperty("game_state", "current_player_index", IntValue(nextIndex))
+    
+    // If we've cycled back to first player, increment turn number
+    if (nextIndex == 0) {
+        engine.updateProperty("game_state", "turn_number", IntValue(turnNumber + 1))
+        println("\n📅 Turn $turnNumber completed. Starting turn ${turnNumber + 1}!")
+    }
+    
+    val nextPlayer = if (nextIndex in participants.indices) participants[nextIndex] else null
+    if (nextPlayer != null) {
+        println("\n➡️ ${nextPlayer.id}'s turn begins!")
     }
 }
 

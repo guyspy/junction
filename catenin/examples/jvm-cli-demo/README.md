@@ -12,13 +12,31 @@ This example demonstrates how to use the Catenin game engine in a JVM command-li
 
 ## Running the Demo
 
+### Recommended: Use the Run Scripts (Clean CLI Experience)
+
+For the best interactive experience without Gradle's progress bar:
+
+```bash
+# From this directory
+./run.sh          # Unix/Mac/Linux
+run.bat           # Windows
+```
+
+These scripts build the demo and run it using the standalone executable, providing a clean CLI interface without Gradle's build output interfering with the game.
+
+### Alternative: Direct Gradle Execution
+
+If you prefer using Gradle directly, use the `--console=plain` flag for a cleaner experience:
+
 ```bash
 # From the monorepo root (/junction/)
-./gradlew :catenin:examples:jvm-cli-demo:run
+./gradlew :catenin:examples:jvm-cli-demo:run --console=plain
 
 # Or from this directory
-../../../gradlew run
+../../../gradlew run --console=plain
 ```
+
+**Note**: Without `--console=plain`, Gradle's progress indicators may interfere with the interactive CLI experience.
 
 ## How it Works
 
@@ -44,6 +62,11 @@ cards:
       value: {type: int, min: 1, max: 5}
       color: {type: enum, values: [red, blue, green]}
 ```
+
+## Requirements
+
+- **Java 21 or higher** (the project uses JVM toolchain 21)
+- If using the run scripts, ensure `JAVA_HOME` points to Java 21+
 
 ## Dependencies
 

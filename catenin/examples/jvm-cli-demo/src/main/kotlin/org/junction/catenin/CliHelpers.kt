@@ -11,22 +11,35 @@ fun displayGameState(engine: GameEngine) {
     val world = engine.getWorld()
     val participants = world.getObjectsByType("participant")
     val units = world.getObjectsByType("unit")
+    val gameState = world.getObject("game_state")
+    
+    // Get current turn info
+    val turnNumber = (gameState?.getProperty("turn_number") as? IntValue)?.value ?: 1
+    val currentPlayerIndex = (gameState?.getProperty("current_player_index") as? IntValue)?.value ?: 0
+    val currentPlayer = if (currentPlayerIndex in participants.indices) participants[currentPlayerIndex] else null
     
     println("\n" + "=".repeat(60))
-    println("GAME STATE")
+    println("TURN $turnNumber - ${currentPlayer?.id ?: "Unknown"}'s Turn")
     println("=".repeat(60))
     
-    // Display participants
-    println("\nParticipants:")
-    participants.forEach { participant ->
+    // Display participants with turn indicators
+    println("\nPlayers:")
+    participants.forEachIndexed { index, participant ->
         val wins = (participant.getProperty("wins") as? IntValue)?.value ?: 0
-        val turn = (participant.getState("turn_count") as? IntValue)?.value ?: 0
-        val active = (participant.getState("active") as? BoolValue)?.value ?: false
+        val isCurrentPlayer = index == currentPlayerIndex
         
-        println("  ${participant.id}:")
-        println("    Wins: $wins")
-        println("    Turn: $turn") 
-        println("    Active: $active")
+        val prefix = if (isCurrentPlayer) "🎯 " else "⏳ "
+        val status = if (isCurrentPlayer) " (YOUR TURN)" else " (Waiting)"
+        
+        println("  $prefix${participant.id}$status")
+        println("      Wins: $wins")
+        
+        // Show unit count for this player
+        val playerUnits = units.filter { unit ->
+            val owner = (unit.getProperty("owner") as? ObjectRefValue)?.objectId
+            owner == participant.id
+        }
+        println("      Units: ${playerUnits.size}")
     }
     
     // Display units grouped by owner
