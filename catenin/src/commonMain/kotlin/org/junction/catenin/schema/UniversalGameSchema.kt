@@ -1,5 +1,7 @@
 package org.junction.catenin.schema
 
+import org.junction.catenin.engine.EmptyInitializationConfig
+import org.junction.catenin.engine.InitializationConfig
 import org.junction.catenin.model.definitions.GameMeta
 import org.junction.catenin.model.definitions.ObjectTypeDefinition
 import org.junction.catenin.model.objects.ObjectInstance
@@ -16,7 +18,8 @@ data class UniversalGameSchema(
     val meta: GameMeta,
     val objectTypes: Map<String, ObjectTypeDefinition>,
     val instances: Map<String, ObjectInstance> = emptyMap(),
-    val triggers: List<TriggerDefinition> = emptyList()
+    val triggers: List<TriggerDefinition> = emptyList(),
+    val initialization: InitializationConfig = EmptyInitializationConfig.INSTANCE
 ) {
 
     /**
@@ -33,6 +36,11 @@ data class UniversalGameSchema(
      * Create a new UniversalGameSchema with an additional trigger
      */
     fun withTrigger(trigger: TriggerDefinition): UniversalGameSchema = copy(triggers = triggers + trigger)
+
+    /**
+     * Create a new UniversalGameSchema with initialization configuration
+     */
+    fun withInitialization(initialization: InitializationConfig): UniversalGameSchema = copy(initialization = initialization)
 
     /**
      * Create a new UniversalGameSchema with an object type removed

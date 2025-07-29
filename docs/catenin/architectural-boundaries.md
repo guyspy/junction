@@ -39,6 +39,8 @@ validation/
 - Game-specific setup assumptions
 - Hardcoded object relationships
 - Domain knowledge of any kind
+- Turn management logic (turns are schema-driven, not engine features)
+- Player order enforcement (handled by triggers, not engine code)
 
 ### 🟡 Schema Compiler Layer (Domain-Specific)
 **Components that transpile high-level schemas to universal**
@@ -175,7 +177,63 @@ class TabletopGameCompiler {
 }
 ```
 
-### Rule 4: Tests Must Follow Same Boundaries
+### Rule 4: Turn Management Must Be Schema-Driven
+
+**CRITICAL**: Turn management is NOT a universal engine feature. Different game schemas require different action ordering:
+- **TurnBasedSchema**: Rigid turn order, phases, action points
+- **NarrativeSchema**: Flexible action order, story-driven progression
+- **Real-time schemas** (future): No turns at all
+
+**❌ VIOLATION - Hardcoded turn logic in engine:**
+```kotlin
+// In GameEngine (Universal Layer) - WRONG!
+class GameEngine {
+    private var currentPlayerIndex = 0
+    private val players = mutableListOf<String>()
+    
+    fun nextTurn() {
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.size
+    }
+    
+    fun canAct(playerId: String): Boolean {
+        return playerId == players[currentPlayerIndex]  // HARDCODED TURN LOGIC!
+    }
+}
+```
+
+**✅ CORRECT - Turn management via triggers:**
+```kotlin
+// TurnBasedSchema generates these triggers
+triggers:
+  - name: "enforce_turn_order"
+    when:
+      any_action_attempted: true
+    condition: "actor.id == game_state.current_player"
+    reject_with: "Not your turn!"
+    
+  - name: "advance_turn"
+    when:
+      action_type: "end_turn"
+    effects:
+      - modify_property:
+          target: "game_state"
+          property: "current_player_index"
+          value: "(current_player_index + 1) % player_count"
+```
+
+```kotlin
+// NarrativeSchema uses different triggers
+triggers:
+  - name: "story_progression_lock"
+    when:
+      action_type: "enter_room"
+    condition: "world.hasStoryFlag('key_found')"
+    reject_with: "The door is locked. You need a key."
+```
+
+**Key Principle**: The engine just processes triggers. Turn order, story locks, and action validation are ALL schema-defined trigger rules.
+
+### Rule 5: Tests Must Follow Same Boundaries
 
 **❌ VIOLATION:**
 ```kotlin
@@ -224,6 +282,8 @@ fun testGameSetup() {
    ❌ if (definition.hasObjectType("specific_type"))
    ❌ obj.getProperty("specific_property")
    ❌ createObject("specific_type")
+   ❌ currentPlayer, nextTurn(), canAct()
+   ❌ turnOrder, playerIndex, activePlayer
    ```
 
 3. **Import Check:**
