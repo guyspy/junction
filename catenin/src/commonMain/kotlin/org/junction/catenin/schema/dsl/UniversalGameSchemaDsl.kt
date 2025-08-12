@@ -1,8 +1,10 @@
 package org.junction.catenin.schema.dsl
 
+import org.junction.catenin.engine.InitializationConfig
+import org.junction.catenin.engine.SingletonObjectConfig
 import org.junction.catenin.model.definitions.*
 import org.junction.catenin.model.objects.ObjectInstance
-import org.junction.catenin.model.triggers.TriggerDefinition
+import org.junction.catenin.model.triggers.*
 import org.junction.catenin.model.values.*
 import org.junction.catenin.schema.UniversalGameSchema
 
@@ -14,6 +16,7 @@ class UniversalGameSchemaDslBuilder {
     private val objectTypes = mutableMapOf<String, ObjectTypeDefinition>()
     private val instances = mutableMapOf<String, ObjectInstance>()
     private val triggers = mutableListOf<TriggerDefinition>()
+    private var initialization: InitializationConfig? = null
     
     fun meta(block: GameMetaDslBuilder.() -> Unit) {
         meta = GameMetaDslBuilder().apply(block).build()
@@ -31,12 +34,17 @@ class UniversalGameSchemaDslBuilder {
         triggers.addAll(TriggersDslBuilder().apply(block).build())
     }
     
+    fun initialization(block: InitializationConfigDslBuilder.() -> Unit) {
+        initialization = InitializationConfigDslBuilder().apply(block).build()
+    }
+    
     fun build(): UniversalGameSchema {
         return UniversalGameSchema(
             meta = meta ?: throw IllegalStateException("Meta information is required"),
             objectTypes = objectTypes.toMap(),
             instances = instances.toMap(),
-            triggers = triggers.toList()
+            triggers = triggers.toList(),
+            initialization = initialization ?: InitializationConfig()
         )
     }
 }
@@ -192,13 +200,129 @@ class StringMapDslBuilder {
 }
 
 /**
- * Triggers DSL builder (basic structure for future implementation)
+ * Triggers DSL builder
  */
 class TriggersDslBuilder {
     private val triggers = mutableListOf<TriggerDefinition>()
     
-    // TODO: Implement trigger DSL when needed
+    fun trigger(name: String, block: TriggerDslBuilder.() -> Unit) {
+        triggers.add(TriggerDslBuilder(name).apply(block).build())
+    }
+    
     fun build(): List<TriggerDefinition> = triggers.toList()
+}
+
+/**
+ * Trigger DSL builder
+ */
+class TriggerDslBuilder(private val name: String) {
+    private var condition: TriggerCondition? = null
+    private val effects = mutableListOf<EffectDefinition>()
+    
+    fun `when`(block: TriggerConditionDslBuilder.() -> Unit) {
+        condition = TriggerConditionDslBuilder().apply(block).build()
+    }
+    
+    fun effects(block: EffectsDslBuilder.() -> Unit) {
+        effects.addAll(EffectsDslBuilder().apply(block).build())
+    }
+    
+    fun build(): TriggerDefinition {
+        return TriggerDefinition(
+            name = name,
+            `when` = condition ?: TriggerCondition(),
+            effects = effects.toList()
+        )
+    }
+}
+
+/**
+ * Trigger condition DSL builder
+ */
+class TriggerConditionDslBuilder {
+    var objectType: String? = null
+    var propertyChanged: String? = null
+    var newValue: String? = null
+    var condition: String? = null
+    
+    fun build(): TriggerCondition {
+        return TriggerCondition(
+            objectType = objectType,
+            propertyChanged = propertyChanged,
+            newValue = newValue,
+            condition = condition
+        )
+    }
+}
+
+/**
+ * Effects DSL builder
+ */
+class EffectsDslBuilder {
+    private val effects = mutableListOf<EffectDefinition>()
+    
+    fun modifyProperty(target: String, property: String, delta: String) {
+        effects.add(ModifyPropertyEffect(target, property, delta))
+    }
+    
+    // Note: There's no SetPropertyEffect in the current model.
+    // Use modifyProperty with a calculated delta to achieve similar effect.
+    
+    // Note: LogEffect removed - logging is handled by the application layer
+    
+    fun build(): List<EffectDefinition> = effects.toList()
+}
+
+/**
+ * Initialization config DSL builder
+ */
+class InitializationConfigDslBuilder {
+    var participantType: String? = null
+    var participantIdProperty: String? = null
+    private val singletonObjects = mutableListOf<SingletonObjectConfig>()
+    private val autoCreateInstances = mutableListOf<String>()
+    var createAllInstances: Boolean = false
+    
+    fun singleton(objectType: String, id: String, block: SingletonConfigDslBuilder.() -> Unit = {}) {
+        val config = SingletonConfigDslBuilder(objectType, id).apply(block).build()
+        singletonObjects.add(config)
+    }
+    
+    fun autoCreate(vararg instanceIds: String) {
+        autoCreateInstances.addAll(instanceIds)
+    }
+    
+    fun build(): InitializationConfig {
+        return InitializationConfig(
+            participantType = participantType,
+            participantIdProperty = participantIdProperty,
+            singletonObjects = singletonObjects.toList(),
+            autoCreateInstances = autoCreateInstances.toList(),
+            createAllInstances = createAllInstances
+        )
+    }
+}
+
+/**
+ * Singleton object config DSL builder
+ */
+class SingletonConfigDslBuilder(
+    private val objectType: String,
+    private val id: String
+) {
+    private val propertyOverrides = mutableMapOf<String, String>()
+    
+    fun properties(block: StringMapDslBuilder.() -> Unit) {
+        propertyOverrides.putAll(StringMapDslBuilder().apply(block).build())
+    }
+    
+    fun build(): SingletonObjectConfig {
+        return SingletonObjectConfig(
+            objectType = objectType,
+            id = id,
+            propertyOverrides = propertyOverrides.toMap()
+        )
+    }
 }
 
 /**

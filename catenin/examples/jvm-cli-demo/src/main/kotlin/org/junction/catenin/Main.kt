@@ -3,6 +3,8 @@ package org.junction.catenin
 import org.junction.catenin.core.*
 import org.junction.catenin.engine.GameEngine
 import org.junction.catenin.model.objects.GameObject
+import org.junction.catenin.model.triggers.LogEffect
+import org.junction.catenin.model.triggers.ModifyPropertyEffect
 import org.junction.catenin.model.values.*
 
 fun main() {
@@ -318,17 +320,41 @@ fun viewTriggers(engine: GameEngine) {
     
     println("\nActive Triggers:")
     schema.triggers.forEach { trigger ->
-        println("\n${trigger.name ?: "Unnamed Trigger"}:")
-        println("  When: ${trigger.`when`.objectType ?: "any"} object")
-        trigger.`when`.propertyChanged?.let {
-            println("        property '$it' changes")
+        println("\n🎯 ${trigger.name ?: "Unnamed Trigger"}:")
+        
+        val condition = trigger.`when`
+        val conditions = mutableListOf<String>()
+        
+        // Build condition description
+        if (condition.objectType != null) {
+            conditions.add("Object type: ${condition.objectType}")
         }
-        trigger.`when`.newValue?.let {
-            println("        to value '$it'")
+        if (condition.propertyChanged != null) {
+            conditions.add("Property: ${condition.propertyChanged}")
         }
+        if (condition.newValue != null) {
+            conditions.add("New value: ${condition.newValue}")
+        }
+        if (condition.condition != null) {
+            conditions.add("Expression: ${condition.condition}")
+        }
+        
+        if (conditions.isEmpty()) {
+            println("  When: Any property change")
+        } else {
+            println("  When:")
+            conditions.forEach { println("    - $it") }
+        }
+        
         println("  Effects:")
         trigger.effects.forEach { effect ->
-            println("    - $effect")
+            when (effect) {
+                is ModifyPropertyEffect -> println("    - Modify ${effect.property} by ${effect.delta} on ${effect.target}")
+                is LogEffect -> println("    - Log: \"${effect.message}\"")
+                else -> println("    - $effect")
+            }
         }
     }
+    
+    println("\n💡 Tip: Complex triggers use boolean expressions like 'source.health < 5 && source.armor > 0'")
 }

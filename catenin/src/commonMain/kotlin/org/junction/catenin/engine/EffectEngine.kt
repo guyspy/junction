@@ -28,7 +28,7 @@ class EffectEngine(
         return when (effect) {
             is LogEffect -> {
                 // Log effects don't generate world updates
-                // In a real implementation, this would emit a log event
+                // Applications can observe state changes and generate their own logs
                 emptyList()
             }
             
@@ -142,6 +142,7 @@ class EffectEngine(
 /**
  * Interface for resolving effect targets
  */
+@JsExport
 interface TargetResolver {
     fun resolveTargets(
         targetSpec: String,

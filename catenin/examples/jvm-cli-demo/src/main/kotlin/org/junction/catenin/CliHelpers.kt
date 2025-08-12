@@ -90,13 +90,28 @@ fun displayUnit(unit: GameObject, indent: String = "") {
     val attack = (unit.getProperty("attack") as? IntValue)?.value ?: 0
     val armor = (unit.getProperty("armor") as? IntValue)?.value ?: 0
     val tapped = (unit.getState("tapped") as? BoolValue)?.value ?: false
+    val berserk = (unit.getState("berserk") as? BoolValue)?.value ?: false
     
     val healthBar = createHealthBar(health, maxHealth)
-    val status = if (tapped) " [TAPPED]" else ""
+    val statusParts = mutableListOf<String>()
+    if (tapped) statusParts.add("TAPPED")
+    if (berserk) statusParts.add("🔥BERSERK")
+    val status = if (statusParts.isNotEmpty()) " [${statusParts.joinToString(", ")}]" else ""
     
     println("$indent${unit.id} - $unitType$status")
     println("$indent  Health: $healthBar $health/$maxHealth")
     println("$indent  Attack: $attack, Armor: $armor")
+    
+    // Show trigger-relevant warnings
+    if (health < 5 && armor < 3) {
+        println("$indent  ⚠️ Critical armor boost trigger ready!")
+    }
+    if (health <= 3 || attack > 7) {
+        println("$indent  🔥 Berserk trigger condition met!")
+    }
+    if (health == 1 && armor > 0) {
+        println("$indent  💚 Death prevention will activate!")
+    }
 }
 
 /**

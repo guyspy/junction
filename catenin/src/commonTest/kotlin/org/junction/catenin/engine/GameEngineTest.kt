@@ -83,18 +83,24 @@ class GameEngineTest {
             )
         )
         
+        val initConfig = InitializationConfig(
+            participantType = "participant",
+            createAllInstances = true
+        )
+        
         return UniversalGameSchema(
             meta = meta,
             objectTypes = objectTypes,
             instances = instances,
-            triggers = listOf(lowHealthTrigger)
+            triggers = listOf(lowHealthTrigger),
+            initialization = initConfig
         )
     }
     
     @Test
     fun testCreateGameEngine() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
         
         assertNotNull(engine)
         assertEquals(schema, engine.getSchema())
@@ -105,7 +111,7 @@ class GameEngineTest {
     @Test
     fun testInitializeGame() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
         
         val participantIds = listOf("player1", "player2")
         engine.initializeGame(participantIds)
@@ -128,7 +134,7 @@ class GameEngineTest {
     @Test
     fun testInitializeGameInvalidParticipantCount() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
         
         // Too few participants
         assertFailsWith<IllegalArgumentException> {
@@ -144,7 +150,7 @@ class GameEngineTest {
     @Test
     fun testCreateAndAddObject() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
             .initializeGame(listOf("player1", "player2"))
         
         // Create a new unit
@@ -166,7 +172,7 @@ class GameEngineTest {
     @Test
     fun testUpdatePropertyWithTrigger() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
             .initializeGame(listOf("player1", "player2"))
         
         // Create a unit
@@ -186,7 +192,7 @@ class GameEngineTest {
     @Test
     fun testRemoveObject() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
             .initializeGame(listOf("player1", "player2"))
         
         val unit = engine.createObject("unit")
@@ -205,7 +211,7 @@ class GameEngineTest {
     @Test
     fun testUpdateState() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
             .initializeGame(listOf("player1", "player2"))
         
         engine.updateState("player1", "turn_phase", StringValue("active"))
@@ -219,7 +225,7 @@ class GameEngineTest {
     @Test
     fun testApplyMultipleUpdates() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
             .initializeGame(listOf("player1", "player2"))
         
         val unit1 = engine.createObject("unit", id = "unit1")
@@ -242,7 +248,7 @@ class GameEngineTest {
     @Test
     fun testCreateFromInstance() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
         
         val starterUnit = engine.createFromInstance("starter_unit")
         engine.addObject(starterUnit)
@@ -257,7 +263,7 @@ class GameEngineTest {
     @Test
     fun testMethodChaining() {
         val schema = createTestSchema()
-        val engine = GameEngine.fromSchema(schema)
+        val engine = GameEngine.fromSchema(schema, schema.initialization)
             .initializeGame(listOf("player1", "player2"))
         
         val unit = engine.createObject("unit", id = "unit1")
