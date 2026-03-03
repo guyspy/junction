@@ -5,6 +5,9 @@ import org.junction.catenin.model.objects.GameObject
 import org.junction.catenin.model.triggers.EffectDefinition
 import org.junction.catenin.model.triggers.TriggerDefinition
 import org.junction.catenin.model.values.*
+import org.junction.catenin.protocol.AnimationHint
+import org.junction.catenin.protocol.BlockType
+import org.junction.catenin.protocol.EffectBlock
 import org.junction.catenin.schema.UniversalGameSchema
 import kotlin.js.JsExport
 
@@ -53,6 +56,45 @@ class TriggerEngine(
         return triggeredUpdates
     }
     
+    /**
+     * Evaluate all triggers for a world update and return EffectBlock children
+     * representing each triggered effect chain.
+     */
+    fun evaluateUpdateAsBlocks(world: GameWorld, update: WorldUpdate): List<EffectBlock> {
+        val blocks = mutableListOf<EffectBlock>()
+
+        when (update) {
+            is UpdatePropertyUpdate -> {
+                val obj = world.getObject(update.objectId) ?: return emptyList()
+                val updatedObj = obj.withProperty(update.propertyName, update.value)
+                val triggers = schema.getTriggersForPropertyChange(obj.type, update.propertyName)
+
+                triggers.forEach { trigger ->
+                    if (evaluateTriggerCondition(trigger, updatedObj, update.propertyName, update.value, world)) {
+                        val triggerUpdates = mutableListOf<WorldUpdate>()
+                        trigger.effects.forEach { effect ->
+                            triggerUpdates.addAll(generateEffectUpdates(effect, updatedObj, world))
+                        }
+                        blocks.add(
+                            EffectBlock(
+                                type = BlockType.TRIGGER,
+                                sourceId = trigger.name ?: update.objectId,
+                                updates = triggerUpdates,
+                                children = emptyList(),
+                                animationHints = emptyList()
+                            )
+                        )
+                    }
+                }
+            }
+            else -> {
+                // Other update types don't trigger effects yet
+            }
+        }
+
+        return blocks
+    }
+
     /**
      * Check if a trigger condition is satisfied
      */

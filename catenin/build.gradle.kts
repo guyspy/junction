@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    id("org.jetbrains.kotlinx.kover") version "0.8.3"
+    id("org.jetbrains.kotlinx.kover") version "0.9.7"
     id("maven-publish")
 }
 
@@ -99,11 +99,11 @@ kover {
         
         total {
             html {
-                onCheck = false
+                onCheck = true
                 htmlDir = layout.buildDirectory.dir("reports/kover/html")
             }
             xml {
-                onCheck = false
+                onCheck = true
                 xmlFile = layout.buildDirectory.file("reports/kover/result.xml")
             }
         }

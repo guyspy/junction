@@ -4,13 +4,13 @@ catenin = "1.0.0"
 occludin = "1.0.0"
 
 # Language versions
-kotlin = "2.1.21"
+kotlin = "2.3.10"
 java = "21"
-kotlinx-serialization = "1.7.3"
-kotlinx-coroutines = "1.9.0"
-kaml = "0.66.0"
-junit = "5.11.4"
-assertj = "3.26.3"
+kotlinx-serialization = "1.10.0"
+kotlinx-coroutines = "1.10.2"
+kaml = "0.104.0"
+junit = "5.14.2"
+assertj = "3.27.7"
 
 [libraries]
 catenin = { module = "org.junction.catenin:catenin", version.ref = "catenin" }

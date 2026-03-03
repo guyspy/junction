@@ -3,6 +3,10 @@ package org.junction.catenin.engine
 import org.junction.catenin.core.*
 import org.junction.catenin.factory.ObjectFactory
 import org.junction.catenin.model.objects.GameObject
+import org.junction.catenin.model.values.PropertyValue
+import org.junction.catenin.protocol.BlockType
+import org.junction.catenin.protocol.EffectBlock
+import org.junction.catenin.protocol.PlayerAction
 import org.junction.catenin.schema.UniversalGameSchema
 import kotlin.js.JsExport
 
@@ -68,6 +72,77 @@ class GameEngine(
         return this
     }
     
+    /**
+     * Apply a player action and return an EffectBlock tree representing
+     * the full causal chain (action + triggered effects).
+     * Also updates the world state.
+     */
+    fun applyAction(action: PlayerAction): EffectBlock {
+        val updates = actionToUpdates(action)
+        val childBlocks = mutableListOf<EffectBlock>()
+        var newWorld = currentWorld
+
+        updates.forEach { update ->
+            // Evaluate triggers before applying the update (triggers read old world state)
+            val triggerBlocks = triggerEngine.evaluateUpdateAsBlocks(newWorld, update)
+            childBlocks.addAll(triggerBlocks)
+
+            // Apply the primary update
+            newWorld = newWorld.applyUpdate(update)
+
+            // Apply all trigger-produced updates
+            triggerBlocks.forEach { triggerBlock ->
+                triggerBlock.updates.forEach { triggeredUpdate ->
+                    newWorld = newWorld.applyUpdate(triggeredUpdate)
+                }
+            }
+        }
+
+        currentWorld = newWorld
+
+        return EffectBlock(
+            type = BlockType.ACTION,
+            sourceId = action.sourceId,
+            updates = updates,
+            children = childBlocks,
+            animationHints = emptyList()
+        )
+    }
+
+    /**
+     * Convert a PlayerAction into WorldUpdate(s).
+     */
+    private fun actionToUpdates(action: PlayerAction): List<WorldUpdate> {
+        return when (action.type) {
+            "update_property" -> {
+                val targetId = action.targetId ?: return emptyList()
+                val propertyName = action.metadata["property"] ?: return emptyList()
+                val valueStr = action.metadata["value"] ?: return emptyList()
+                val targetObj = currentWorld.getObject(targetId) ?: return emptyList()
+                val currentValue = targetObj.getProperty(propertyName) ?: return emptyList()
+                val newValue = parseActionValue(valueStr, currentValue)
+                listOf(UpdatePropertyUpdate(targetId, propertyName, newValue))
+            }
+            else -> emptyList()
+        }
+    }
+
+    /**
+     * Parse a string value into a PropertyValue matching the type of the current value.
+     */
+    private fun parseActionValue(valueStr: String, currentValue: PropertyValue): PropertyValue {
+        return when (currentValue) {
+            is org.junction.catenin.model.values.IntValue ->
+                org.junction.catenin.model.values.IntValue(valueStr.toIntOrNull() ?: 0)
+            is org.junction.catenin.model.values.StringValue ->
+                org.junction.catenin.model.values.StringValue(valueStr)
+            is org.junction.catenin.model.values.BoolValue ->
+                org.junction.catenin.model.values.BoolValue(valueStr.toBoolean())
+            is org.junction.catenin.model.values.ObjectRefValue ->
+                org.junction.catenin.model.values.ObjectRefValue(valueStr)
+        }
+    }
+
     /**
      * Get the current game world state
      */

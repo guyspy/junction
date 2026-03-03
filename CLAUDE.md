@@ -246,40 +246,57 @@ ai_hints:
     harder: {damage_max: 7, health: 10}
 ```
 
-## Game Definition Format
+## Game Definition Format (Universal YAML Schema)
 
-Standard YAML structure for game definitions:
+The engine uses a universal YAML schema where all game concepts are expressed through generic object/property/trigger patterns. See `/docs/catenin/universal-yaml-schema.md` for the full specification.
+
+**Note:** YAML field names use camelCase (matching Kotlin serialization): `objectTypes`, `objectType`, `targetAge`, `participantCount`, `propertyChanged`, etc.
 
 ```yaml
 meta:
   name: "Game Name"
-  target_age: [8, 12]
-  player_count: [2, 4]
+  targetAge: [8, 12]
+  participantCount: [2, 4]
 
-cards:
-  card_type_name:
-    count: 10
+objectTypes:                      # Define object templates
+  unit:
     properties:
-      property_name: {type: int, min: 1, max: 5}
-    events:
-      on_play:
-        action: "action_name"
-        target: "target_type"
+      health: {type: INT, initial: 100, min: 0, max: 200}
+      name: {type: STRING, initial: "Default"}
+    states:
+      alive: {type: BOOL, initial: true}
 
-mechanics:
-  setup:
-    players:
-      health: 10
-      hand_size: 5
-  win_conditions:
-    - type: "health_depleted"
-      message: "{winner} wins!"
+instances:                        # Predefined object instances
+  warrior:
+    objectType: "unit"
+    properties:
+      name: "Warrior"
+      health: "120"
 
-ai_hints:
-  difficulty_factors: [list of YAML paths]
-  common_modifications:
-    easier: {modifications}
-    harder: {modifications}
+triggers:                         # Global triggers (on property changes)
+  - name: "defeat_check"
+    when:
+      objectType: unit
+      propertyChanged: "health"
+      newValue: "0"
+    effects:
+      - log: "Unit defeated!"
+      - modifyProperty:
+          target: {id: "this"}
+          property: "alive"
+          value: "false"
+
+setup:                            # Initialization rules
+  worldInitialization:
+    - createObjects:
+        count: 1
+        objectType: "board"
+  participantInitialization:
+    - createObjects:
+        count: 1
+        objectType: "unit"
+        properties:
+          participantId: "{participant_id}"
 ```
 
 ## Testing Approach
