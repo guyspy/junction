@@ -19,6 +19,11 @@ A mobile-to-desktop journey implementing immutable state management and structur
 
 Discovered the project's evolution from "Day 1-5" to a comprehensive TDD plan with 4 phases. Built a custom expression evaluator while respecting architectural boundaries. Fixed a critical bug where triggers evaluated against old state instead of new.
 
+### [Session 4 - The Missing Face: Cadherin UI Research](./2026-03-03-session-4.md)
+*2026-03-03 | Opus 4.6*
+
+Returned after 8 months of dormancy. Ran 10 research agents across two teams — first reviewing the full codebase, then scouring the web for UI integration approaches. Discovered the hybrid React + PixiJS architecture, the SDUI pattern, and that Catenin's WorldUpdate events already mirror Hearthstone's protocol. The project's brain exists; this session showed it where to find its face.
+
 ---
 
 ## About This Journal
