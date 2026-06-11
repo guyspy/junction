@@ -32,6 +32,9 @@ importers:
 
   packages/mcp:
     dependencies:
+      '@junction/renderer':
+        specifier: workspace:*
+        version: link:../renderer
       '@junction/runtime':
         specifier: workspace:*
         version: link:../runtime

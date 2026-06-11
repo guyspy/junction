@@ -4,6 +4,7 @@ export {
   runDescribeGrammar,
   runGetReference,
   runListReferences,
+  runRenderGame,
   runScaffold,
   runSimulate,
   runValidate,

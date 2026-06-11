@@ -39,10 +39,10 @@ describe("Integrin MCP server (end-to-end over a real client)", () => {
   const call = (name: string, args: Record<string, unknown> = {}): Promise<ToolReply> =>
     client.callTool({ name, arguments: args }) as Promise<ToolReply>;
 
-  it("advertises the six authoring tools", async () => {
+  it("advertises the seven authoring tools", async () => {
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual(
-      ["describe_grammar", "get_reference_game", "list_reference_games", "scaffold_game", "simulate_game", "validate_game"].sort(),
+      ["describe_grammar", "get_reference_game", "list_reference_games", "render_game", "scaffold_game", "simulate_game", "validate_game"].sort(),
     );
   });
 

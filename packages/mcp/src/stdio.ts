@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readdirSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { parseGameDocument } from "@junction/spec";
@@ -41,13 +42,24 @@ function loadReferenceGames(): ReferenceGame[] {
   return out;
 }
 
+function loadRendererBundle(): string | undefined {
+  try {
+    const require = createRequire(import.meta.url);
+    return readFileSync(require.resolve("@junction/renderer/standalone.js"), "utf8");
+  } catch {
+    console.error("integrin: renderer bundle unavailable — render_game disabled.");
+    return undefined;
+  }
+}
+
 async function main(): Promise<void> {
   const referenceGames = loadReferenceGames();
-  const server = buildIntegrinServer({ referenceGames });
+  const rendererBundle = loadRendererBundle();
+  const server = buildIntegrinServer({ referenceGames, rendererBundle });
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(
-    `integrin: ready over stdio — ${referenceGames.length} reference game(s): ${referenceGames.map((r) => r.name).join(", ") || "none"}`,
+    `integrin: ready over stdio — ${referenceGames.length} reference game(s): ${referenceGames.map((r) => r.name).join(", ") || "none"}${rendererBundle !== undefined ? " · render_game enabled" : ""}`,
   );
 }
 

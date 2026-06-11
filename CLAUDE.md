@@ -37,7 +37,7 @@ packages/renderer  @junction/renderer — Cadherin: framework-free accessible DO
                                         single-file HTML. Browser-only: NO node imports.
 packages/mcp       @junction/mcp      — Integrin: the MCP server. Tools (describe_grammar,
                                         list/get_reference_game, scaffold_game, validate_game,
-                                        simulate_game) wrap pure functions; reference corpus is
+                                        simulate_game, render_game → ui:// playable pages) wrap pure functions; reference corpus is
                                         injected (DI) so tools stay Workers-portable. stdio entry +
                                         SDK. Imports spec+runtime.
 packages/cli       @junction/cli      — validate/simulate/play/render CLI. `render` emits a

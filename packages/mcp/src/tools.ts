@@ -1,5 +1,6 @@
 import { parseGameDocument, type Diagnostic } from "@junction/spec";
 import { simulate, type SimulateReport } from "@junction/runtime";
+import { buildGamePageHtml, computeQaBadges } from "@junction/renderer";
 import { describeGrammar, type GrammarReference } from "./grammar-reference.js";
 import { scaffoldGame, type ScaffoldInput } from "./scaffold.js";
 
@@ -129,6 +130,83 @@ export function runGetReference(refs: readonly ReferenceGame[], name: string): T
       structured: {},
     };
   return { ok: true, summary: `Reference game '${found.name}' (${found.title}).`, structured: { name: found.name, yaml: found.yaml } };
+}
+
+export interface RenderInput {
+  /** A full GameSpec YAML, or omit and pass `game` to render a reference game. */
+  readonly yaml?: string;
+  readonly game?: string;
+  readonly seed?: string;
+}
+
+export interface RenderOutput {
+  readonly ok: boolean;
+  readonly name?: string;
+  readonly badges?: readonly string[];
+  readonly bytes?: number;
+  readonly diagnostics?: readonly Diagnostic[];
+}
+
+export interface RenderedPage {
+  readonly result: ToolResult<RenderOutput>;
+  /** The playable HTML — returned as a ui:// resource, never inside structured content. */
+  readonly html?: string;
+  readonly uri?: string;
+}
+
+/**
+ * The MCP Apps spike (extension ratified 2026-01-26): render a GameSpec into the same
+ * self-contained playable page `junction render` emits, returned as a `ui://` text/html
+ * resource an Apps-capable host (Claude, ChatGPT, Goose…) can open in its sandboxed
+ * iframe. The internal contract is untouched — packaging, not protocol.
+ */
+export function runRenderGame(
+  refs: readonly ReferenceGame[],
+  rendererBundle: string | undefined,
+  input: RenderInput,
+): RenderedPage {
+  if (rendererBundle === undefined)
+    return {
+      result: {
+        ok: false,
+        summary: "Rendering is not available on this deployment (no renderer bundle was injected).",
+        structured: { ok: false },
+      },
+    };
+  const yaml = input.yaml ?? refs.find((r) => r.name === input.game)?.yaml;
+  if (yaml === undefined)
+    return {
+      result: {
+        ok: false,
+        summary: `Pass \`yaml\`, or \`game\` as one of: ${refs.map((r) => r.name).join(", ")}.`,
+        structured: { ok: false },
+      },
+    };
+  const parsed = parseGameDocument(yaml, { file: "<render>" });
+  if (!parsed.ok)
+    return {
+      result: {
+        ok: false,
+        summary: "Cannot render — the game is invalid. Run validate_game first.",
+        structured: { ok: false, diagnostics: parsed.diagnostics },
+      },
+    };
+
+  const badges = computeQaBadges(parsed.data, { games: 200, seed: input.seed ?? "render" });
+  const html = buildGamePageHtml({ doc: parsed.data, yaml, bundleJs: rendererBundle, badges });
+  const name = parsed.data.metadata.name;
+  return {
+    result: {
+      ok: true,
+      summary:
+        `Rendered '${name}' as a playable page (${Math.round(html.length / 1024)} KB) — ` +
+        `badges: ${badges.join(" · ")}. Hosts with MCP Apps support can open the attached ui:// resource; ` +
+        `it is also a complete standalone HTML file.`,
+      structured: { ok: true, name, badges, bytes: html.length },
+    },
+    html,
+    uri: `ui://junction/games/${name}`,
+  };
 }
 
 function clamp(n: number, lo: number, hi: number): number {

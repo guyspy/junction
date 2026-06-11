@@ -13,7 +13,7 @@ const RULES = {
   // Cadherin: the DOM renderer. Browser-only — no node imports, ever.
   renderer: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
   // Integrin: the MCP server. Imports spec+runtime; the SDK + stdio transport need node.
-  mcp: { allow: ["@junction/spec", "@junction/runtime"], allowNode: true, sideEffectsFree: false },
+  mcp: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
   cli: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
 };
 const FORBIDDEN_EVERYWHERE = [/@cloudflare\//, /\bworkerd\b/];
