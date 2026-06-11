@@ -1,0 +1,27 @@
+{
+  "name": "@junction/mcp",
+  "version": "0.0.1-alpha.0",
+  "description": "Integrin — the Junction MCP server: scaffold, validate, simulate, and playtest games as agent tools.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "junction-mcp": "./dist/stdio.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@junction/runtime": "workspace:*",
+    "@junction/spec": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "yaml": "^2.6.0",
+    "zod": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
