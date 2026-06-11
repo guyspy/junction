@@ -47,6 +47,30 @@ export type GameEvent = { readonly seq: number } & (
       readonly matched: boolean;
       readonly bySeat: number;
     }
+  | {
+      readonly type: "propertyChanged";
+      readonly pieceId: string;
+      readonly property: string;
+      readonly from: number;
+      readonly to: number;
+      readonly bySeat: number | null;
+    }
+  | {
+      readonly type: "varChanged";
+      readonly scope: "global" | "seat";
+      readonly var: string;
+      /** The owning seat for seat-scoped variables. */
+      readonly seat: number | null;
+      readonly from: number;
+      readonly to: number;
+    }
+  | {
+      readonly type: "diceRolled";
+      readonly seat: number;
+      readonly var: string;
+      readonly sides: number;
+      readonly value: number;
+    }
   | { readonly type: "turnSkipped"; readonly seat: number; readonly phase: string }
   | {
       readonly type: "gameEnded";

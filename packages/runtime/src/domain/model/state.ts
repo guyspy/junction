@@ -30,6 +30,10 @@ export interface GameState {
   /** zone instance key → ordered entries ("top" = last element). */
   readonly zones: Readonly<Record<string, readonly ZoneEntry[]>>;
   readonly pieces: Readonly<Record<string, PieceInstance>>;
+  /** Global integer variables (Wave 1). */
+  readonly vars: Readonly<Record<string, number>>;
+  /** Per-seat integer variables: var name → value per seat index. */
+  readonly seatVars: Readonly<Record<string, readonly number[]>>;
   readonly winnerSeat: number | null;
   /** Next event sequence number. */
   readonly seq: number;

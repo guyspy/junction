@@ -1,0 +1,67 @@
+# Math Duel — the first Wave-1 game: health, mana, costs, and damage.
+# Each strike costs its rank in mana and deals its rank in damage. You can't
+# afford everything — budgeting the mana IS the arithmetic lesson. When someone
+# falls to 0 health (or nobody can afford another strike), highest health wins.
+apiVersion: games.junction.aotter.net/v1alpha1
+kind: Game
+metadata:
+  name: math-duel
+spec:
+  meta:
+    title: "Math Duel"
+    description: >-
+      Spend mana to strike: a card costs its rank and deals its rank.
+      Budget 20 mana against 12 health — subtraction under pressure.
+    seats: { min: 2, max: 2 }
+    estMinutes: 8
+
+  variables:
+    perSeat:
+      health: { initial: 12 }
+      mana: { initial: 20 }
+
+  zones:
+    - { name: armory, owner: shared, visibility: none }
+    - { name: hand, owner: seat, visibility: owner }
+    - { name: pot, owner: shared, visibility: all }
+
+  pieces:
+    - name: attack-card
+      properties:
+        rank: { type: int }
+      generate:
+        cartesian:
+          rank: [1, 2, 3, 4, 5, 6, 7, 8]
+      copies: 2
+
+  setup:
+    - { op: create, pieces: attack-card, into: armory }
+    - { op: shuffle, zone: armory }
+    - { op: deal, from: armory, to: hand, count: all }
+
+  turn:
+    order: roundRobin
+    phases:
+      - { name: strike, actions: [strike] }
+
+  actions:
+    - name: strike
+      move:
+        from: { zone: hand, owner: actor }
+        take: chosen
+        to: { zone: pot }
+        reveal: true
+      cost: { var: mana, amount: "target.rank" }
+
+  triggers:
+    - name: deal-damage
+      on: { event: pieceMoved, intoZone: pot, pieceSet: attack-card }
+      effects:
+        - addVar: { scope: opponent, var: health, amount: "0 - this.rank" }
+
+  end:
+    when: "seatVars.health.min <= 0"
+    winner: { highestSeatVar: health }
+
+  presentation:
+    theme: { table: slate, accent: lime, motion: lively, sound: arcade }

@@ -104,6 +104,57 @@ describe("v1alpha grammar extensions", () => {
     expect(codes(bad.diagnostics)).toContain("SCHEMA_VALIDATION_FAILED");
   });
 
+  it("Wave 1: variables, costs, and scoped expressions lint correctly", () => {
+    const wave1 = base
+      .replace(
+        "spec:",
+        `spec:
+  variables:
+    perSeat: { mana: { initial: 5 } }
+    global: { pool: { initial: 0 } }`,
+      )
+      .replace(
+        "flip: { zone: { zone: grid }, target: chosen, direction: faceUp }",
+        `flip: { zone: { zone: grid }, target: chosen, direction: faceUp }
+      cost: { var: mana, amount: 1 }`,
+      );
+    expect(parseGameDocument(wave1).ok).toBe(true);
+
+    // Unknown variable → VAR_REF_UNKNOWN with candidates.
+    const badVar = wave1.replace("cost: { var: mana, amount: 1 }", "cost: { var: gold, amount: 1 }");
+    const r1 = parseGameDocument(badVar);
+    expect(!r1.ok && codes(r1.diagnostics)).toContain("VAR_REF_UNKNOWN");
+
+    // seat.* is illegal in end conditions (no actor exists there).
+    const badEnd = wave1.replace('when: "zones.grid.allEmpty"', 'when: "seat.mana <= 0"');
+    const r2 = parseGameDocument(badEnd);
+    expect(!r2.ok && r2.diagnostics.some((d) => d.code === "EXPRESSION_REF_INVALID" && d.expected?.includes("end conditions"))).toBe(true);
+
+    // seatVars aggregates ARE legal in end conditions.
+    const aggEnd = wave1.replace('when: "zones.grid.allEmpty"', 'when: "seatVars.mana.sum <= 0"');
+    expect(parseGameDocument(aggEnd).ok).toBe(true);
+
+    // target.* requires a chosen-target action.
+    const topAction = wave1.replace(
+      `flip: { zone: { zone: grid }, target: chosen, direction: faceUp }
+      cost: { var: mana, amount: 1 }`,
+      `move: { from: { zone: grid }, to: { zone: won, owner: actor } }
+      requires: "target.value > 1"`,
+      );
+    const r3 = parseGameDocument(topAction);
+    expect(!r3.ok && r3.diagnostics.some((d) => d.expected?.includes("chosen-target"))).toBe(true);
+
+    // opponent scope demands an exactly-two-seat game.
+    const wideSeats = wave1
+      .replace("seats: { min: 2, max: 2 }", "seats: { min: 2, max: 4 }")
+      .replace(
+        "- resolveEqualPair: { zone: grid, property: value, toZone: won, onMatch: goAgain, onMismatch: flipDown }",
+        "- addVar: { scope: opponent, var: mana, amount: 1 }",
+      );
+    const r4 = parseGameDocument(wideSeats);
+    expect(!r4.ok && r4.diagnostics.some((d) => d.expected?.includes("exactly 2"))).toBe(true);
+  });
+
   it("rejects resolveEqualPair on a non-shared zone", () => {
     const bad = base.replace(
       "resolveEqualPair: { zone: grid, property: value, toZone: won, onMatch: goAgain, onMismatch: flipDown }",

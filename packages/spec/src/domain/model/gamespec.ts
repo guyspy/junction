@@ -54,6 +54,19 @@ const setupOp = z.discriminatedUnion("op", [
   }),
 ]);
 
+// ---- variables (Wave 1: the mutable world) ---------------------------------
+/** Integer variables: global, or one instance per seat (health, mana, score, flags). */
+const varDecl = z.strictObject({ initial: z.number().int() });
+const variablesDecl = z.strictObject({
+  global: z.record(name, varDecl).default({}),
+  perSeat: z.record(name, varDecl).default({}),
+});
+
+/** Who a variable effect touches. `opponent` is two-seat vocabulary (linted). */
+const varScope = z.enum(["global", "actor", "opponent"]);
+/** Effect amounts: an int literal or a total expression (may use this.X, seat.X, vars.X). */
+const amount = z.union([z.number().int(), z.string()]);
+
 // ---- turn / actions -------------------------------------------------------
 const zoneSel = z.strictObject({
   zone: name,
@@ -81,8 +94,10 @@ const actionDecl = z
         direction: z.enum(["faceUp"]),
       })
       .optional(),
-    /** Extra legality condition (total expression). Implicit: a valid source piece must exist. */
+    /** Extra legality condition (total expression; `target.*` is the chosen piece). */
     requires: z.string().optional(),
+    /** Spend a per-seat variable to act: legality requires balance >= amount. */
+    cost: z.strictObject({ var: name, amount }).optional(),
   })
   .refine((a) => (a.move !== undefined) !== (a.flip !== undefined), {
     message: "an action declares exactly one of: move, flip",
@@ -102,6 +117,29 @@ const turnDecl = z.strictObject({
 const effectDecl = z.union([
   z.strictObject({
     moveAll: z.strictObject({ from: zoneSel, to: zoneSel }),
+  }),
+  z.strictObject({
+    /** Mutate an int property of the piece that fired the trigger (`this`). */
+    modifyProperty: z
+      .strictObject({
+        target: z.enum(["this"]),
+        property: z.string(),
+        add: amount.optional(),
+        set: amount.optional(),
+      })
+      .refine((m) => (m.add !== undefined) !== (m.set !== undefined), {
+        message: "modifyProperty takes exactly one of: add, set",
+      }),
+  }),
+  z.strictObject({
+    setVar: z.strictObject({ scope: varScope, var: name, value: amount }),
+  }),
+  z.strictObject({
+    addVar: z.strictObject({ scope: varScope, var: name, amount }),
+  }),
+  z.strictObject({
+    /** Roll a die (runtime RNG): sets the variable and emits diceRolled. */
+    roll: z.strictObject({ scope: varScope, var: name, sides: z.number().int().min(2) }),
   }),
   z.strictObject({
     /**
@@ -136,11 +174,17 @@ const effectDecl = z.union([
 const triggerDecl = z.strictObject({
   name,
   on: z.strictObject({
-    event: z.enum(["pieceMoved", "pieceFlipped"]),
+    event: z.enum(["pieceMoved", "pieceFlipped", "propertyChanged", "varChanged"]),
     /** pieceMoved filter: the destination zone. */
     intoZone: name.optional(),
     /** pieceFlipped filter: the zone the piece lies in. */
     inZone: name.optional(),
+    /** Piece-event filter: only pieces from this set (per-card behavior, the cheap way). */
+    pieceSet: name.optional(),
+    /** propertyChanged filter: which property. */
+    property: z.string().optional(),
+    /** varChanged filter: which variable. */
+    var: name.optional(),
   }),
   when: z.string().optional(),
   effects: z.array(effectDecl).min(1),
@@ -172,10 +216,16 @@ const presentationDecl = z.strictObject({
 });
 
 // ---- end ------------------------------------------------------------------
-const winnerRule = z.strictObject({
-  /** Winner = seat with the most pieces in its instance of this owner zone. Tie ⇒ draw. */
-  mostPiecesIn: name,
-});
+const winnerRule = z.union([
+  z.strictObject({
+    /** Winner = seat with the most pieces in its instance of this owner zone. Tie ⇒ draw. */
+    mostPiecesIn: name,
+  }),
+  z.strictObject({
+    /** Winner = seat with the highest value of this per-seat variable. Tie ⇒ draw. */
+    highestSeatVar: name,
+  }),
+]);
 
 const endDecl = z.strictObject({
   when: z.string(),
@@ -195,6 +245,7 @@ export const gameSpecSchema = z.strictObject({
   }),
   zones: z.array(zoneDecl).min(1),
   pieces: z.array(pieceDecl).min(1),
+  variables: variablesDecl.prefault({}),
   setup: z.array(setupOp).min(1),
   turn: turnDecl,
   actions: z.array(actionDecl).min(1),

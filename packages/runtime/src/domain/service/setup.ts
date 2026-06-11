@@ -94,6 +94,12 @@ export function buildInitialState(doc: GameDocument, seats: number, rng: Rng): S
     { seq: 2, type: "turnStarted", seat: 0, round: 1 },
   ];
 
+  const vars: Record<string, number> = {};
+  for (const [varName, decl] of Object.entries(spec.variables.global)) vars[varName] = decl.initial;
+  const seatVars: Record<string, number[]> = {};
+  for (const [varName, decl] of Object.entries(spec.variables.perSeat))
+    seatVars[varName] = new Array<number>(seats).fill(decl.initial);
+
   const state: GameState = {
     status: "running",
     seats,
@@ -102,6 +108,8 @@ export function buildInitialState(doc: GameDocument, seats: number, rng: Rng): S
     phaseIndex: 0,
     zones,
     pieces,
+    vars,
+    seatVars,
     winnerSeat: null,
     seq: events.length,
     consecutiveSkips: 0,

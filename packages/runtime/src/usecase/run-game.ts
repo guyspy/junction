@@ -36,6 +36,7 @@ export function runGame(doc: GameDocument, options: RunGameOptions): RunGameResu
   const chooser = options.chooser ?? randomChooser;
   const setupRng = createRng(`${options.seed}:setup`);
   const botRng = createRng(`${options.seed}:bot`);
+  const diceRng = createRng(`${options.seed}:dice`);
 
   const setup = buildInitialState(doc, options.seats, setupRng);
   let state = setup.state;
@@ -50,7 +51,7 @@ export function runGame(doc: GameDocument, options: RunGameOptions): RunGameResu
       events.push(...result.events);
     } else {
       const move = chooser(legal, botRng);
-      const result = applyAction(state, doc.spec, { seat: state.activeSeat, ...move });
+      const result = applyAction(state, doc.spec, { seat: state.activeSeat, ...move }, diceRng);
       if (!result.ok) {
         // The chooser picked from `legal`, so this is an engine bug — surface loudly.
         throw new Error(`reducer rejected a legal move: ${result.diagnostics[0]?.message}`);

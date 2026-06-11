@@ -37,6 +37,18 @@ export interface MoveButtonVM {
   readonly label: string;
 }
 
+export interface StatVM {
+  readonly name: string;
+  readonly value: number;
+}
+
+export interface SeatStatsVM {
+  readonly seat: number;
+  readonly mine: boolean;
+  readonly title: string;
+  readonly stats: readonly StatVM[];
+}
+
 export interface ViewModel {
   readonly title: string;
   readonly statusLine: string;
@@ -46,6 +58,10 @@ export interface ViewModel {
   readonly zones: readonly ZoneVM[];
   /** Untargeted legal moves render as buttons; targeted ones attach to their cards. */
   readonly buttons: readonly MoveButtonVM[];
+  /** Per-seat variables (health, mana, score…) — Wave 1's mutable world, visible. */
+  readonly seatStats: readonly SeatStatsVM[];
+  /** Global variables, if any. */
+  readonly globalStats: readonly StatVM[];
 }
 
 const RANK_NAMES: Record<number, string> = { 11: "jack", 12: "queen", 13: "king", 14: "ace" };
@@ -154,6 +170,21 @@ export function buildViewModel(doc: GameDocument, state: GameState, viewerSeat: 
       ? `Round ${state.round} — your turn (${phase.replace(/-/g, " ")})`
       : `Round ${state.round} — seat ${state.activeSeat} is thinking…`;
 
+  const seatVarNames = Object.keys(doc.spec.variables.perSeat);
+  const seatStats: SeatStatsVM[] =
+    seatVarNames.length === 0
+      ? []
+      : Array.from({ length: state.seats }, (_, seat) => ({
+          seat,
+          mine: seat === viewerSeat,
+          title: seat === viewerSeat ? "you" : `seat ${seat}`,
+          stats: seatVarNames.map((name) => ({ name, value: state.seatVars[name]?.[seat] ?? 0 })),
+        }));
+  const globalStats: StatVM[] = Object.keys(doc.spec.variables.global).map((name) => ({
+    name,
+    value: state.vars[name] ?? 0,
+  }));
+
   return {
     title: doc.spec.meta.title,
     statusLine,
@@ -162,5 +193,7 @@ export function buildViewModel(doc: GameDocument, state: GameState, viewerSeat: 
     winnerText,
     zones,
     buttons,
+    seatStats,
+    globalStats,
   };
 }
