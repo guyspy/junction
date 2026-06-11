@@ -10,9 +10,11 @@ import { join } from "node:path";
 const RULES = {
   spec: { allow: [], allowNode: false, sideEffectsFree: true },
   runtime: { allow: ["@junction/spec"], allowNode: false, sideEffectsFree: true },
+  // Cadherin: the DOM renderer. Browser-only — no node imports, ever.
+  renderer: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
   // Integrin: the MCP server. Imports spec+runtime; the SDK + stdio transport need node.
   mcp: { allow: ["@junction/spec", "@junction/runtime"], allowNode: true, sideEffectsFree: false },
-  cli: { allow: ["@junction/spec", "@junction/runtime"], allowNode: true, sideEffectsFree: false },
+  cli: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
 };
 const FORBIDDEN_EVERYWHERE = [/@cloudflare\//, /\bworkerd\b/];
 

@@ -30,12 +30,18 @@ packages/spec      @junction/spec     — GameSpec grammar (Zod), manifest parse
 packages/runtime   @junction/runtime  — pure reducer (state, action) → {state', events[]}, seeded RNG,
                                         trigger engine, per-seat projection, simulate. Imports
                                         @junction/spec ONLY. No node:/platform imports in src/.
+packages/renderer  @junction/renderer — Cadherin: framework-free accessible DOM renderer.
+                                        Pure view-model (semantics → zone presentation), announcer
+                                        (events → ARIA live narration), procedural SVG card art,
+                                        FLIP animation, standalone IIFE bundle (esbuild) for
+                                        single-file HTML. Browser-only: NO node imports.
 packages/mcp       @junction/mcp      — Integrin: the MCP server. Tools (describe_grammar,
                                         list/get_reference_game, scaffold_game, validate_game,
                                         simulate_game) wrap pure functions; reference corpus is
                                         injected (DI) so tools stay Workers-portable. stdio entry +
                                         SDK. Imports spec+runtime.
-packages/cli       @junction/cli      — validate/simulate/play CLI. May import spec+runtime+node:.
+packages/cli       @junction/cli      — validate/simulate/play/render CLI. `render` emits a
+                                        self-contained playable HTML file with QA badges.
 games/                                — reference GameSpecs (YAML) + golden replays.
 skills/game-designer/SKILL.md         — the agent authoring guide (onboarding trinity).
 scripts/check-boundaries.mjs          — enforces the above. CI fails on violation.

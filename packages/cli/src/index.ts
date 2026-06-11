@@ -1,13 +1,15 @@
 #!/usr/bin/env node
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { formatDiagnosticText, parseGameDocument, type Diagnostic } from "@junction/spec";
 import { simulate, type SimulateReport } from "@junction/runtime";
 import { runPlay } from "./play.js";
+import { renderGameHtml } from "./render.js";
 
 /**
  * junction validate <file> [--format json|text]
  * junction simulate <file> [--games N] [--seed S] [--seats N] [--max-turns M] [--format json|text]
  * junction play <file> [--seat N] [--seats N] [--seed S]
+ * junction render <file> [--out file.html] [--seed S]
  * Exit codes: 0 ok, 1 diagnostics with errors / failed run, 2 usage.
  */
 
@@ -18,6 +20,7 @@ interface Flags {
   readonly seats?: number;
   readonly seat: number;
   readonly maxTurns: number;
+  readonly out?: string;
 }
 
 function parseFlags(args: readonly string[]): { positional: string[]; flags: Flags } {
@@ -28,6 +31,7 @@ function parseFlags(args: readonly string[]): { positional: string[]; flags: Fla
   let seats: number | undefined;
   let seat = 0;
   let maxTurns = 1000;
+  let out: string | undefined;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
     const next = (): string => {
@@ -44,11 +48,12 @@ function parseFlags(args: readonly string[]): { positional: string[]; flags: Fla
     else if (arg === "--seats") seats = Number(next());
     else if (arg === "--seat") seat = Number(next());
     else if (arg === "--max-turns") maxTurns = Number(next());
+    else if (arg === "--out" || arg === "-o") out = next();
     else if (arg.startsWith("--")) usage(`unknown flag ${arg}`);
     else positional.push(arg);
   }
   const resolvedFormat = format ?? (process.stdout.isTTY ? "text" : "json");
-  return { positional, flags: { format: resolvedFormat, games, seed, seats, seat, maxTurns } };
+  return { positional, flags: { format: resolvedFormat, games, seed, seats, seat, maxTurns, out } };
 }
 
 function usage(reason?: string): never {
@@ -58,6 +63,8 @@ function usage(reason?: string): never {
       "Usage:",
       "  junction validate <file.yaml> [--format json|text]",
       "  junction simulate <file.yaml> [--games N] [--seed S] [--seats N] [--max-turns M] [--format json|text]",
+      "  junction play     <file.yaml> [--seat N] [--seats N] [--seed S]",
+      "  junction render   <file.yaml> [--out file.html] [--seed S]",
     ].join("\n"),
   );
   process.exit(2);
@@ -86,7 +93,7 @@ function printReport(report: SimulateReport, format: "json" | "text"): void {
 
 async function main(): Promise<void> {
   const [command, ...rest] = process.argv.slice(2);
-  if (command !== "validate" && command !== "simulate" && command !== "play") usage();
+  if (command !== "validate" && command !== "simulate" && command !== "play" && command !== "render") usage();
   const { positional, flags } = parseFlags(rest);
   const file = positional[0];
   if (file === undefined) usage("missing <file.yaml>");
@@ -121,6 +128,20 @@ async function main(): Promise<void> {
     if (flags.seat < 0 || flags.seat >= seats) usage(`--seat must be in [0, ${seats - 1}]`);
     const code = await runPlay(parsed.data, { seats, seat: flags.seat, seed: flags.seed });
     process.exit(code);
+  }
+
+  if (command === "render") {
+    const outFile = flags.out ?? `${parsed.data.metadata.name}.html`;
+    const { html, badges } = renderGameHtml({
+      doc: parsed.data,
+      yaml: text,
+      badgeGames: 400,
+      seed: flags.seed,
+    });
+    writeFileSync(outFile, html);
+    const kb = (Buffer.byteLength(html) / 1024).toFixed(0);
+    console.log(`✓ rendered ${outFile} (${kb} KB, self-contained) — badges: ${badges.join(" · ")}`);
+    return;
   }
 
   const report = simulate(parsed.data, {

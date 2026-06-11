@@ -13,11 +13,22 @@ export interface ProjectedPiece {
   readonly pieceId: string;
   readonly decl: string;
   readonly properties: Readonly<Record<string, string | number>>;
+  /** The piece's true face state — in open-faced zones identity is visible while faceUp still marks selection. */
+  readonly faceUp: boolean;
 }
 
-/** A face-down/hidden piece: present and countable, identity withheld. */
+/**
+ * A face-down/hidden piece: present, countable, and addressable (you can target it
+ * with a chosen-action) — but its identity is withheld.
+ *
+ * NOTE: in local/solo play the handle is the raw pieceId. Piece ids are creation-
+ * ordered, so a determined client could infer properties from them; harmless against
+ * a local bot, but Connexon (the online runtime) must mint opaque per-session handles
+ * before this projection crosses a network boundary.
+ */
 export interface HiddenPiece {
   readonly hidden: true;
+  readonly handle: string;
 }
 
 export type ProjectedEntry = ProjectedPiece | HiddenPiece;
@@ -71,8 +82,8 @@ export function projectState(state: GameState, spec: GameSpec, viewerSeat: numbe
       const entries: ProjectedEntry[] = raw.map((entry) => {
         const piece = state.pieces[entry.pieceId]!;
         if (viewerSeesIdentity(decl.visibility, ownerSeat, viewerSeat, piece.faceUp))
-          return { pieceId: piece.id, decl: piece.decl, properties: { ...piece.properties } };
-        return { hidden: true };
+          return { pieceId: piece.id, decl: piece.decl, properties: { ...piece.properties }, faceUp: piece.faceUp };
+        return { hidden: true, handle: piece.id };
       });
       zones.push({ zone: decl.name, owner: decl.owner, ownerSeat, entries, count: raw.length });
     }

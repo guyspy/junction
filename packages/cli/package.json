@@ -14,6 +14,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@junction/renderer": "workspace:*",
     "@junction/runtime": "workspace:*",
     "@junction/spec": "workspace:*"
   },

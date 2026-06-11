@@ -31,13 +31,19 @@ pnpm install
 pnpm check                                   # boundaries → build → test
 node packages/cli/dist/index.js validate games/war.yaml
 node packages/cli/dist/index.js simulate games/war.yaml --games 200
-node packages/cli/dist/index.js play games/memory-match.yaml --seat 0   # play a human turn
+node packages/cli/dist/index.js play games/memory-match.yaml --seat 0   # play in the terminal
+node packages/cli/dist/index.js render games/war.yaml                  # → war.html, just open it
 ```
 
-Reference games: [`games/war.yaml`](./games/war.yaml) (chance, hidden decks) and
-[`games/memory-match.yaml`](./games/memory-match.yaml) (flip mechanics, face-up/down
-state, go-again). `play` shows only your seat's view — the per-seat projection that the
-online runtime will reuse unchanged.
+**`render` is the magic trick**: one self-contained HTML file — engine in-browser,
+procedural card art, FLIP animations, keyboard + screen-reader playable, QA badges
+stamped at render time. Email it, drop it in a classroom LMS, open it offline.
+
+Reference games: [`games/war.yaml`](./games/war.yaml) (chance, hidden decks),
+[`games/memory-match.yaml`](./games/memory-match.yaml) (flips, go-again), and
+[`games/make-ten-match.yaml`](./games/make-ten-match.yaml) (addition facts — authored
+end-to-end by a cold AI agent). `play` and `render` both show only your seat's view —
+the per-seat projection the online runtime will reuse unchanged.
 
 ## History
 
