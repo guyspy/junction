@@ -1,0 +1,23 @@
+{
+  "name": "@junction/cli",
+  "version": "0.0.1-alpha.0",
+  "description": "The junction CLI: validate and simulate GameSpecs.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "junction": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@junction/runtime": "workspace:*",
+    "@junction/spec": "workspace:*"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

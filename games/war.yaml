@@ -1,0 +1,64 @@
+# War (battle variant) — the first GameSpec of the TypeScript era.
+# Seats alternate flipping their top card into the pot; when every seat has played,
+# the highest rank takes the pot. Ties leave the pot to carry into the next battle.
+apiVersion: games.junction.aotter.net/v1alpha1
+kind: Game
+metadata:
+  name: war
+spec:
+  meta:
+    title: "War (Battle Variant)"
+    description: >-
+      Classic War: each seat flips a card; the higher rank takes the pot.
+      On a tie the pot carries to the next battle. When the decks run out,
+      whoever has won the most cards wins (a final tied pot is discarded).
+    seats: { min: 2, max: 2 }
+    estMinutes: 10
+
+  zones:
+    - { name: deck, owner: seat, visibility: none }
+    - { name: pot, owner: shared, visibility: all }
+    - { name: won, owner: seat, visibility: all }
+
+  pieces:
+    - name: playing-card
+      properties:
+        suit: { type: string }
+        rank: { type: int }
+      generate:
+        cartesian:
+          suit: [clubs, diamonds, hearts, spades]
+          rank: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+
+  setup:
+    - { op: create, pieces: playing-card, into: pot }
+    - { op: shuffle, zone: pot }
+    - { op: deal, from: pot, to: deck, count: all }
+
+  turn:
+    order: roundRobin
+    phases:
+      - { name: battle, actions: [play-card] }
+
+  actions:
+    - name: play-card
+      move:
+        from: { zone: deck, owner: actor }
+        take: top
+        to: { zone: pot }
+        reveal: true
+
+  triggers:
+    - name: resolve-battle
+      on: { event: pieceMoved, intoZone: pot }
+      when: "zones.pot.count >= seats.count && turn.seatIndex == seats.count - 1"
+      effects:
+        - resolveHighest:
+            zone: pot
+            property: rank
+            toWinnerZone: won
+            onTie: stay
+
+  end:
+    when: "zones.deck.allEmpty"
+    winner: { mostPiecesIn: won }
