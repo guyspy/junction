@@ -105,6 +105,10 @@ export function scaffoldGame(input: ScaffoldInput): ScaffoldResult {
       when: "zones.hand.allEmpty",
       winner: { mostPiecesIn: "score" },
     },
+    // Presentation is data (customization ladder rung 2) — restyle freely, rules unaffected.
+    presentation: {
+      theme: { table: "forest", accent: "gold", motion: "lively", celebration: "festive", sound: "soft" },
+    },
   };
 
   const doc = {

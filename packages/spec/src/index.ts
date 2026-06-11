@@ -25,6 +25,7 @@ export {
   type GameSpec,
   type PieceDecl,
   type SetupOp,
+  type ThemeDecl,
   type TriggerDecl,
   type ZoneDecl,
   type ZoneSel,

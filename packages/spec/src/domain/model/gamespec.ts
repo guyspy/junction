@@ -146,6 +146,31 @@ const triggerDecl = z.strictObject({
   effects: z.array(effectDecl).min(1),
 });
 
+// ---- presentation -----------------------------------------------------------
+/**
+ * Presentation hints (rung 2 of the customization ladder). Pure data, closed
+ * vocabulary, zero effect on outcomes — the renderer maps these to CSS tokens,
+ * motion parameters, and synth sound sets. All optional with defaults.
+ */
+const themeDecl = z.strictObject({
+  /** Table palette. */
+  table: z.enum(["forest", "ocean", "sunset", "slate", "plum"]).default("forest"),
+  /** Accent for playable highlights and buttons. */
+  accent: z.enum(["gold", "sky", "coral", "lime"]).default("gold"),
+  /** Card scale. */
+  cardSize: z.enum(["compact", "regular", "large"]).default("regular"),
+  /** Motion intensity: calm = no overshoot/arcs, bouncy = maximum spring. */
+  motion: z.enum(["calm", "lively", "bouncy"]).default("lively"),
+  /** Celebration level at wins and matches. */
+  celebration: z.enum(["subtle", "festive"]).default("festive"),
+  /** Synthesized sound set (no audio assets exist anywhere). */
+  sound: z.enum(["off", "soft", "arcade"]).default("soft"),
+});
+
+const presentationDecl = z.strictObject({
+  theme: themeDecl.prefault({}),
+});
+
 // ---- end ------------------------------------------------------------------
 const winnerRule = z.strictObject({
   /** Winner = seat with the most pieces in its instance of this owner zone. Tie ⇒ draw. */
@@ -175,9 +200,11 @@ export const gameSpecSchema = z.strictObject({
   actions: z.array(actionDecl).min(1),
   triggers: z.array(triggerDecl).default([]),
   end: endDecl,
+  presentation: presentationDecl.prefault({}),
 });
 
 export type GameSpec = z.infer<typeof gameSpecSchema>;
+export type ThemeDecl = z.infer<typeof themeDecl>;
 export type ZoneDecl = z.infer<typeof zoneDecl>;
 export type PieceDecl = z.infer<typeof pieceDecl>;
 export type SetupOp = z.infer<typeof setupOp>;

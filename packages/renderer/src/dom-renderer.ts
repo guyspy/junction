@@ -11,13 +11,17 @@ import {
 } from "@junction/runtime";
 import { announceAll } from "./announcer.js";
 import { cardBackSVG, cardFaceSVG } from "./art.js";
+import { confettiBurst, scorePop } from "./celebrate.js";
+import { createSoundBank, soundForEvent, type SoundName } from "./sound.js";
+import { applyThemeTokens, celebrationColors, motionParams, resolveTheme, type MotionParams } from "./theme.js";
 import { buildViewModel, type CardVM, type ViewModel } from "./view-model.js";
 
 /**
  * Cadherin's DOM controller: mounts a playable game into a container. Framework-free
  * by design — the game surface should not marry a framework (the same seam discipline
- * as the @pixi/react decision). Re-renders from the projected view-model each step and
- * FLIP-animates cards between renders.
+ * as the @pixi/react decision). Re-renders from the projected view-model each step;
+ * theme tokens, arc-FLIP motion, synth sound, and celebrations are all driven by the
+ * game's presentation data — never the other way around.
  */
 
 export interface MountOptions {
@@ -32,30 +36,79 @@ export interface GameController {
   readonly dispose: () => void;
 }
 
+const MUTE_KEY = "junction-muted";
+
+function readMuted(): boolean {
+  try {
+    return typeof localStorage !== "undefined" && localStorage.getItem(MUTE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function storeMuted(muted: boolean): void {
+  try {
+    if (typeof localStorage !== "undefined") localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
+  } catch {
+    /* private mode etc. — preference just doesn't persist */
+  }
+}
+
 export function mountGame(container: HTMLElement, doc: GameDocument, options: MountOptions = {}): GameController {
   const seats = options.seats ?? doc.spec.meta.seats.min;
   const viewerSeat = options.seat ?? 0;
   const seed = options.seed ?? `web-${Math.floor(Math.random() * 1e9)}`;
-  const botDelay = options.botDelay ?? 750;
+  const botDelay = options.botDelay ?? 800;
   const botRng = createRng(`${seed}:bot`);
+
+  const theme = resolveTheme(doc.spec);
+  const motion = motionParams(theme);
+  const colors = celebrationColors(theme);
+  const sound = createSoundBank(theme.sound, readMuted());
 
   let state: GameState = buildInitialState(doc, seats, createRng(`${seed}:setup`)).state;
   let ticker: string[] = [];
+  let stepEvents: readonly GameEvent[] = [];
+  let matchStreak = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
+  let firstRender = true;
 
   // ---- static scaffold -------------------------------------------------------
   container.innerHTML = "";
   container.classList.add("jx-shell");
+  applyThemeTokens(document.documentElement, container, theme);
 
+  const statusBar = el("div", "jx-statusbar");
   const status = el("p", "jx-status");
+  const soundToggle = el("button", "jx-sound");
+  soundToggle.type = "button";
+  const syncSoundToggle = (): void => {
+    const muted = sound.isMuted() || theme.sound === "off";
+    soundToggle.textContent = muted ? "🔇" : "🔊";
+    soundToggle.setAttribute("aria-label", muted ? "turn sound on" : "turn sound off");
+    soundToggle.setAttribute("aria-pressed", String(!muted));
+  };
+  soundToggle.addEventListener("click", () => {
+    sound.setMuted(!sound.isMuted());
+    storeMuted(sound.isMuted());
+    syncSoundToggle();
+    if (!sound.isMuted()) sound.play("tap");
+  });
+  syncSoundToggle();
+  statusBar.append(status, soundToggle);
+
   const zonesHost = el("div", "jx-zones");
   const buttonsHost = el("div", "jx-buttons");
   const tickerHost = el("div", "jx-ticker");
   const live = el("div", "visually-hidden");
   live.setAttribute("role", "status");
   live.setAttribute("aria-live", "polite");
-  container.append(status, zonesHost, buttonsHost, tickerHost, live);
+  container.append(statusBar, zonesHost, buttonsHost, tickerHost, live);
+
+  // Browsers require a user gesture before audio: unlock on the first interaction.
+  const unlockOnce = (): void => sound.unlock();
+  container.addEventListener("pointerdown", unlockOnce, { capture: true });
 
   // ---- render loop ------------------------------------------------------------
   function render(): void {
@@ -69,19 +122,65 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
     renderButtons(buttonsHost, vm, onMove);
     renderTicker(tickerHost, ticker);
 
-    playFlip(zonesHost, firstRects);
+    if (firstRender) {
+      firstRender = false;
+      playEntrance(zonesHost, motion);
+    } else {
+      playFlip(zonesHost, firstRects, motion);
+    }
+    playCelebrations(vm);
     if (vm.ended) showBanner(container, vm);
   }
 
+  function playCelebrations(vm: ViewModel): void {
+    // Score pops: pieces gained into an owner-zone instance this step.
+    const gains = new Map<string, number>();
+    for (const event of stepEvents)
+      if (event.type === "pieceMoved" && event.to.includes("#") && event.bySeat !== null)
+        gains.set(event.to, (gains.get(event.to) ?? 0) + 1);
+    for (const [zoneKey, count] of gains) {
+      if (count < 2) continue;
+      const section = zonesHost.querySelector<HTMLElement>(`[data-zone-key="${zoneKey}"]`);
+      if (section === null) continue;
+      const streakText = matchStreak >= 2 ? ` 🔥×${matchStreak}` : "";
+      scorePop(section, `+${count}${streakText}`, "var(--accent)");
+    }
+    // Confetti on the viewer's victory.
+    const ended = stepEvents.find((e) => e.type === "gameEnded");
+    if (
+      ended?.type === "gameEnded" &&
+      ended.winnerSeat === viewerSeat &&
+      theme.celebration === "festive" &&
+      vm.ended
+    )
+      confettiBurst(colors);
+    stepEvents = [];
+  }
+
   function pushEvents(events: readonly GameEvent[]): void {
+    stepEvents = events;
     const lines = announceAll(events, viewerSeat);
-    if (lines.length === 0) return;
-    ticker = [...ticker, ...lines].slice(-6);
-    live.textContent = lines[lines.length - 1]!;
+    if (lines.length > 0) {
+      ticker = [...ticker, ...lines].slice(-6);
+      live.textContent = lines[lines.length - 1]!;
+    }
+    // Streak bookkeeping (consecutive matches by the viewer).
+    for (const event of events)
+      if (event.type === "pairResolved" && event.bySeat === viewerSeat)
+        matchStreak = event.matched ? matchStreak + 1 : 0;
+    // Sounds: dedupe per step; a game-end fanfare/defeat owns the moment.
+    const names: SoundName[] = [];
+    for (const event of events) {
+      const name = soundForEvent(event, viewerSeat);
+      if (name !== null && !names.includes(name)) names.push(name);
+    }
+    const finale = names.find((n) => n === "fanfare" || n === "defeat");
+    for (const name of finale !== undefined ? [finale] : names.slice(0, 2)) sound.play(name);
   }
 
   function onMove(move: { action: string; target?: string }): void {
     if (state.status !== "running" || state.activeSeat !== viewerSeat) return;
+    sound.unlock();
     const result = applyAction(state, doc.spec, { seat: viewerSeat, ...move });
     if (!result.ok) return; // stale click (legal set changed); the re-render fixes it
     state = result.data.state;
@@ -107,6 +206,7 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
         state = result.data.state;
         pushEvents(result.data.events);
       }
+      unstickViewer();
       render();
       scheduleBots();
     }, botDelay);
@@ -128,8 +228,6 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
     }
   }
 
-  const observer = new MutationObserver(() => undefined); // placeholder for future hooks
-
   pushEvents([{ seq: 0, type: "gameStarted", seats, game: doc.metadata.name }]);
   unstickViewer();
   render();
@@ -139,7 +237,7 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
     dispose: () => {
       disposed = true;
       if (timer !== undefined) clearTimeout(timer);
-      observer.disconnect();
+      container.removeEventListener("pointerdown", unlockOnce, { capture: true });
     },
   };
 }
@@ -163,6 +261,7 @@ function renderZones(
     const section = el("section", "jx-zone");
     if (zone.mine) section.classList.add("mine");
     section.dataset["kind"] = zone.kind;
+    section.dataset["zoneKey"] = `${zone.zone}${zone.ownerSeat === null ? "" : `#${zone.ownerSeat}`}`;
 
     const heading = el("h2");
     heading.textContent = zone.title;
@@ -243,7 +342,11 @@ function showBanner(container: HTMLElement, vm: ViewModel): void {
   container.append(banner);
 }
 
-// ---- FLIP animation --------------------------------------------------------------
+// ---- motion --------------------------------------------------------------------
+
+function reducedMotion(): boolean {
+  return typeof window === "undefined" || (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+}
 
 function measureCards(host: HTMLElement): Map<string, DOMRect> {
   const rects = new Map<string, DOMRect>();
@@ -252,8 +355,30 @@ function measureCards(host: HTMLElement): Map<string, DOMRect> {
   return rects;
 }
 
-function playFlip(host: HTMLElement, firstRects: Map<string, DOMRect>): void {
-  if (typeof window === "undefined" || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+/** Staggered deal-in on the first render. */
+function playEntrance(host: HTMLElement, motion: MotionParams): void {
+  if (reducedMotion()) return;
+  let index = 0;
+  for (const node of host.querySelectorAll<HTMLElement>("[data-piece-id]")) {
+    if (typeof node.animate !== "function") return;
+    node.animate(
+      [
+        { opacity: 0, transform: "translateY(18px) scale(0.92)" },
+        { opacity: 1, transform: "none" },
+      ],
+      {
+        duration: 340,
+        delay: Math.min(index++, 24) * motion.staggerStep,
+        easing: motion.easing,
+        fill: "backwards",
+      },
+    );
+  }
+}
+
+/** FLIP with an arc: cards fly in a lifted curve with a slight tilt, like a thrown card. */
+function playFlip(host: HTMLElement, firstRects: Map<string, DOMRect>, motion: MotionParams): void {
+  if (reducedMotion()) return;
   for (const node of host.querySelectorAll<HTMLElement>("[data-piece-id]")) {
     const id = node.dataset["pieceId"]!;
     const first = firstRects.get(id);
@@ -261,11 +386,22 @@ function playFlip(host: HTMLElement, firstRects: Map<string, DOMRect>): void {
     const last = node.getBoundingClientRect();
     const dx = first.left - last.left;
     const dy = first.top - last.top;
-    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
-    if (typeof node.animate !== "function") continue; // older engines / test DOMs
+    const distance = Math.hypot(dx, dy);
+    if (distance < 2) continue;
+    if (typeof node.animate !== "function") continue;
+
+    const lift = Math.min(90, distance * motion.arc);
+    const tilt = motion.tilt === 0 ? 0 : Math.sign(dx || 1) * Math.min(motion.tilt, distance / 24);
     node.animate(
-      [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "translate(0, 0)" }],
-      { duration: 380, easing: "cubic-bezier(0.3, 1, 0.4, 1)" },
+      [
+        { transform: `translate(${dx}px, ${dy}px) rotate(${tilt}deg)` },
+        {
+          transform: `translate(${dx * 0.5}px, ${dy * 0.5 - lift}px) rotate(${tilt * 0.5}deg) scale(${motion.liftScale})`,
+          offset: 0.5,
+        },
+        { transform: "translate(0, 0) rotate(0deg) scale(1)" },
+      ],
+      { duration: motion.moveDuration, easing: motion.easing },
     );
   }
 }

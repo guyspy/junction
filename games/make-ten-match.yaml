@@ -111,3 +111,6 @@ spec:
   end:
     when: "zones.table.allEmpty"
     winner: { mostPiecesIn: won }
+
+  presentation:
+    theme: { table: sunset, accent: coral, motion: bouncy, celebration: festive, sound: arcade }

@@ -90,6 +90,20 @@ describe("v1alpha grammar extensions", () => {
     expect(d).toBeDefined();
   });
 
+  it("presentation.theme: defaults fill, declared values stick, bad enums fail", () => {
+    const defaulted = parseGameDocument(base);
+    expect(defaulted.ok && defaulted.data.spec.presentation.theme.table).toBe("forest");
+
+    const themed = parseGameDocument(base.replace("spec:", "spec:\n  presentation: { theme: { table: plum, sound: arcade } }"));
+    expect(themed.ok && themed.data.spec.presentation.theme.table).toBe("plum");
+    expect(themed.ok && themed.data.spec.presentation.theme.accent).toBe("gold"); // default
+
+    const bad = parseGameDocument(base.replace("spec:", "spec:\n  presentation: { theme: { table: lava } }"));
+    expect(bad.ok).toBe(false);
+    if (bad.ok) return;
+    expect(codes(bad.diagnostics)).toContain("SCHEMA_VALIDATION_FAILED");
+  });
+
   it("rejects resolveEqualPair on a non-shared zone", () => {
     const bad = base.replace(
       "resolveEqualPair: { zone: grid, property: value, toZone: won, onMatch: goAgain, onMismatch: flipDown }",

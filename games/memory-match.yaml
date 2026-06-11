@@ -60,3 +60,6 @@ spec:
   end:
     when: "zones.grid.allEmpty"
     winner: { mostPiecesIn: won }
+
+  presentation:
+    theme: { table: ocean, accent: sky, motion: bouncy, sound: soft }

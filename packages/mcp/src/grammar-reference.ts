@@ -18,6 +18,10 @@ export interface GrammarReference {
   readonly effects: readonly { readonly name: string; readonly summary: string }[];
   readonly expressions: { readonly grammar: string; readonly paths: readonly string[]; readonly notes: string };
   readonly end: string;
+  readonly presentation: {
+    readonly theme: Readonly<Record<string, readonly string[]>>;
+    readonly notes: string;
+  };
 }
 
 export const GRAMMAR_REFERENCE: GrammarReference = {
@@ -81,6 +85,18 @@ export const GRAMMAR_REFERENCE: GrammarReference = {
     notes: "count/faceUpCount are shared-zone-only; use totalCount/allEmpty/anyEmpty for owner zones.",
   },
   end: "end: { when: <boolean expression>, winner: { mostPiecesIn: <seat zone> } }. A tie in the winner zone is a draw.",
+  presentation: {
+    theme: {
+      table: ["forest", "ocean", "sunset", "slate", "plum"],
+      accent: ["gold", "sky", "coral", "lime"],
+      cardSize: ["compact", "regular", "large"],
+      motion: ["calm", "lively", "bouncy"],
+      celebration: ["subtle", "festive"],
+      sound: ["off", "soft", "arcade"],
+    },
+    notes:
+      "Optional `presentation.theme` block — pure presentation data, zero effect on rules or simulation. All fields optional with defaults (forest/gold/regular/lively/festive/soft). Pick a palette and feel that fits the lesson's mood; sound is synthesized, no assets exist.",
+  },
 };
 
 export function describeGrammar(): GrammarReference {
