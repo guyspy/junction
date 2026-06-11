@@ -33,8 +33,15 @@ packages/runtime   @junction/runtime  — pure reducer (state, action) → {stat
 packages/renderer  @junction/renderer — Cadherin: framework-free accessible DOM renderer.
                                         Pure view-model (semantics → zone presentation), announcer
                                         (events → ARIA live narration), procedural SVG card art,
-                                        FLIP animation, standalone IIFE bundle (esbuild) for
-                                        single-file HTML. Browser-only: NO node imports.
+                                        FLIP animation, theme tokens + synth sound + celebrations,
+                                        single-file page builder + standalone IIFE bundle (esbuild).
+                                        Browser-only: NO node imports.
+packages/connexon  @junction/connexon — Connexon: the online runtime. Platform-agnostic Room
+                                        (authoritative state, per-seat projection, ordered event
+                                        log + resume, bots fill empty seats) + RoomManager (join
+                                        codes) + JSON wire protocol. Transport adapters (Durable
+                                        Objects, Node ws) are thin shells. Imports spec+runtime;
+                                        NO node/@cloudflare in src/.
 packages/mcp       @junction/mcp      — Integrin: the MCP server. Tools (describe_grammar,
                                         list/get_reference_game, scaffold_game, validate_game,
                                         simulate_game, render_game → ui:// playable pages) wrap pure functions; reference corpus is
