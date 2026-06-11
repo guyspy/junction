@@ -1,135 +1,54 @@
-# Junction - Educational Gaming Platform
+# Junction
 
-## Project Overview
+**The agent-native game engine + studio where educators and AI agents make educational 2D games together** — card, board, adventure, RPG — and where every published game makes the next one easier to make.
 
-Junction is an educational gaming platform monorepo, inspired by cell junction biological concepts. It enables educators to create online 2D card-based games with AI assistance and provides a complete gaming ecosystem.
+> The scripting language is conversation. The GameSpec is the bytecode.
 
-**Current Status**: 🎉 **MVP Complete + Multi-Service Monorepo Ready**
+Junction is the third member of a family of agent-native platforms ([mantle](https://github.com/aotter/mantle) does content, clam does data, Junction does play) sharing one thesis: **agents write config, the runtime carries the complexity.**
 
-## Core Features
+## The constitution
 
-- **Game Creation Engine**: YAML DSL with AI-assisted card game creation  
-- **Multi-Platform Gaming**: Cross-platform game engine (JVM + JavaScript)
-- **Community Features**: Rating systems, sharing mechanisms
-- **Crowdfunding**: Platform sustainability
-- **Social Good**: Charitable credit system for underprivileged children
+Read [`docs/2026-06-11-junction-reboot-blueprint.md`](./docs/2026-06-11-junction-reboot-blueprint.md) — thesis, anatomy, decision register, roadmap E0–E7, and the three addenda that shaped it.
 
-## Technology Architecture
+The moat is not the DSL. The moat is the **verification loop** (validate → simulate → critic → playtest) and the **corpus** (a registry of schema-validated, simulation-certified, remixable games).
 
-**Monorepo Design**: Multi-technology services with independent build systems
+## Anatomy
 
-- **Catenin (Game Engine)**: Kotlin Multiplatform + YAML DSL
-- **Future Occludin (Server)**: Quarkus + Java + MongoDB  
-- **Future Renderers**: Pure JavaScript + Phaser/Three.js
-- **Future AI Services**: Python + ML models
-- **Development Method**: Test-driven development
+| Organ | Role |
+|---|---|
+| **Catenin** | the kernel — GameSpec grammar, deterministic reducer, validator, simulator (`@junction/spec` + `@junction/runtime`) |
+| **Cadherin** | the renderer — accessible DOM component registry + game templates |
+| **Connexon** | the online runtime — per-room actors, ordered event streams, classroom join codes |
+| **Synapse** | the studio — agentic desktop app where teachers and an embedded agent co-create |
+| **Plexus** | the community — registry of addressable, forkable, certified game artifacts |
+| **Integrin** | the agent interface — the MCP server, the platform's front door |
+| **Occludin** | trust & safety — publish gates, moderation, compliance |
 
-## Service Naming Convention
+## Quick start (E0 spike)
 
-Based on cell junction biological concepts:
-- **`catenin`**: Game engine SDK (Kotlin Multiplatform)
-- **`occludin`**: Server platform services (Future: Quarkus + Java)
-- **Future services**: Will follow cell junction protein naming
-
-## Development Status
-
-### ✅ **Phase 1: Game Engine Core (COMPLETED)**
-1. **Catenin SDK**: YAML DSL + Kotlin Multiplatform engine
-2. **Multi-Platform Support**: JVM + JavaScript targets  
-3. **Example Projects**: CLI, Browser, Node.js demos
-4. **Maven Publishing**: Ready for external consumption
-
-### 🚧 **Phase 2: Platform Infrastructure (PLANNED)**
-1. **Occludin Server**: Quarkus + MongoDB backend
-2. **User Management System**: Authentication & authorization
-3. **Game Room Management**: Real-time multiplayer
-4. **Communication System**: WebSocket + event streaming
-
-### 📋 **Phase 3: Creation Tools (PLANNED)**
-1. **Game Editor**: Web-based YAML editor
-2. **AI-Assisted Creation**: Game generation with LLMs
-3. **Asset Management**: Card art and audio system
-
-### 💰 **Phase 4: Community & Business (PLANNED)**
-1. **Rating & Sharing System**: Community features
-2. **Crowdfunding Features**: Platform sustainability  
-3. **Charitable Credit System**: Social impact features
-
-## Monorepo Structure
-
-```
-junction/
-├── catenin/                         # 🎮 Game Engine SDK (Kotlin Multiplatform)
-│   ├── src/                         # Core engine code
-│   │   ├── commonMain/kotlin/       # Shared game logic  
-│   │   └── commonTest/kotlin/       # Cross-platform tests
-│   ├── examples/                    # Platform demos
-│   │   ├── jvm-cli-demo/           # Command-line demo
-│   │   ├── js-browser-demo/        # Web browser demo
-│   │   ├── js-node-demo/           # Kotlin/JS Node.js server demo
-│   │   └── typescript-server-demo/  # TypeScript server demo
-│   └── game-samples/               # YAML game templates
-├── docs/                           # 📚 Documentation
-│   ├── monorepo-architecture.md    # Monorepo design
-│   ├── catenin/                    # Game engine docs
-│   └── overview.md                 # Project overview
-├── gradle/                         # 🔧 Shared Gradle config
-│   ├── libs.versions.toml         # Version catalog
-│   └── wrapper/                    # Gradle wrapper
-├── build.gradle.kts               # Root build configuration
-├── settings.gradle.kts            # Project structure
-└── CLAUDE.md                      # AI assistant guidance
-
-# Future services will be added as siblings to catenin/
-├── occludin/                      # 🚧 Future: Quarkus server
-├── phaser-renderer/               # 🚧 Future: JS game renderer  
-└── ai-agent/                      # 🚧 Future: Python ML service
-```
-
-## Quick Start
-
-### Prerequisites
-- JDK 21+ for Catenin development
-- Node.js 18+ for JavaScript demos
-
-### Build & Run
 ```bash
-# Build entire monorepo
-./gradlew build
-
-# Run JVM command-line demo
-./gradlew :catenin:examples:jvm-cli-demo:run
-
-# Run web browser demo  
-./gradlew :catenin:examples:js-browser-demo:serve
-
-# Run Kotlin/JS Node.js server demo
-./gradlew :catenin:examples:js-node-demo:jsNodeDevelopmentRun
-
-# Run TypeScript server demo
-cd catenin/examples/typescript-server-demo && npm start
+pnpm install
+pnpm check                                   # boundaries → build → test
+node packages/cli/dist/index.js validate games/war.yaml
+node packages/cli/dist/index.js simulate games/war.yaml --games 200
+node packages/cli/dist/index.js play games/memory-match.yaml --seat 0   # play in the terminal
+node packages/cli/dist/index.js render games/war.yaml                  # → war.html, just open it
 ```
 
-## Services
+**`render` is the magic trick**: one self-contained HTML file — engine in-browser,
+procedural card art, FLIP animations, keyboard + screen-reader playable, QA badges
+stamped at render time. Email it, drop it in a classroom LMS, open it offline.
 
-### 🎮 Catenin (Game Engine)
-Kotlin Multiplatform game engine for 2D card-based educational games.
-- **Status**: ✅ Complete 
-- **Documentation**: [catenin/README.md](catenin/README.md)
-- **Technology**: Kotlin Multiplatform + YAML DSL
+Reference games: [`games/war.yaml`](./games/war.yaml) (chance, hidden decks),
+[`games/memory-match.yaml`](./games/memory-match.yaml) (flips, go-again), and
+[`games/make-ten-match.yaml`](./games/make-ten-match.yaml) (addition facts — authored
+end-to-end by a cold AI agent). `play` and `render` both show only your seat's view —
+the per-seat projection the online runtime will reuse unchanged.
 
-### 🚧 Future Services
-- **Occludin**: Quarkus server for multiplayer game rooms
-- **Renderers**: JavaScript/Phaser game renderers  
-- **AI Agents**: Python ML services for game generation
+## History
 
-## Contributing
-
-See individual service documentation:
-- [Catenin Game Engine](catenin/README.md) - Detailed usage, API, troubleshooting
-- [Monorepo Architecture](docs/monorepo-architecture.md) - Technical design
-- [Development Guidelines](CLAUDE.md) - AI assistant guidance
+The Kotlin Multiplatform prototype (Sessions 1–4, 2025-07 → 2026-03) is archived with honor at the [`kotlin-prototype`](../../tree/kotlin-prototype) tag — the prototype that taught us the shape. The development journal lives in [`journal/claude/`](./journal/claude/).
 
 ## License
 
-MIT License - see individual service licenses for details.
+Apache-2.0 (engine). Published GameSpecs default to CC BY.

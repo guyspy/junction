@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`war.yaml — the first reference game > golden replay: same seed ⇒ byte-identical event log; different seed diverges 1`] = `
+{
+  "events": 288,
+  "hash": "597fb2cde19ae332",
+  "steps": 52,
+}
+`;

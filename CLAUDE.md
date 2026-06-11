@@ -1,398 +1,64 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Agent orientation for the Junction repository. Humans: see [README.md](./README.md) and [CONTRIBUTING](./docs/2026-06-11-junction-reboot-blueprint.md).
 
-## Project Overview
+## What this is
 
-Junction is an educational gaming platform monorepo featuring multiple services:
+Junction is an **agent-native game engine + studio for 2D educational card/board/adventure/RPG games**. The constitution is [`docs/2026-06-11-junction-reboot-blueprint.md`](./docs/2026-06-11-junction-reboot-blueprint.md) (v1.3) — thesis, anatomy, decision register with reversal triggers, roadmap E0–E7. Read it before proposing architectural change.
 
-- **Catenin**: Kotlin Multiplatform game engine for creating 2D card-based educational games
-- **Future Services**: Occludin (Quarkus server), Phaser renderers, etc.
+**The thesis (family-shared with mantle/clam):** agents write config; the runtime carries the complexity. Teachers converse; agents compile conversation into validated GameSpec documents; the deterministic kernel executes and *judges* them (validate → simulate → critic → playtest).
 
-The platform uses YAML DSL for game definitions and is optimized for AI Agent driven game creation. Each service is technology-independent with its own build system.
+The Kotlin prototype (2025-07 → 2026-03) is archived at the `kotlin-prototype` tag. Reference it for trigger/expression/protocol design lineage; never resurrect it.
 
 ## Commands
 
-### Development Commands
-
-**Monorepo Commands:**
 ```bash
-# Build all Gradle-based services
-./gradlew build
-
-# Show all projects in monorepo
-./gradlew projects
+pnpm install                # workspace install
+pnpm check                  # check:boundaries → build → test (the CI gate — must pass before any PR)
+pnpm build                  # tsc -b (composite project references)
+pnpm test                   # vitest across packages
+node packages/cli/dist/index.js validate games/war.yaml
+node packages/cli/dist/index.js simulate games/war.yaml --games 200 --seed 42
 ```
 
-**Catenin Service Commands:**
-```bash
-# Build Catenin (JVM + JS)
-./gradlew :catenin:build
-
-# Run tests
-./gradlew :catenin:allTests
-
-# Run JVM command-line demo
-./gradlew :catenin:examples:jvm-cli-demo:run
-
-# Run JS browser demo
-./gradlew :catenin:examples:js-browser-demo:serve
-
-# Run Kotlin/JS Node.js demo
-./gradlew :catenin:examples:kotlin-js-node-demo:jsNodeDevelopmentRun
-
-# Run TypeScript server demo
-cd catenin/examples/typescript-node-demo && npm start
-
-# Note: This project uses npm (not yarn) for JavaScript dependencies.
-# If you encounter package lock issues, use:
-# ./gradlew :catenin:examples:kotlin-js-node-demo:jsNodeDevelopmentRun -x kotlinStorePackageLock
-
-# Generate JavaScript library files
-./gradlew :catenin:jsBrowserDevelopmentLibraryDistribution
-
-# Create NPM package
-./gradlew :catenin:createNpmPackage
-
-# Pack NPM package for distribution
-./gradlew :catenin:packNpmPackage
-```
-
-**Future Service Commands:**
-```bash
-# Occludin (Quarkus) - when added
-./gradlew :occludin:quarkusDev
-
-# Pure JS services use their own tooling (npm, etc.)
-```
-
-### Testing Commands
-```bash
-# Run all tests
-./gradlew :catenin:allTests
-
-# Run platform-specific tests
-./gradlew :catenin:jvmTest        # JVM tests
-./gradlew :catenin:jsTest         # All JavaScript tests
-
-# Run JavaScript tests by environment
-./gradlew :catenin:jsNodeTest     # Node.js environment (library API tests)
-./gradlew :catenin:jsBrowserTest  # Browser environment (headless)
-
-# Run with coverage
-./gradlew :catenin:test :catenin:jacocoTestReport
-```
-
-## Architecture & Components
-
-### Monorepo Structure
-Junction is organized as a multi-technology monorepo where each service is independent:
-
-### Catenin Service (Kotlin Multiplatform)
-The core game engine that compiles to both JVM and JavaScript:
+## Architecture (layering is the law)
 
 ```
-catenin/
-├── src/
-│   ├── commonMain/kotlin/           # Shared game logic
-│   │   ├── model/                   # Game data models
-│   │   ├── parser/                  # YAML parsing
-│   │   ├── core/                    # Game engine
-│   │   └── actions/                 # Player actions
-│   └── commonTest/kotlin/           # Cross-platform tests
-│       ├── core/                    # Core engine tests
-│       ├── js/                      # JavaScript library tests
-│       ├── model/                   # Model tests
-│       └── parser/                  # Parser tests
-├── examples/
-│   ├── jvm-cli-demo/               # JVM command-line demo
-│   ├── js-browser-demo/            # JavaScript browser demo
-│   ├── js-node-demo/               # Kotlin/JS Node.js demo
-│   └── typescript-server-demo/     # TypeScript server demo
-├── game-samples/                   # YAML game definitions
-└── npm-package.json                # NPM package configuration
+packages/spec      @junction/spec     — GameSpec grammar (Zod), manifest parser, expression parser,
+                                        diagnostics kernel. Zero runtime deps beyond yaml+zod.
+                                        sideEffects: false. Imports NO other @junction package.
+packages/runtime   @junction/runtime  — pure reducer (state, action) → {state', events[]}, seeded RNG,
+                                        trigger engine, per-seat projection, simulate. Imports
+                                        @junction/spec ONLY. No node:/platform imports in src/.
+packages/renderer  @junction/renderer — Cadherin: framework-free accessible DOM renderer.
+                                        Pure view-model (semantics → zone presentation), announcer
+                                        (events → ARIA live narration), procedural SVG card art,
+                                        FLIP animation, standalone IIFE bundle (esbuild) for
+                                        single-file HTML. Browser-only: NO node imports.
+packages/mcp       @junction/mcp      — Integrin: the MCP server. Tools (describe_grammar,
+                                        list/get_reference_game, scaffold_game, validate_game,
+                                        simulate_game) wrap pure functions; reference corpus is
+                                        injected (DI) so tools stay Workers-portable. stdio entry +
+                                        SDK. Imports spec+runtime.
+packages/cli       @junction/cli      — validate/simulate/play/render CLI. `render` emits a
+                                        self-contained playable HTML file with QA badges.
+games/                                — reference GameSpecs (YAML) + golden replays.
+skills/game-designer/SKILL.md         — the agent authoring guide (onboarding trinity).
+scripts/check-boundaries.mjs          — enforces the above. CI fails on violation.
 ```
 
-### Technology Stack
+Run Integrin: `node packages/mcp/dist/stdio.js` (connect from Claude Code/Desktop as an MCP server). Future packages per blueprint §7: `renderer` (Cadherin), `cloudflare` + `node` (Connexon adapters), `junction` (umbrella). Apps: `synapse` (studio), `plexus` (registry).
 
-**Monorepo Architecture:**
-- **Build Systems**: Gradle (Kotlin/Java services), npm (JS services), Maven (optional)
-- **Service Independence**: Each service uses appropriate technology stack
-- **Coordination**: Shared version catalog, unified documentation
+## House rules (inherited from the mantle/clam family)
 
-**Catenin Service:**
-- **Core**: Kotlin Multiplatform
-- **Frontend**: Kotlin/JS compiles to TypeScript-compatible JavaScript
-- **Backend**: Kotlin/JVM 
-- **DSL Format**: YAML (AI-friendly structure)
-- **Development**: Test-driven development
+1. **Diagnostics** use the ADR-0008 shape: `{code, phase: validate|test|boot|runtime, severity, path, value?, expected?, candidates?, suggestion?, message}`. Codes are UPPER_SNAKE. Messages are generated by the single formatter in `packages/spec/src/kernel/diagnostic.ts` — never hand-write `message`.
+2. **Result objects, not exceptions**, at package boundaries: `{ok: true, data, warnings} | {ok: false, diagnostics}`. Tests assert on `diagnostic.code`.
+3. **The grammar is closed.** New manifest keys, effects, expression roots, or event types are grammar revisions — update the Zod schema + lints + docs together. Never add an open-ended escape hatch (no user code, no eval).
+4. **Determinism is sacred.** The reducer is pure; all randomness flows from the seeded RNG; `Date.now()`/`Math.random()` are forbidden in spec/ and runtime/ src. Golden replay tests guard this.
+5. **Expressions are total**: comparisons/arithmetic/boolean over typed context paths. No loops, no recursion, no side effects.
+6. **Manifest envelope**: `apiVersion: games.junction.aotter.net/v1alpha1`, `kind`, `metadata.name`, `spec`. v1alpha floats (breaking changes allowed) until the registry opens — "the registry locks the grammar; the studio floats it."
+7. Conventional commits; end commit messages with the Claude co-author trailer; branches `feature/YYYYMMDD_name` or `spike/YYYYMMDD_name`; PRs to `main`; merge, don't squash.
 
-**Future Services:**
-- **Occludin**: Quarkus + Java + MongoDB
-- **Renderers**: Pure JS/TS + Phaser/Three.js
-- **APIs**: GraphQL, REST, WebSocket
+## Journal convention
 
-### Data Architecture
-- **GameDefinition**: YAML-defined game rules and cards
-- **GameState**: Runtime game state (players, deck, actions)
-- **GameEngine**: Core logic engine (shared between frontend/backend)
-
-## Development Philosophy
-
-### AI-First Design
-The engine prioritizes AI Agent usability:
-- **YAML DSL**: Structured format AI can easily understand and modify
-- **Semantic naming**: Clear, descriptive property names
-- **AI Hints system**: Built-in guidance for AI modifications
-- **Unified API**: Same game logic on frontend and backend
-
-### Incremental Development
-Each day delivers a working game:
-- **Day 1**: YAML parsing + basic card display
-- **Day 2**: Player actions (draw, play cards)
-- **Day 3**: Event system (card effects)
-- **Day 4**: Turn management and scoring
-- **Day 5**: Win conditions and complete game
-
-### Key Design Decisions
-
-#### Event System Simplification (Day 3)
-Decided on minimal viable event system:
-- **Triggers**: Only `on_play` events initially
-- **Targets**: Fixed targets (`self`, `opponent`, `all_opponents`)
-- **Parameters**: Simple `{property}` substitution
-- **Display**: Clear command-line effect visualization
-
-Example:
-```yaml
-fire_spell:
-  properties:
-    damage: {type: int, min: 2, max: 5}
-  events:
-    on_play:
-      action: "deal_damage"
-      target: "opponent"
-      amount: "{damage}"
-```
-
-## Frontend Integration
-
-JavaScript compilation provides TypeScript-compatible API:
-
-```javascript
-// Browser/ES6 module import
-import { createGameEngineFromYaml, GameDefinitionParser, CardFactory } from './junction-catenin.mjs'
-
-// NPM package import (TypeScript/Node.js)
-import { createGameEngineFromYaml, GameDefinitionParser, CardFactory } from '@junction/catenin'
-
-// Create game from YAML
-const engine = createGameEngineFromYaml(yamlContent, ['Alice', 'Bob'])
-
-// Parse game definition
-const parser = new GameDefinitionParser()
-const definition = parser.parseFromString(yamlContent)
-
-// Generate cards
-const cardFactory = new CardFactory(definition)
-const cards = cardFactory.generateCards()  // Returns JavaScript Array
-
-// Get players
-const players = engine.getPlayers()  // Returns JavaScript Array
-
-// All methods return JavaScript-friendly Arrays by default
-players.map(p => p.name)  // Works perfectly!
-cards.filter(c => c.type === 'spell')  // Standard Array methods!
-```
-
-### JavaScript API Design Principles
-
-1. **Arrays Instead of Lists**: All exported methods that return collections return JavaScript Arrays by default, not Kotlin Lists. This ensures JavaScript developers can use standard Array methods (map, filter, slice) without issues.
-
-2. **@JsExport Usage**: All classes and functions that need to be available in JavaScript must use the `@JsExport` annotation with proper import:
-   ```kotlin
-   import kotlin.js.JsExport
-   
-   @JsExport
-   class GameEngine { ... }
-   ```
-
-3. **Factory Functions**: Since companion object methods aren't directly accessible in JavaScript, we provide top-level factory functions like `createGameEngineFromYaml()`.
-
-## Backend Integration
-
-JVM version provides server functionality:
-
-```kotlin
-// Same engine, server context
-val engine = GameEngine.fromYaml(yamlContent, playerIds)
-val result = engine.processAction(playerAction)
-
-// Save to MongoDB
-mongoAdapter.saveGameState(engine.getGameState())
-```
-
-## AI Agent Integration
-
-The engine provides AI-friendly modification points:
-
-```yaml
-ai_hints:
-  difficulty_factors: 
-    - "cards.attack_card.properties.damage.max"
-    - "mechanics.setup.players.health"
-  common_modifications:
-    easier: {damage_max: 3, health: 20}
-    harder: {damage_max: 7, health: 10}
-```
-
-## Game Definition Format (Universal YAML Schema)
-
-The engine uses a universal YAML schema where all game concepts are expressed through generic object/property/trigger patterns. See `/docs/catenin/universal-yaml-schema.md` for the full specification.
-
-**Note:** YAML field names use camelCase (matching Kotlin serialization): `objectTypes`, `objectType`, `targetAge`, `participantCount`, `propertyChanged`, etc.
-
-```yaml
-meta:
-  name: "Game Name"
-  targetAge: [8, 12]
-  participantCount: [2, 4]
-
-objectTypes:                      # Define object templates
-  unit:
-    properties:
-      health: {type: INT, initial: 100, min: 0, max: 200}
-      name: {type: STRING, initial: "Default"}
-    states:
-      alive: {type: BOOL, initial: true}
-
-instances:                        # Predefined object instances
-  warrior:
-    objectType: "unit"
-    properties:
-      name: "Warrior"
-      health: "120"
-
-triggers:                         # Global triggers (on property changes)
-  - name: "defeat_check"
-    when:
-      objectType: unit
-      propertyChanged: "health"
-      newValue: "0"
-    effects:
-      - log: "Unit defeated!"
-      - modifyProperty:
-          target: {id: "this"}
-          property: "alive"
-          value: "false"
-
-setup:                            # Initialization rules
-  worldInitialization:
-    - createObjects:
-        count: 1
-        objectType: "board"
-  participantInitialization:
-    - createObjects:
-        count: 1
-        objectType: "unit"
-        properties:
-          participantId: "{participant_id}"
-```
-
-## Testing Approach
-
-- **Unit Tests**: Test individual components in isolation
-- **Integration Tests**: Test complete game flows
-- **Cross-Platform**: Same tests run on JVM and JS
-- **Game Scenarios**: Test actual gameplay sequences
-- **JavaScript Library Tests**: Validate browser/HTML demo compatibility
-
-### JavaScript Library Testing
-
-The `JavaScriptLibraryTest` ensures that the JavaScript exports work correctly:
-
-```bash
-# Run JavaScript tests specifically
-./gradlew :catenin:jsNodeTest    # Node.js environment
-./gradlew :catenin:jsBrowserTest # Browser environment (headless)
-```
-
-**Test Coverage:**
-- `createGameEngineFromYaml()` factory function
-- JavaScript Array compatibility for `getPlayers()` and `generateCards()`
-- Complete HTML demo workflow simulation
-- Error handling scenarios
-- YAML parsing and game definition validation
-
-**Key Benefits:**
-- Validates that JavaScript exports work in real browser/Node.js environments
-- Tests the exact API used by the HTML demo
-- Ensures Array methods (map, filter, slice) work correctly
-- Catches JavaScript-specific issues early in development
-
-## Development Status
-
-**Current Phase**: ✅ PHASE 1 COMPLETE → Ready for PHASE 2!
-Following the TDD Implementation Plan from `/docs/catenin/tdd-implementation-plan.md`
-
-### Phase 1: Data Models (Week 1) - ✅ COMPLETE
-- **Day 1**: ✅ Property Values and Basic Objects
-  - PropertyValue sealed class (INT, STRING, BOOL, OBJECT_REF)
-  - GameObject with immutable properties and states
-  - Type-safe property access
-- **Day 2**: ✅ Game Definition and Object Types  
-  - Universal object system (not limited to cards/players)
-  - ObjectTypeDefinition with properties and states
-  - UniversalGameSchema with YAML parsing
-  - Schema validation
-- **Day 3**: ✅ Object Factory and World State
-  - ObjectFactory for creating objects from schemas
-  - GameWorld with immutable state management
-  - Configuration-driven initialization (no hardcoded "participant")
-  - Trigger and Effect definitions
-
-### Phase 2: Trigger System (Week 2) - 🚀 NEXT
-- **Day 4**: ⏳ Trigger Conditions - NEXT
-- **Day 5**: ⏳ Effect System Foundation
-- **Day 6**: ⏳ Complete Trigger-Effect Pipeline
-- **Day 7**: ⏳ Game Actions and Turn Management
-
-### Phase 3: High-Level Schemas (Week 3) - 📅 PLANNED
-- **Day 8**: ⏳ Schema Compiler Foundation
-- **Day 9**: ⏳ BoardGameSchema Compiler
-- **Day 10**: ⏳ AdventureGameSchema Compiler
-
-### Phase 4: Integration and Polish (Week 4) - 📅 PLANNED
-- **Day 11**: ⏳ Expression Engine Integration
-- **Day 12**: ⏳ Schema Validation and Error Handling
-- **Day 13**: ⏳ Performance and Optimization
-- **Day 14**: ⏳ Cross-Platform and Examples
-
-**🎉 PHASE 1 ACHIEVEMENTS:**
-- Universal object system (beyond original card/player design)
-- Immutable GameWorld architecture with functional updates
-- Configuration-driven initialization (removed hardcoded assumptions)
-- Trigger system foundation (TriggerDefinition, EffectDefinition, TargetResolver)
-- Turn-based CLI demo proving system flexibility
-- 4 working demos (JVM CLI, Browser, Node.js, TypeScript)
-- NPM package distribution maintained
-- **Monorepo Config**: ✅ Multi-service ready (Kotlin, Java, JS, TypeScript)
-
-## Key Files
-
-### Planning Documents
-- `/docs/catenin/tdd-implementation-plan.md` - Current development roadmap
-- `/docs/catenin/architectural-boundaries.md` - Core design principles
-- `/docs/catenin/turn-based-first-architecture.md` - Turn-based focus rationale
-- `/docs/catenin/universal-yaml-schema.md` - YAML schema specification
-
-### Implementation Guides
-- `/docs/catenin/high-level-game-schemas.md` - High-level schema designs
-- `/docs/catenin/board-game-schema.md` - BoardGameSchema specification
-- `/docs/catenin/adventure-game-schema.md` - AdventureGameSchema specification
-- `/docs/catenin/js-usage-example.md` - JavaScript integration guide
-
-### Archive (Historical - DO NOT USE)
-- `/docs/catenin/archive/` - Old day-by-day plans (deprecated)
-
-The project prioritizes practical functionality over architectural complexity, with a focus on creating a working cross-platform game engine that AI agents can easily understand and modify.
+Each working session: read [`journal/claude/README.md`](./journal/claude/README.md) + recent entries at session start; add `journal/claude/YYYY-MM-DD-session-N.md` (personal, reflective — see Session 4/5 for tone) and update that README at session end. The journal is institutional memory across model generations. Honor it.

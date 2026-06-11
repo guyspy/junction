@@ -1,0 +1,116 @@
+# Make-Ten Match — an addition-facts game (sums up to 10) for two players.
+#
+# The board shows number cards face-up. On your turn you pick TWO cards; if their
+# two numbers ADD UP TO 10 you win the pair and go again, otherwise they go back
+# and play passes on. Whoever collects the most cards wins.
+#
+# HOW THE LESSON IS ENCODED:
+#   * Every card shows a `value` (1..9) — that is the number a 7–9 year old reads
+#     and reasons about.
+#   * The engine pairs two flipped cards only when they share a hidden `pairKey`,
+#     and pairKeys are assigned so that two cards share one EXACTLY when their
+#     values sum to 10 (9+1, 8+2, 7+3, 6+4, 5+5). So a legal capture is always a
+#     true "make 10" fact, and to play well a child must compute the complement of
+#     a number to 10 (e.g. "I flipped 3, I need 7"). Knowing your make-ten addition
+#     facts is the winning strategy.
+#   * There are NINE capturable pairs (an odd number). Each capture is worth two
+#     cards, so the 18 cards can never split evenly — the game always has a clear
+#     winner, never a draw.
+apiVersion: games.junction.aotter.net/v1alpha1
+kind: Game
+metadata:
+  name: make-ten-match
+spec:
+  meta:
+    title: "Make-Ten Match"
+    description: >-
+      Number cards lie on the table. Each turn, pick two cards; if the two numbers
+      add up to 10 (like 6 and 4, or 3 and 7) you capture the pair and take another
+      turn — otherwise they go back. When every card is captured, whoever has the
+      most cards wins. Know your make-ten facts to win.
+    seats: { min: 2, max: 2 }
+    estMinutes: 10
+
+  # visibility: all means every card's number is face-up the whole game — this is an
+  # open-information addition race, not a memory/recall game. The engine still needs
+  # to "flip" two cards to mark this turn's choice; their identities are never hidden.
+  zones:
+    - { name: table, owner: shared, visibility: all }
+    - { name: won, owner: seat, visibility: all }
+
+  # One piece set per make-ten fact. A distinct pairKey per fact means a card only
+  # ever matches its true complement-to-ten. Two cards with the same value (e.g. two
+  # 8s from different facts) carry the SAME value but different pairKeys, so they
+  # never match each other — a capture is always exactly a sum of 10.
+  pieces:
+    # 9 + 1 = 10  (two facts ⇒ two pairs)
+    - { name: fact-9-1-a, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 9, pairKey: k91a } }
+    - { name: fact-1-9-a, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 1, pairKey: k91a } }
+    - { name: fact-9-1-b, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 9, pairKey: k91b } }
+    - { name: fact-1-9-b, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 1, pairKey: k91b } }
+    # 8 + 2 = 10
+    - { name: fact-8-2-a, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 8, pairKey: k82a } }
+    - { name: fact-2-8-a, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 2, pairKey: k82a } }
+    - { name: fact-8-2-b, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 8, pairKey: k82b } }
+    - { name: fact-2-8-b, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 2, pairKey: k82b } }
+    # 7 + 3 = 10
+    - { name: fact-7-3-a, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 7, pairKey: k73a } }
+    - { name: fact-3-7-a, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 3, pairKey: k73a } }
+    - { name: fact-7-3-b, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 7, pairKey: k73b } }
+    - { name: fact-3-7-b, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 3, pairKey: k73b } }
+    # 6 + 4 = 10
+    - { name: fact-6-4-a, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 6, pairKey: k64a } }
+    - { name: fact-4-6-a, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 4, pairKey: k64a } }
+    - { name: fact-6-4-b, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 6, pairKey: k64b } }
+    - { name: fact-4-6-b, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 4, pairKey: k64b } }
+    # 5 + 5 = 10  (two fives are one genuine make-ten pair ⇒ the 9th, odd pair)
+    - { name: fact-5-5, properties: { value: { type: int }, pairKey: { type: string } }, values: { value: 5, pairKey: k55 }, copies: 2 }
+
+  setup:
+    - { op: create, pieces: fact-9-1-a, into: table }
+    - { op: create, pieces: fact-1-9-a, into: table }
+    - { op: create, pieces: fact-9-1-b, into: table }
+    - { op: create, pieces: fact-1-9-b, into: table }
+    - { op: create, pieces: fact-8-2-a, into: table }
+    - { op: create, pieces: fact-2-8-a, into: table }
+    - { op: create, pieces: fact-8-2-b, into: table }
+    - { op: create, pieces: fact-2-8-b, into: table }
+    - { op: create, pieces: fact-7-3-a, into: table }
+    - { op: create, pieces: fact-3-7-a, into: table }
+    - { op: create, pieces: fact-7-3-b, into: table }
+    - { op: create, pieces: fact-3-7-b, into: table }
+    - { op: create, pieces: fact-6-4-a, into: table }
+    - { op: create, pieces: fact-4-6-a, into: table }
+    - { op: create, pieces: fact-6-4-b, into: table }
+    - { op: create, pieces: fact-4-6-b, into: table }
+    - { op: create, pieces: fact-5-5, into: table }
+    - { op: shuffle, zone: table }
+
+  turn:
+    order: roundRobin
+    phases:
+      - { name: pick-first, actions: [pick] }
+      - { name: pick-second, actions: [pick] }
+
+  actions:
+    - name: pick
+      flip: { zone: { zone: table }, target: chosen, direction: faceUp }
+
+  triggers:
+    - name: resolve-make-ten
+      on: { event: pieceFlipped, inZone: table }
+      when: "zones.table.faceUpCount == 2"
+      effects:
+        - resolveEqualPair:
+            zone: table
+            property: pairKey
+            toZone: won
+            onMatch: goAgain
+            onMismatch: flipDown
+
+  end:
+    when: "zones.table.allEmpty"
+    winner: { mostPiecesIn: won }
+
+  presentation:
+    theme: { table: sunset, accent: coral, motion: bouncy, celebration: festive, sound: arcade }
