@@ -14,9 +14,11 @@ const RULES = {
   renderer: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
   // Connexon: the online runtime core. Platform-agnostic — no node, no @cloudflare; adapters live elsewhere.
   connexon: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
+  // Node adapter: Connexon's ws transport + local server. Node allowed by definition.
+  node: { allow: ["@junction/spec", "@junction/runtime", "@junction/connexon", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
   // Integrin: the MCP server. Imports spec+runtime; the SDK + stdio transport need node.
   mcp: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
-  cli: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
+  cli: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer", "@junction/node"], allowNode: true, sideEffectsFree: false },
 };
 const FORBIDDEN_EVERYWHERE = [/@cloudflare\//, /\bworkerd\b/];
 

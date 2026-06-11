@@ -1,4 +1,4 @@
-import type { GameEvent, ProjectedState } from "@junction/runtime";
+import type { GameEvent, PlayerMove, ProjectedState } from "@junction/runtime";
 
 /**
  * The Connexon wire protocol — plain JSON over any ordered transport (WebSocket today,
@@ -37,6 +37,8 @@ export interface WelcomeMessage {
   readonly state: ProjectedState;
   /** Highest event seq already reflected in `state`. */
   readonly seq: number;
+  /** Your legal moves right now (server-sent options — clients never know the rules). Empty unless it's your turn. */
+  readonly moves: readonly PlayerMove[];
 }
 
 /** An ordered, per-seat-projected batch of game events. */
@@ -47,6 +49,8 @@ export interface PatchMessage {
   readonly state: ProjectedState;
   /** Seq of the last event in this batch. */
   readonly seq: number;
+  /** Your legal moves after this batch (empty unless it's your turn). */
+  readonly moves: readonly PlayerMove[];
 }
 
 export interface RoomInfoMessage {

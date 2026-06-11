@@ -2,8 +2,8 @@
 export { announce, announceAll } from "./announcer.js";
 export { cardBackSVG, cardFaceSVG } from "./art.js";
 export { confettiBurst, scorePop } from "./celebrate.js";
-export { mountGame, type GameController, type MountOptions } from "./dom-renderer.js";
-export { buildGamePageHtml, computeQaBadges, type GamePageInput, type QaBadgeOptions } from "./page.js";
+export { mountGame, mountOnlineGame, type GameController, type MountOptions, type OnlineMountOptions } from "./dom-renderer.js";
+export { buildGamePageHtml, buildOnlinePageHtml, computeQaBadges, type GamePageInput, type OnlinePageInput, type QaBadgeOptions } from "./page.js";
 export { createSoundBank, soundForEvent, type SoundBank, type SoundName, type SoundSetName } from "./sound.js";
 export { CADHERIN_CSS } from "./styles.js";
 export {
@@ -16,6 +16,7 @@ export {
 } from "./theme.js";
 export {
   buildViewModel,
+  buildViewModelFromProjection,
   cardLabel,
   cardShortText,
   type CardVM,

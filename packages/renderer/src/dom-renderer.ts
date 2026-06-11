@@ -14,7 +14,7 @@ import { cardBackSVG, cardFaceSVG } from "./art.js";
 import { confettiBurst, scorePop } from "./celebrate.js";
 import { createSoundBank, soundForEvent, type SoundName } from "./sound.js";
 import { applyThemeTokens, celebrationColors, motionParams, resolveTheme, type MotionParams } from "./theme.js";
-import { buildViewModel, type CardVM, type ViewModel } from "./view-model.js";
+import { buildViewModel, buildViewModelFromProjection, type CardVM, type ViewModel } from "./view-model.js";
 
 /**
  * Cadherin's DOM controller: mounts a playable game into a container. Framework-free
@@ -464,4 +464,235 @@ function playFlip(host: HTMLElement, firstRects: Map<string, DOMRect>, motion: M
       { duration: motion.moveDuration, easing: motion.easing },
     );
   }
+}
+
+// ---- online play -----------------------------------------------------------------
+
+export interface OnlineMountOptions {
+  /** WebSocket URL including the room code, e.g. wss://host/ws?code=ABCDE */
+  readonly url: string;
+  readonly name?: string;
+}
+
+interface WireWelcome {
+  t: "welcome";
+  seat: number;
+  token: string;
+  title: string;
+  spec: string;
+  state: import("@junction/runtime").ProjectedState;
+  seq: number;
+  moves: { action: string; target?: string }[];
+}
+interface WirePatch {
+  t: "patch";
+  events: GameEvent[];
+  state: import("@junction/runtime").ProjectedState;
+  seq: number;
+  moves: { action: string; target?: string }[];
+}
+
+/**
+ * Mount an ONLINE game: the server is authoritative; this client renders projections
+ * and sends chosen moves. Same view-model, same juice — different state source.
+ * Reconnects with its token + lastSeq, so a dropped Chromebook resumes seamlessly.
+ */
+export function mountOnlineGame(container: HTMLElement, options: OnlineMountOptions): GameController {
+  container.innerHTML = "";
+  container.classList.add("jx-shell");
+  const status = el("p", "jx-status");
+  status.textContent = "Connecting…";
+  container.append(status);
+
+  let disposed = false;
+  let socket: WebSocket | undefined;
+  let token: string | undefined;
+  let lastSeq = -1;
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // Set after welcome (we need the spec to build the doc + theme).
+  let game: {
+    doc: GameDocument;
+    theme: ReturnType<typeof resolveTheme>;
+    motion: MotionParams;
+    colors: string[];
+    sound: ReturnType<typeof createSoundBank>;
+    viewerSeat: number;
+    statusEl: HTMLElement;
+    zonesHost: HTMLElement;
+    buttonsHost: HTMLElement;
+    statsHost: HTMLElement;
+    tickerHost: HTMLElement;
+    live: HTMLElement;
+    ticker: string[];
+    stepEvents: readonly GameEvent[];
+    matchStreak: number;
+    firstRender: boolean;
+  } | undefined;
+
+  function send(message: unknown): void {
+    if (socket !== undefined && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
+  }
+
+  function scaffold(welcome: WireWelcome): void {
+    const { parseGameDocument } = junctionSpec();
+    const parsed = parseGameDocument(welcome.spec, { file: "<online>" });
+    if (!parsed.ok) {
+      status.textContent = "This room's game failed to load.";
+      return;
+    }
+    const doc = parsed.data;
+    const theme = resolveTheme(doc.spec);
+    container.innerHTML = "";
+    applyThemeTokens(document.documentElement, container, theme);
+
+    const statusBar = el("div", "jx-statusbar");
+    const statusEl = el("p", "jx-status");
+    const sound = createSoundBank(theme.sound, readMuted());
+    const soundToggle = el("button", "jx-sound");
+    soundToggle.type = "button";
+    const syncToggle = (): void => {
+      const muted = sound.isMuted() || theme.sound === "off";
+      soundToggle.textContent = muted ? "🔇" : "🔊";
+      soundToggle.setAttribute("aria-label", muted ? "turn sound on" : "turn sound off");
+    };
+    soundToggle.addEventListener("click", () => {
+      sound.setMuted(!sound.isMuted());
+      storeMuted(sound.isMuted());
+      syncToggle();
+    });
+    syncToggle();
+    statusBar.append(statusEl, soundToggle);
+
+    const statsHost = el("div", "jx-stats");
+    const zonesHost = el("div", "jx-zones");
+    const buttonsHost = el("div", "jx-buttons");
+    const tickerHost = el("div", "jx-ticker");
+    const live = el("div", "visually-hidden");
+    live.setAttribute("role", "status");
+    live.setAttribute("aria-live", "polite");
+    container.append(statusBar, statsHost, zonesHost, buttonsHost, tickerHost, live);
+    container.addEventListener("pointerdown", () => sound.unlock(), { capture: true });
+
+    game = {
+      doc,
+      theme,
+      motion: motionParams(theme),
+      colors: celebrationColors(theme),
+      sound,
+      viewerSeat: welcome.seat,
+      statusEl,
+      zonesHost,
+      buttonsHost,
+      statsHost,
+      tickerHost,
+      live,
+      ticker: [],
+      stepEvents: [],
+      matchStreak: 0,
+      firstRender: true,
+    };
+  }
+
+  function renderOnline(state: import("@junction/runtime").ProjectedState, moves: { action: string; target?: string }[]): void {
+    if (game === undefined) return;
+    const g = game;
+    const vm = buildViewModelFromProjection(g.doc, state, moves);
+    const firstRects = measureCards(g.zonesHost);
+    g.statusEl.textContent = vm.statusLine;
+    g.statusEl.classList.toggle("your-turn", vm.yourTurn);
+    renderStats(g.statsHost, vm);
+    renderZones(g.zonesHost, vm, g.doc.metadata.name, (move) => {
+      g.sound.unlock();
+      send({ t: "move", ...move });
+    });
+    renderButtons(g.buttonsHost, vm, (move) => {
+      g.sound.unlock();
+      send({ t: "move", ...move });
+    });
+    renderTicker(g.tickerHost, g.ticker);
+    pulseChangedStats(g.statsHost, g.stepEvents);
+    if (g.firstRender) {
+      g.firstRender = false;
+      playEntrance(g.zonesHost, g.motion);
+    } else {
+      playFlip(g.zonesHost, firstRects, g.motion);
+    }
+    // celebrations
+    const ended = g.stepEvents.find((e) => e.type === "gameEnded");
+    if (ended?.type === "gameEnded" && ended.winnerSeat === g.viewerSeat && g.theme.celebration === "festive")
+      confettiBurst(g.colors);
+    g.stepEvents = [];
+    if (vm.ended) showBanner(container, vm);
+  }
+
+  function onMessage(raw: string): void {
+    let msg: { t?: string };
+    try {
+      msg = JSON.parse(raw) as { t?: string };
+    } catch {
+      return;
+    }
+    if (msg.t === "welcome") {
+      const welcome = msg as WireWelcome;
+      token = welcome.token;
+      lastSeq = welcome.seq;
+      scaffold(welcome);
+      renderOnline(welcome.state, welcome.moves);
+    } else if (msg.t === "patch") {
+      const patch = msg as WirePatch;
+      lastSeq = patch.seq;
+      if (game !== undefined) {
+        game.stepEvents = patch.events;
+        const lines = announceAll(patch.events, game.viewerSeat);
+        if (lines.length > 0) {
+          game.ticker = [...game.ticker, ...lines].slice(-6);
+          game.live.textContent = lines[lines.length - 1]!;
+        }
+        for (const event of patch.events)
+          if (event.type === "pairResolved" && event.bySeat === game.viewerSeat)
+            game.matchStreak = event.matched ? game.matchStreak + 1 : 0;
+        const names: SoundName[] = [];
+        for (const event of patch.events) {
+          const name = soundForEvent(event, game.viewerSeat);
+          if (name !== null && !names.includes(name)) names.push(name);
+        }
+        const finale = names.find((n) => n === "fanfare" || n === "defeat");
+        for (const name of finale !== undefined ? [finale] : names.slice(0, 2)) game.sound.play(name);
+      }
+      renderOnline(patch.state, patch.moves);
+    } else if (msg.t === "error") {
+      const err = msg as { message?: string };
+      if (game === undefined) status.textContent = err.message ?? "Room error.";
+    }
+  }
+
+  function connect(): void {
+    if (disposed) return;
+    socket = new WebSocket(options.url);
+    socket.addEventListener("open", () => {
+      send({ t: "join", ...(options.name !== undefined ? { name: options.name } : {}), ...(token !== undefined ? { token, lastSeq } : {}) });
+    });
+    socket.addEventListener("message", (event) => onMessage(String(event.data)));
+    socket.addEventListener("close", () => {
+      if (disposed) return;
+      (game?.statusEl ?? status).textContent = "Reconnecting…";
+      retryTimer = setTimeout(connect, 1200);
+    });
+  }
+  connect();
+
+  return {
+    dispose: () => {
+      disposed = true;
+      if (retryTimer !== undefined) clearTimeout(retryTimer);
+      socket?.close();
+    },
+  };
+}
+
+/** Indirection so the spec import stays at module top (bundled) without circularity. */
+import { parseGameDocument as _parseGameDocument } from "@junction/spec";
+function junctionSpec(): { parseGameDocument: typeof _parseGameDocument } {
+  return { parseGameDocument: _parseGameDocument };
 }

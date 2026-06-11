@@ -81,3 +81,39 @@ window.JunctionGame.boot({ yaml: ${yamlJson} });
 </html>
 `;
 }
+
+export interface OnlinePageInput {
+  readonly title: string;
+  readonly badges: readonly string[];
+  readonly bundleJs: string;
+}
+
+/** The join/play page a room server serves: same shell, boots the online client. */
+export function buildOnlinePageHtml(input: OnlinePageInput): string {
+  const badgeHtml = input.badges
+    .map((b) => `<span class="jx-badge${b.startsWith("⚠") ? " warn" : ""}">${escapeHtml(b)}</span>`)
+    .join("");
+  const bundle = input.bundleJs.replace(/<\/script/gi, "<\\/script");
+  const title = escapeHtml(input.title);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title} · Junction Live</title>
+</head>
+<body>
+<div class="jx-shell">
+  <header class="jx-header">
+    <h1 class="jx-title">${title}</h1>
+    <div class="jx-badges">${badgeHtml}<span class="jx-badge">LIVE</span></div>
+  </header>
+  <main id="junction-root" aria-label="${title} game board"></main>
+  <footer class="jx-footer">Made with Junction — playing live in an authoritative room.</footer>
+</div>
+<script>${bundle}</script>
+<script>window.JunctionGame.bootOnline();</script>
+</body>
+</html>
+`;
+}
