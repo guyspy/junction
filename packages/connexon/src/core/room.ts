@@ -12,6 +12,7 @@ import {
   type Rng,
 } from "@junction/runtime";
 import { encode } from "../protocol/messages.js";
+import { HandleCodec } from "./handles.js";
 
 /**
  * The Room — Connexon's platform-agnostic heart. It owns authoritative game state and
@@ -72,6 +73,8 @@ export class Room {
   private readonly conns = new Map<string, Conn>();
   private tokenCounter = 0;
   private botTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Server-secret pieceId↔handle mapping — nothing creation-ordered crosses the wire. */
+  private readonly codec: HandleCodec;
   /** Injectable so tests can run bots synchronously. */
   private readonly schedule: (fn: () => void) => void;
 
@@ -87,6 +90,7 @@ export class Room {
     const setup = buildInitialState(this.doc, this.seatCount, createRng(`${config.hooks.seed}:setup`));
     this.state = setup.state;
     this.log.push(...setup.events);
+    this.codec = new HandleCodec(Object.keys(this.state.pieces), `${config.hooks.seed}:handles`);
     this.seats = Array.from({ length: this.seatCount }, (_, i) => ({
       connId: null,
       token: `seat${i}-${(this.tokenCounter++).toString(36)}`,
@@ -153,8 +157,9 @@ export class Room {
         game: this.doc.metadata.name,
         title: this.doc.spec.meta.title,
         spec: this.yaml,
-        state: projectState(this.state, this.doc.spec, seatIndex),
+        state: this.codec.translateState(projectState(this.state, this.doc.spec, seatIndex)),
         seq: this.lastSeq,
+        moves: this.movesFor(seatIndex),
       }),
     );
     // Resume: replay any events the client missed (lastSeq < current).
@@ -173,7 +178,8 @@ export class Room {
       this.hooks.send(connId, encode({ t: "error", code: "NOT_YOUR_TURN", message: "It is not your turn." }));
       return;
     }
-    const result = applyAction(this.state, this.doc.spec, { seat: conn.seat, action: msg.action, target: msg.target }, this.diceRng);
+    const target = msg.target === undefined ? undefined : this.codec.fromWire(msg.target);
+    const result = applyAction(this.state, this.doc.spec, { seat: conn.seat, action: msg.action, ...(target !== undefined ? { target } : {}) }, this.diceRng);
     if (!result.ok) {
       this.hooks.send(connId, encode({ t: "error", code: result.diagnostics[0]?.code ?? "ILLEGAL", message: result.diagnostics[0]?.message ?? "Illegal move." }));
       return;
@@ -201,11 +207,20 @@ export class Room {
       connId,
       encode({
         t: "patch",
-        events: events.map((e) => e), // v1alpha reveals are public; per-seat event filtering lands with private reveals
-        state: projectState(this.state, this.doc.spec, seat),
+        // v1alpha reveals are public, so all seats get the same (handle-translated) events;
+        // per-seat event filtering lands with private reveals.
+        events: events.map((e) => this.codec.translateEvent(e)),
+        state: this.codec.translateState(projectState(this.state, this.doc.spec, seat)),
         seq: this.lastSeq,
+        moves: this.movesFor(seat),
       }),
     );
+  }
+
+  /** Server-sent options: this seat's legal moves right now (handle-translated). */
+  private movesFor(seat: number): readonly import("@junction/runtime").PlayerMove[] {
+    if (this.state.status !== "running" || this.state.activeSeat !== seat) return [];
+    return this.codec.translateMoves(legalMoves(this.state, this.doc.spec));
   }
 
   private broadcastRoomInfo(): void {

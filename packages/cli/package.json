@@ -8,7 +8,9 @@
     "junction": "./dist/index.js"
   },
   "main": "./dist/index.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "test": "vitest run --passWithNoTests"
@@ -16,7 +18,8 @@
   "dependencies": {
     "@junction/renderer": "workspace:*",
     "@junction/runtime": "workspace:*",
-    "@junction/spec": "workspace:*"
+    "@junction/spec": "workspace:*",
+    "@junction/node": "workspace:*"
   },
   "engines": {
     "node": ">=20.19"

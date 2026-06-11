@@ -1,0 +1,28 @@
+{
+  "name": "@junction/node",
+  "version": "0.0.1-alpha.0",
+  "description": "Connexon's Node adapter: a ws room server — the portability hedge and local classroom host.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@junction/connexon": "workspace:*",
+    "@junction/renderer": "workspace:*",
+    "@junction/runtime": "workspace:*",
+    "@junction/spec": "workspace:*",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.0"
+  },
+  "engines": { "node": ">=20.19" }
+}

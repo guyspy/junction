@@ -50,6 +50,9 @@ export interface ProjectedState {
   readonly phaseIndex: number;
   readonly winnerSeat: number | null;
   readonly zones: readonly ProjectedZone[];
+  /** Variables are public in v1alpha (health/mana/score are open information). */
+  readonly vars: Readonly<Record<string, number>>;
+  readonly seatVars: Readonly<Record<string, readonly number[]>>;
 }
 
 /**
@@ -97,6 +100,8 @@ export function projectState(state: GameState, spec: GameSpec, viewerSeat: numbe
     phaseIndex: state.phaseIndex,
     winnerSeat: state.winnerSeat,
     zones,
+    vars: { ...state.vars },
+    seatVars: Object.fromEntries(Object.entries(state.seatVars).map(([k, v]) => [k, [...v]])),
   };
 }
 

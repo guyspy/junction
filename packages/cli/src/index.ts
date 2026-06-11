@@ -4,12 +4,14 @@ import { formatDiagnosticText, parseGameDocument, type Diagnostic } from "@junct
 import { simulate, type SimulateReport } from "@junction/runtime";
 import { runPlay } from "./play.js";
 import { renderGameHtml } from "./render.js";
+import { startNodeServer } from "@junction/node";
 
 /**
  * junction validate <file> [--format json|text]
  * junction simulate <file> [--games N] [--seed S] [--seats N] [--max-turns M] [--format json|text]
  * junction play <file> [--seat N] [--seats N] [--seed S]
  * junction render <file> [--out file.html] [--seed S]
+ * junction serve  <file> [--port N] [--seats N] [--host H]
  * Exit codes: 0 ok, 1 diagnostics with errors / failed run, 2 usage.
  */
 
@@ -21,6 +23,8 @@ interface Flags {
   readonly seat: number;
   readonly maxTurns: number;
   readonly out?: string;
+  readonly port: number;
+  readonly host: string;
 }
 
 function parseFlags(args: readonly string[]): { positional: string[]; flags: Flags } {
@@ -32,6 +36,8 @@ function parseFlags(args: readonly string[]): { positional: string[]; flags: Fla
   let seat = 0;
   let maxTurns = 1000;
   let out: string | undefined;
+  let port = 8787;
+  let host = "127.0.0.1";
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
     const next = (): string => {
@@ -49,11 +55,13 @@ function parseFlags(args: readonly string[]): { positional: string[]; flags: Fla
     else if (arg === "--seat") seat = Number(next());
     else if (arg === "--max-turns") maxTurns = Number(next());
     else if (arg === "--out" || arg === "-o") out = next();
+    else if (arg === "--port") port = Number(next());
+    else if (arg === "--host") host = next();
     else if (arg.startsWith("--")) usage(`unknown flag ${arg}`);
     else positional.push(arg);
   }
   const resolvedFormat = format ?? (process.stdout.isTTY ? "text" : "json");
-  return { positional, flags: { format: resolvedFormat, games, seed, seats, seat, maxTurns, out } };
+  return { positional, flags: { format: resolvedFormat, games, seed, seats, seat, maxTurns, out, port, host } };
 }
 
 function usage(reason?: string): never {
@@ -65,6 +73,7 @@ function usage(reason?: string): never {
       "  junction simulate <file.yaml> [--games N] [--seed S] [--seats N] [--max-turns M] [--format json|text]",
       "  junction play     <file.yaml> [--seat N] [--seats N] [--seed S]",
       "  junction render   <file.yaml> [--out file.html] [--seed S]",
+      "  junction serve    <file.yaml> [--port N] [--seats N] [--host H]",
     ].join("\n"),
   );
   process.exit(2);
@@ -93,7 +102,7 @@ function printReport(report: SimulateReport, format: "json" | "text"): void {
 
 async function main(): Promise<void> {
   const [command, ...rest] = process.argv.slice(2);
-  if (command !== "validate" && command !== "simulate" && command !== "play" && command !== "render") usage();
+  if (command !== "validate" && command !== "simulate" && command !== "play" && command !== "render" && command !== "serve") usage();
   const { positional, flags } = parseFlags(rest);
   const file = positional[0];
   if (file === undefined) usage("missing <file.yaml>");
@@ -128,6 +137,17 @@ async function main(): Promise<void> {
     if (flags.seat < 0 || flags.seat >= seats) usage(`--seat must be in [0, ${seats - 1}]`);
     const code = await runPlay(parsed.data, { seats, seat: flags.seat, seed: flags.seed });
     process.exit(code);
+  }
+
+  if (command === "serve") {
+    const seats = flags.seats ?? parsed.data.spec.meta.seats.min;
+    const server = await startNodeServer({ doc: parsed.data, yaml: text, seats, port: flags.port, host: flags.host });
+    console.log(`🎴  ${parsed.data.spec.meta.title} — room open`);
+    console.log(`    join code   ${server.code}`);
+    console.log(`    play url    ${server.url}`);
+    console.log(`    self-test   http://${flags.host}:${server.port}/check`);
+    console.log(`    (${seats} seats; empty seats are played by bots — Ctrl-C to close the room)`);
+    await new Promise(() => undefined); // run until interrupted
   }
 
   if (command === "render") {

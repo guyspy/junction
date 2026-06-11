@@ -1,5 +1,5 @@
 import type { GameDocument } from "@junction/spec";
-import { legalMoves, projectState, type GameState, type PlayerMove } from "@junction/runtime";
+import { legalMoves, projectState, type GameState, type PlayerMove, type ProjectedState } from "@junction/runtime";
 
 /**
  * The pure view-model: (doc, state, viewerSeat) → what to draw, with zero DOM.
@@ -105,10 +105,26 @@ function zoneTitle(zone: string, mine: boolean, ownerSeat: number | null, count:
   return `${who}${zone} (${count})`;
 }
 
+/** Local play: project + compute legal moves, then delegate to the projection core. */
 export function buildViewModel(doc: GameDocument, state: GameState, viewerSeat: number): ViewModel {
   const projected = projectState(state, doc.spec, viewerSeat);
   const yourTurn = state.status === "running" && state.activeSeat === viewerSeat;
   const moves = yourTurn ? legalMoves(state, doc.spec) : [];
+  return buildViewModelFromProjection(doc, projected, moves);
+}
+
+/**
+ * The projection core — also the ONLINE path: the server sends exactly a ProjectedState
+ * + this seat's legal moves (Hearthstone-style options), and this renders it. Clients
+ * never evaluate rules.
+ */
+export function buildViewModelFromProjection(
+  doc: GameDocument,
+  projected: ProjectedState,
+  moves: readonly PlayerMove[],
+): ViewModel {
+  const viewerSeat = projected.viewerSeat;
+  const yourTurn = projected.status === "running" && projected.activeSeat === viewerSeat;
   const moveByTarget = new Map<string, PlayerMove>();
   const buttons: MoveButtonVM[] = [];
   for (const move of moves) {
@@ -154,35 +170,36 @@ export function buildViewModel(doc: GameDocument, state: GameState, viewerSeat: 
     };
   });
 
-  const ended = state.status === "ended";
+  const ended = projected.status === "ended";
   const winnerText = !ended
     ? null
-    : state.winnerSeat === null
+    : projected.winnerSeat === null
       ? "It's a draw!"
-      : state.winnerSeat === viewerSeat
+      : projected.winnerSeat === viewerSeat
         ? "You win! 🏆"
-        : `Seat ${state.winnerSeat} wins.`;
+        : `Seat ${projected.winnerSeat} wins.`;
 
-  const phase = doc.spec.turn.phases[state.phaseIndex]?.name ?? "";
+  const phase = doc.spec.turn.phases[projected.phaseIndex]?.name ?? "";
   const statusLine = ended
     ? (winnerText ?? "Game over.")
     : yourTurn
-      ? `Round ${state.round} — your turn (${phase.replace(/-/g, " ")})`
-      : `Round ${state.round} — seat ${state.activeSeat} is thinking…`;
+      ? `Round ${projected.round} — your turn (${phase.replace(/-/g, " ")})`
+      : `Round ${projected.round} — seat ${projected.activeSeat} is thinking…`;
 
   const seatVarNames = Object.keys(doc.spec.variables.perSeat);
+  const seatCount = Object.values(projected.seatVars)[0]?.length ?? doc.spec.meta.seats.min;
   const seatStats: SeatStatsVM[] =
     seatVarNames.length === 0
       ? []
-      : Array.from({ length: state.seats }, (_, seat) => ({
+      : Array.from({ length: seatCount }, (_, seat) => ({
           seat,
           mine: seat === viewerSeat,
           title: seat === viewerSeat ? "you" : `seat ${seat}`,
-          stats: seatVarNames.map((name) => ({ name, value: state.seatVars[name]?.[seat] ?? 0 })),
+          stats: seatVarNames.map((name) => ({ name, value: projected.seatVars[name]?.[seat] ?? 0 })),
         }));
   const globalStats: StatVM[] = Object.keys(doc.spec.variables.global).map((name) => ({
     name,
-    value: state.vars[name] ?? 0,
+    value: projected.vars[name] ?? 0,
   }));
 
   return {
