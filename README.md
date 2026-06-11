@@ -28,10 +28,16 @@ The moat is not the DSL. The moat is the **verification loop** (validate → sim
 
 ```bash
 pnpm install
-pnpm check                      # boundaries → build → test
+pnpm check                                   # boundaries → build → test
 node packages/cli/dist/index.js validate games/war.yaml
 node packages/cli/dist/index.js simulate games/war.yaml --games 200
+node packages/cli/dist/index.js play games/memory-match.yaml --seat 0   # play a human turn
 ```
+
+Reference games: [`games/war.yaml`](./games/war.yaml) (chance, hidden decks) and
+[`games/memory-match.yaml`](./games/memory-match.yaml) (flip mechanics, face-up/down
+state, go-again). `play` shows only your seat's view — the per-seat projection that the
+online runtime will reuse unchanged.
 
 ## History
 

@@ -92,6 +92,8 @@ export function simulate(doc: GameDocument, options: SimulateOptions = {}): Simu
   const unusedActions = doc.spec.actions.filter((a) => (actionUsage[a.name] ?? 0) === 0);
   if (unusedActions.length > 0)
     notes.push(`⚠ actions never used: ${unusedActions.map((a) => a.name).join(", ")}`);
+  if (decided > 0 && draws / decided > 0.4)
+    notes.push(`⚠ ${((draws / decided) * 100).toFixed(0)}% of decided games are draws — consider a tiebreaker`);
 
   return {
     game: doc.metadata.name,

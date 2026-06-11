@@ -61,17 +61,32 @@ const zoneSel = z.strictObject({
   owner: z.enum(["actor"]).optional(),
 });
 
-const actionDecl = z.strictObject({
-  name,
-  move: z.strictObject({
-    from: zoneSel,
-    take: z.enum(["top"]).default("top"),
-    to: zoneSel,
-    reveal: z.boolean().default(false),
-  }),
-  /** Extra legality condition (total expression). Implicit: `from` must be non-empty. */
-  requires: z.string().optional(),
-});
+const actionDecl = z
+  .strictObject({
+    name,
+    /** Move a piece between zones. `take: top` is automatic; `chosen` requires a player target. */
+    move: z
+      .strictObject({
+        from: zoneSel,
+        take: z.enum(["top", "chosen"]).default("top"),
+        to: zoneSel,
+        reveal: z.boolean().default(false),
+      })
+      .optional(),
+    /** Flip a chosen face-down piece face-up in place (flipping down happens via effects). */
+    flip: z
+      .strictObject({
+        zone: zoneSel,
+        target: z.enum(["chosen"]),
+        direction: z.enum(["faceUp"]),
+      })
+      .optional(),
+    /** Extra legality condition (total expression). Implicit: a valid source piece must exist. */
+    requires: z.string().optional(),
+  })
+  .refine((a) => (a.move !== undefined) !== (a.flip !== undefined), {
+    message: "an action declares exactly one of: move, flip",
+  });
 
 const phaseDecl = z.strictObject({
   name,
@@ -101,13 +116,31 @@ const effectDecl = z.union([
       onTie: z.enum(["stay"]),
     }),
   }),
+  z.strictObject({
+    /**
+     * Memory-match resolution: when exactly two pieces lie face-up in `zone`,
+     * compare them by `property`. Equal ⇒ both move to the actor's `toZone`
+     * (and `onMatch: goAgain` lets the actor keep the turn); unequal ⇒ both
+     * flip back face-down.
+     */
+    resolveEqualPair: z.strictObject({
+      zone: name,
+      property: z.string(),
+      toZone: name,
+      onMatch: z.enum(["goAgain", "none"]).default("goAgain"),
+      onMismatch: z.enum(["flipDown"]),
+    }),
+  }),
 ]);
 
 const triggerDecl = z.strictObject({
   name,
   on: z.strictObject({
-    event: z.enum(["pieceMoved"]),
+    event: z.enum(["pieceMoved", "pieceFlipped"]),
+    /** pieceMoved filter: the destination zone. */
     intoZone: name.optional(),
+    /** pieceFlipped filter: the zone the piece lies in. */
+    inZone: name.optional(),
   }),
   when: z.string().optional(),
   effects: z.array(effectDecl).min(1),

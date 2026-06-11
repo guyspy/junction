@@ -7,9 +7,19 @@ export { SetupError, buildInitialState, type SetupResult } from "./domain/servic
 export {
   applyAction,
   applySkip,
-  legalActions,
+  legalMoves,
   type PlayerAction,
+  type PlayerMove,
   type StepResult,
 } from "./domain/service/reducer.js";
+export {
+  projectEvent,
+  projectState,
+  type HiddenPiece,
+  type ProjectedEntry,
+  type ProjectedPiece,
+  type ProjectedState,
+  type ProjectedZone,
+} from "./domain/service/projection.js";
 export { randomChooser, runGame, type Chooser, type RunGameOptions, type RunGameResult } from "./usecase/run-game.js";
 export { simulate, type SimulateOptions, type SimulateReport } from "./usecase/simulate.js";

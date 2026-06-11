@@ -8,6 +8,8 @@ export interface PieceInstance {
   /** The declaring piece set. */
   readonly decl: string;
   readonly properties: Readonly<Record<string, string | number>>;
+  /** Pieces are created face-down; reveals and flips turn them up, effects may turn them back. */
+  readonly faceUp: boolean;
 }
 
 export interface ZoneEntry {
@@ -33,6 +35,8 @@ export interface GameState {
   readonly seq: number;
   /** Consecutive skipped phases — the stall guard. */
   readonly consecutiveSkips: number;
+  /** Set by goAgain effects; consumed (and reset) by turn advancement within the same step. */
+  readonly pendingGoAgain: boolean;
 }
 
 export function zoneKey(zone: string, ownerSeat: number | null): string {

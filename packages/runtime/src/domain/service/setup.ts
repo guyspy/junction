@@ -22,10 +22,10 @@ function generatePieces(decl: PieceDecl, idStart: number): PieceInstance[] {
     }
     for (const combo of combos)
       for (let copy = 0; copy < decl.copies; copy++)
-        out.push({ id: `${decl.name}-${n++}`, decl: decl.name, properties: combo });
+        out.push({ id: `${decl.name}-${n++}`, decl: decl.name, properties: combo, faceUp: false });
   } else {
     for (let copy = 0; copy < decl.copies; copy++)
-      out.push({ id: `${decl.name}-${n++}`, decl: decl.name, properties: decl.values ?? {} });
+      out.push({ id: `${decl.name}-${n++}`, decl: decl.name, properties: decl.values ?? {}, faceUp: false });
   }
   return out;
 }
@@ -105,6 +105,7 @@ export function buildInitialState(doc: GameDocument, seats: number, rng: Rng): S
     winnerSeat: null,
     seq: events.length,
     consecutiveSkips: 0,
+    pendingGoAgain: false,
   };
   return { state, events };
 }

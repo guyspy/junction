@@ -237,8 +237,11 @@ function lintGameSpec(spec: GameSpec, file: string): Diagnostic[] {
 
   // Actions.
   spec.actions.forEach((action, i) => {
-    zoneSelRef(action.move.from, `actions/${i}/move/from`);
-    zoneSelRef(action.move.to, `actions/${i}/move/to`);
+    if (action.move !== undefined) {
+      zoneSelRef(action.move.from, `actions/${i}/move/from`);
+      zoneSelRef(action.move.to, `actions/${i}/move/to`);
+    }
+    if (action.flip !== undefined) zoneSelRef(action.flip.zone, `actions/${i}/flip/zone`);
     if (action.requires !== undefined)
       lintExpression(action.requires, at(`actions/${i}/requires`), spec, out);
   });
@@ -263,26 +266,67 @@ function lintGameSpec(spec: GameSpec, file: string): Diagnostic[] {
   // Triggers.
   const allPieceProps = new Set(spec.pieces.flatMap((p) => Object.keys(p.properties)));
   spec.triggers.forEach((trigger, i) => {
-    if (trigger.on.intoZone !== undefined) zoneRef(trigger.on.intoZone, `triggers/${i}/on/intoZone`);
+    if (trigger.on.intoZone !== undefined) {
+      zoneRef(trigger.on.intoZone, `triggers/${i}/on/intoZone`);
+      if (trigger.on.event !== "pieceMoved")
+        out.push(
+          validateError({
+            code: DiagnosticCodes.SCHEMA_VALIDATION_FAILED,
+            path: at(`triggers/${i}/on/intoZone`),
+            value: trigger.on.event,
+            expected: "intoZone is a pieceMoved filter; use inZone for pieceFlipped",
+          }),
+        );
+    }
+    if (trigger.on.inZone !== undefined) {
+      zoneRef(trigger.on.inZone, `triggers/${i}/on/inZone`);
+      if (trigger.on.event !== "pieceFlipped")
+        out.push(
+          validateError({
+            code: DiagnosticCodes.SCHEMA_VALIDATION_FAILED,
+            path: at(`triggers/${i}/on/inZone`),
+            value: trigger.on.event,
+            expected: "inZone is a pieceFlipped filter; use intoZone for pieceMoved",
+          }),
+        );
+    }
     if (trigger.when !== undefined) lintExpression(trigger.when, at(`triggers/${i}/when`), spec, out);
     trigger.effects.forEach((effect, j) => {
-      if ("moveAll" in effect) {
-        zoneSelRef(effect.moveAll.from, `triggers/${i}/effects/${j}/moveAll/from`);
-        zoneSelRef(effect.moveAll.to, `triggers/${i}/effects/${j}/moveAll/to`);
-      } else {
-        zoneRef(effect.resolveHighest.zone, `triggers/${i}/effects/${j}/resolveHighest/zone`);
-        seatZoneRef(effect.resolveHighest.toWinnerZone, `triggers/${i}/effects/${j}/resolveHighest/toWinnerZone`);
-        if (!allPieceProps.has(effect.resolveHighest.property))
+      const propLint = (property: string, ptr: string): void => {
+        if (!allPieceProps.has(property))
           out.push(
             validateError({
               code: DiagnosticCodes.SCHEMA_VALIDATION_FAILED,
-              path: at(`triggers/${i}/effects/${j}/resolveHighest/property`),
-              value: effect.resolveHighest.property,
+              path: at(ptr),
+              value: property,
               expected: "a property declared on some piece set",
               candidates: [...allPieceProps],
-              suggestion: suggestFrom(effect.resolveHighest.property, [...allPieceProps]),
+              suggestion: suggestFrom(property, [...allPieceProps]),
             }),
           );
+      };
+      if ("moveAll" in effect) {
+        zoneSelRef(effect.moveAll.from, `triggers/${i}/effects/${j}/moveAll/from`);
+        zoneSelRef(effect.moveAll.to, `triggers/${i}/effects/${j}/moveAll/to`);
+      } else if ("resolveHighest" in effect) {
+        zoneRef(effect.resolveHighest.zone, `triggers/${i}/effects/${j}/resolveHighest/zone`);
+        seatZoneRef(effect.resolveHighest.toWinnerZone, `triggers/${i}/effects/${j}/resolveHighest/toWinnerZone`);
+        propLint(effect.resolveHighest.property, `triggers/${i}/effects/${j}/resolveHighest/property`);
+      } else {
+        const resolve = effect.resolveEqualPair;
+        zoneRef(resolve.zone, `triggers/${i}/effects/${j}/resolveEqualPair/zone`);
+        const zoneDecl = zoneByName.get(resolve.zone);
+        if (zoneDecl !== undefined && zoneDecl.owner !== "shared")
+          out.push(
+            validateError({
+              code: DiagnosticCodes.SCHEMA_VALIDATION_FAILED,
+              path: at(`triggers/${i}/effects/${j}/resolveEqualPair/zone`),
+              value: resolve.zone,
+              expected: "a shared zone (the match grid is common to all seats)",
+            }),
+          );
+        seatZoneRef(resolve.toZone, `triggers/${i}/effects/${j}/resolveEqualPair/toZone`);
+        propLint(resolve.property, `triggers/${i}/effects/${j}/resolveEqualPair/property`);
       }
     });
   });
@@ -308,6 +352,7 @@ function lintGameSpec(spec: GameSpec, file: string): Diagnostic[] {
 /**
  * Expression context roots (the complete v1alpha vocabulary):
  *   zones.<zone>.count        (shared zones only)
+ *   zones.<zone>.faceUpCount  (shared zones only)
  *   zones.<zone>.totalCount   (any zone; owner zones sum across seats)
  *   zones.<zone>.allEmpty | anyEmpty
  *   seats.count
@@ -349,13 +394,13 @@ function lintExpression(src: string, path: string, spec: GameSpec, out: Diagnost
         continue;
       }
       const field = segs[2];
-      const fields = ["count", "totalCount", "allEmpty", "anyEmpty"];
+      const fields = ["count", "faceUpCount", "totalCount", "allEmpty", "anyEmpty"];
       if (segs.length !== 3 || !fields.includes(field ?? "")) {
         invalid(`one of zones.${zone.name}.{${fields.join("|")}}`);
         continue;
       }
-      if (field === "count" && zone.owner !== "shared")
-        invalid(`'count' is only valid on shared zones; use zones.${zone.name}.totalCount/allEmpty/anyEmpty for owner zones`);
+      if ((field === "count" || field === "faceUpCount") && zone.owner !== "shared")
+        invalid(`'${field}' is only valid on shared zones; use zones.${zone.name}.totalCount/allEmpty/anyEmpty for owner zones`);
     } else if (segs[0] === "seats") {
       if (segs.length !== 2 || segs[1] !== "count") invalid("seats.count");
     } else if (segs[0] === "turn") {

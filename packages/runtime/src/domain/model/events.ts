@@ -26,10 +26,26 @@ export type GameEvent = { readonly seq: number } & (
     }
   | { readonly type: "triggerFired"; readonly trigger: string }
   | {
+      readonly type: "pieceFlipped";
+      readonly pieceId: string;
+      readonly zone: string;
+      readonly faceUp: boolean;
+      readonly bySeat: number | null;
+      /** Present when the flip turns the piece face-up (a public reveal). */
+      readonly revealed?: PieceView;
+    }
+  | {
       readonly type: "zoneResolved";
       readonly zone: string;
       readonly property: string;
       readonly winnerSeat: number | null;
+    }
+  | {
+      readonly type: "pairResolved";
+      readonly zone: string;
+      readonly property: string;
+      readonly matched: boolean;
+      readonly bySeat: number;
     }
   | { readonly type: "turnSkipped"; readonly seat: number; readonly phase: string }
   | {

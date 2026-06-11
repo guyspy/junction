@@ -2,10 +2,12 @@
 import { readFileSync } from "node:fs";
 import { formatDiagnosticText, parseGameDocument, type Diagnostic } from "@junction/spec";
 import { simulate, type SimulateReport } from "@junction/runtime";
+import { runPlay } from "./play.js";
 
 /**
  * junction validate <file> [--format json|text]
  * junction simulate <file> [--games N] [--seed S] [--seats N] [--max-turns M] [--format json|text]
+ * junction play <file> [--seat N] [--seats N] [--seed S]
  * Exit codes: 0 ok, 1 diagnostics with errors / failed run, 2 usage.
  */
 
@@ -14,6 +16,7 @@ interface Flags {
   readonly games: number;
   readonly seed: string;
   readonly seats?: number;
+  readonly seat: number;
   readonly maxTurns: number;
 }
 
@@ -23,6 +26,7 @@ function parseFlags(args: readonly string[]): { positional: string[]; flags: Fla
   let games = 100;
   let seed = "42";
   let seats: number | undefined;
+  let seat = 0;
   let maxTurns = 1000;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
@@ -38,12 +42,13 @@ function parseFlags(args: readonly string[]): { positional: string[]; flags: Fla
     } else if (arg === "--games") games = Number(next());
     else if (arg === "--seed") seed = next();
     else if (arg === "--seats") seats = Number(next());
+    else if (arg === "--seat") seat = Number(next());
     else if (arg === "--max-turns") maxTurns = Number(next());
     else if (arg.startsWith("--")) usage(`unknown flag ${arg}`);
     else positional.push(arg);
   }
   const resolvedFormat = format ?? (process.stdout.isTTY ? "text" : "json");
-  return { positional, flags: { format: resolvedFormat, games, seed, seats, maxTurns } };
+  return { positional, flags: { format: resolvedFormat, games, seed, seats, seat, maxTurns } };
 }
 
 function usage(reason?: string): never {
@@ -79,9 +84,9 @@ function printReport(report: SimulateReport, format: "json" | "text"): void {
   for (const note of report.notes) console.log(`    ${note}`);
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const [command, ...rest] = process.argv.slice(2);
-  if (command !== "validate" && command !== "simulate") usage();
+  if (command !== "validate" && command !== "simulate" && command !== "play") usage();
   const { positional, flags } = parseFlags(rest);
   const file = positional[0];
   if (file === undefined) usage("missing <file.yaml>");
@@ -111,6 +116,13 @@ function main(): void {
     return;
   }
 
+  if (command === "play") {
+    const seats = flags.seats ?? parsed.data.spec.meta.seats.min;
+    if (flags.seat < 0 || flags.seat >= seats) usage(`--seat must be in [0, ${seats - 1}]`);
+    const code = await runPlay(parsed.data, { seats, seat: flags.seat, seed: flags.seed });
+    process.exit(code);
+  }
+
   const report = simulate(parsed.data, {
     games: flags.games,
     seed: flags.seed,
@@ -122,4 +134,7 @@ function main(): void {
     console.log(`  elapsed        ${(performance.now() - started).toFixed(0)} ms`);
 }
 
-main();
+main().catch((error: unknown) => {
+  console.error(`junction: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+});

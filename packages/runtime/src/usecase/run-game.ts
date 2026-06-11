@@ -2,14 +2,14 @@ import type { GameDocument } from "@junction/spec";
 import { createRng, type Rng } from "../kernel/rng.js";
 import type { GameEvent } from "../domain/model/events.js";
 import type { GameState } from "../domain/model/state.js";
-import { applyAction, applySkip, legalActions } from "../domain/service/reducer.js";
+import { applyAction, applySkip, legalMoves, type PlayerMove } from "../domain/service/reducer.js";
 import { buildInitialState } from "../domain/service/setup.js";
 
 export interface Chooser {
-  (legal: readonly string[], rng: Rng): string;
+  (legal: readonly PlayerMove[], rng: Rng): PlayerMove;
 }
 
-/** The default playtest bot: uniformly random over legal actions. */
+/** The default playtest bot: uniformly random over legal moves. */
 export const randomChooser: Chooser = (legal, rng) => legal[rng.int(legal.length)]!;
 
 export interface RunGameOptions {
@@ -43,17 +43,17 @@ export function runGame(doc: GameDocument, options: RunGameOptions): RunGameResu
   let steps = 0;
 
   while (state.status === "running" && steps < maxTurns) {
-    const legal = legalActions(state, doc.spec);
+    const legal = legalMoves(state, doc.spec);
     if (legal.length === 0) {
       const result = applySkip(state, doc.spec);
       state = result.state;
       events.push(...result.events);
     } else {
-      const action = chooser(legal, botRng);
-      const result = applyAction(state, doc.spec, { seat: state.activeSeat, action });
+      const move = chooser(legal, botRng);
+      const result = applyAction(state, doc.spec, { seat: state.activeSeat, ...move });
       if (!result.ok) {
         // The chooser picked from `legal`, so this is an engine bug — surface loudly.
-        throw new Error(`reducer rejected a legal action: ${result.diagnostics[0]?.message}`);
+        throw new Error(`reducer rejected a legal move: ${result.diagnostics[0]?.message}`);
       }
       state = result.data.state;
       events.push(...result.data.events);

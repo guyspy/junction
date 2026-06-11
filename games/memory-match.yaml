@@ -1,0 +1,62 @@
+# Memory Match (Concentration) — the second reference game.
+# A grid of face-down pairs. On your turn you flip two cards; if their values match
+# you take the pair and go again, otherwise they flip back and play passes on.
+# Exercises chosen-target actions, face-up/face-down state, and the goAgain loop.
+apiVersion: games.junction.aotter.net/v1alpha1
+kind: Game
+metadata:
+  name: memory-match
+spec:
+  meta:
+    title: "Memory Match"
+    description: >-
+      Concentration: 8 pairs lie face-down. Flip two cards a turn; a matching pair
+      is yours and earns another turn, a mismatch flips back. Most pairs wins.
+    seats: { min: 2, max: 2 }
+    estMinutes: 10
+
+  # grid is visibility: none — face-down tiles are hidden to everyone; the per-piece
+  # face-up override reveals only the tiles a player has flipped this turn.
+  zones:
+    - { name: grid, owner: shared, visibility: none }
+    - { name: won, owner: seat, visibility: all }
+
+  pieces:
+    - name: tile
+      properties:
+        value: { type: int }
+      # Two copies of each value 1..8 ⇒ 16 tiles, 8 matchable pairs.
+      generate:
+        cartesian:
+          value: [1, 2, 3, 4, 5, 6, 7, 8]
+      copies: 2
+
+  setup:
+    - { op: create, pieces: tile, into: grid }
+    - { op: shuffle, zone: grid }
+
+  turn:
+    order: roundRobin
+    phases:
+      - { name: flip-first, actions: [flip] }
+      - { name: flip-second, actions: [flip] }
+
+  actions:
+    - name: flip
+      flip: { zone: { zone: grid }, target: chosen, direction: faceUp }
+
+  triggers:
+    - name: resolve-pair
+      on: { event: pieceFlipped, inZone: grid }
+      when: "zones.grid.faceUpCount == 2"
+      effects:
+        - resolveEqualPair:
+            zone: grid
+            property: value
+            toZone: won
+            onMatch: goAgain
+            onMismatch: flipDown
+
+  end:
+    when: "zones.grid.allEmpty"
+    winner: { mostPiecesIn: won }

@@ -93,6 +93,11 @@ function resolvePath(segs: readonly string[], state: GameState, spec: GameSpec):
       case "count":
         if (decl.owner !== "shared") throw new EvalError(`'count' is shared-zone-only`);
         return counts[0]!;
+      case "faceUpCount": {
+        if (decl.owner !== "shared") throw new EvalError(`'faceUpCount' is shared-zone-only`);
+        const entries = state.zones[keys[0]!] ?? [];
+        return entries.filter((e) => state.pieces[e.pieceId]?.faceUp === true).length;
+      }
       case "totalCount":
         return counts.reduce((a, b) => a + b, 0);
       case "allEmpty":

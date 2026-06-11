@@ -1,6 +1,6 @@
 import { parseGameDocument, type GameDocument } from "@junction/spec";
 import { describe, expect, it } from "vitest";
-import { applyAction, buildInitialState, createRng, legalActions } from "../src/index.js";
+import { applyAction, buildInitialState, createRng, legalMoves } from "../src/index.js";
 
 /**
  * A two-card deterministic mini-game (no shuffle): seat0 holds rank 3, seat1 holds rank 2.
@@ -67,7 +67,7 @@ describe("kernel engine semantics (deterministic mini-game)", () => {
     const doc = miniGame([3, 2]);
     const { state: s0 } = buildInitialState(doc, 2, createRng("x"));
 
-    expect(legalActions(s0, doc.spec)).toEqual(["play"]);
+    expect(legalMoves(s0, doc.spec)).toEqual([{ action: "play" }]);
     const r1 = applyAction(s0, doc.spec, { seat: 0, action: "play" });
     expect(r1.ok).toBe(true);
     if (!r1.ok) return;
