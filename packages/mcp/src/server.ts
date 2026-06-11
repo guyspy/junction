@@ -4,6 +4,7 @@ import {
   runDescribeGrammar,
   runGetReference,
   runListReferences,
+  runRenderGame,
   runScaffold,
   runSimulate,
   runValidate,
@@ -20,6 +21,8 @@ import {
 export interface IntegrinDeps {
   /** The reference-game corpus, injected so tools stay pure and Workers-portable. */
   readonly referenceGames: readonly ReferenceGame[];
+  /** The standalone renderer+engine IIFE (contents of @junction/renderer/standalone.js), injected the same way. Enables render_game. */
+  readonly rendererBundle?: string;
   readonly version?: string;
 }
 
@@ -114,6 +117,35 @@ export function buildIntegrinServer(deps: IntegrinDeps): McpServer {
       },
     },
     ({ yaml, games, seats, seed }) => reply(runSimulate({ yaml, games, seats, seed })),
+  );
+
+  server.registerTool(
+    "render_game",
+    {
+      title: "Render a playable game page",
+      description:
+        "Turn a valid GameSpec into a complete, self-contained playable HTML page (engine in-browser, themed UI, synth sound, QA badges). Returns it as a ui:// text/html resource — hosts with MCP Apps support can open it in a sandboxed iframe so the game is playable right in the conversation. Pass `yaml`, or `game` to render a reference game.",
+      inputSchema: {
+        yaml: z.string().optional().describe("A full GameSpec YAML document (validate first)."),
+        game: z.string().optional().describe("Or: a reference game name (see list_reference_games)."),
+        seed: z.string().optional().describe("Badge-simulation seed."),
+      },
+    },
+    ({ yaml, game, seed }) => {
+      const page = runRenderGame(deps.referenceGames, deps.rendererBundle, { yaml, game, seed });
+      const base = reply(page.result);
+      if (page.html === undefined || page.uri === undefined) return base;
+      return {
+        ...base,
+        content: [
+          ...base.content,
+          {
+            type: "resource" as const,
+            resource: { uri: page.uri, mimeType: "text/html", text: page.html },
+          },
+        ],
+      };
+    },
   );
 
   return server;

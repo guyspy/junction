@@ -88,6 +88,7 @@ function describeMove(move: PlayerMove, state: GameState): string {
 export async function runPlay(doc: GameDocument, options: PlayOptions): Promise<number> {
   const input = createLineReader();
   const botRng = createRng(`${options.seed}:bot`);
+  const diceRng = createRng(`${options.seed}:dice`);
   const setupRng = createRng(`${options.seed}:setup`);
 
   let state = buildInitialState(doc, options.seats, setupRng).state;
@@ -106,7 +107,7 @@ export async function runPlay(doc: GameDocument, options: PlayOptions): Promise<
       if (state.activeSeat !== options.seat) {
         // Bot turn.
         const move = randomChooser(legal, botRng);
-        const result = applyAction(state, doc.spec, { seat: state.activeSeat, ...move });
+        const result = applyAction(state, doc.spec, { seat: state.activeSeat, ...move }, diceRng);
         if (!result.ok) throw new Error(result.diagnostics[0]?.message);
         state = result.data.state;
         continue;
@@ -131,7 +132,7 @@ export async function runPlay(doc: GameDocument, options: PlayOptions): Promise<
         stdout.write("  invalid choice — try again.\n");
         continue;
       }
-      const result = applyAction(state, doc.spec, { seat: options.seat, ...legal[choice]! });
+      const result = applyAction(state, doc.spec, { seat: options.seat, ...legal[choice]! }, diceRng);
       if (!result.ok) {
         stdout.write(`  ✖ ${result.diagnostics[0]?.message}\n`);
         continue;

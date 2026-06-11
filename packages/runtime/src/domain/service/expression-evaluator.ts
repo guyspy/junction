@@ -1,28 +1,36 @@
 import type { Expr, GameSpec } from "@junction/spec";
-import { zoneKey, type GameState } from "../model/state.js";
+import { zoneKey, type GameState, type PieceInstance } from "../model/state.js";
 
 /**
- * Evaluates the total expression language against (state, spec).
+ * Evaluates the total expression language against (state, spec, context).
  * Path vocabulary (closed, mirrors the validate-time lint):
- *   zones.<zone>.count | totalCount | allEmpty | anyEmpty
- *   seats.count
- *   turn.round | turn.seatIndex
+ *   zones.<zone>.count | faceUpCount | totalCount | allEmpty | anyEmpty
+ *   seats.count · turn.round | turn.seatIndex
+ *   vars.<global> · seat.<perSeat> (actor) · seatVars.<perSeat>.min|max|sum
+ *   this.<intProp> (trigger piece) · target.<intProp> (chosen piece)
  */
 
 export class EvalError extends Error {}
 
 type Value = number | boolean;
 
-export function evaluate(expr: Expr, state: GameState, spec: GameSpec): Value {
+/** Optional evaluation context: which seat acts, which pieces are in scope. */
+export interface EvalContext {
+  readonly actorSeat?: number;
+  readonly eventPiece?: PieceInstance;
+  readonly targetPiece?: PieceInstance;
+}
+
+export function evaluate(expr: Expr, state: GameState, spec: GameSpec, ctx: EvalContext = {}): Value {
   switch (expr.t) {
     case "num":
       return expr.v;
     case "bool":
       return expr.v;
     case "path":
-      return resolvePath(expr.segs, state, spec);
+      return resolvePath(expr.segs, state, spec, ctx);
     case "un": {
-      const v = evaluate(expr.e, state, spec);
+      const v = evaluate(expr.e, state, spec, ctx);
       if (expr.op === "!") {
         if (typeof v !== "boolean") throw new EvalError(`'!' expects a boolean`);
         return !v;
@@ -33,16 +41,16 @@ export function evaluate(expr: Expr, state: GameState, spec: GameSpec): Value {
     case "bin": {
       const op = expr.op;
       if (op === "&&" || op === "||") {
-        const l = evaluate(expr.l, state, spec);
+        const l = evaluate(expr.l, state, spec, ctx);
         if (typeof l !== "boolean") throw new EvalError(`'${op}' expects booleans`);
         if (op === "&&" && !l) return false;
         if (op === "||" && l) return true;
-        const r = evaluate(expr.r, state, spec);
+        const r = evaluate(expr.r, state, spec, ctx);
         if (typeof r !== "boolean") throw new EvalError(`'${op}' expects booleans`);
         return r;
       }
-      const l = evaluate(expr.l, state, spec);
-      const r = evaluate(expr.r, state, spec);
+      const l = evaluate(expr.l, state, spec, ctx);
+      const r = evaluate(expr.r, state, spec, ctx);
       if (op === "==") return l === r;
       if (op === "!=") return l !== r;
       if (typeof l !== "number" || typeof r !== "number")
@@ -69,13 +77,48 @@ export function evaluate(expr: Expr, state: GameState, spec: GameSpec): Value {
   }
 }
 
-export function evaluateBoolean(expr: Expr, state: GameState, spec: GameSpec): boolean {
-  const v = evaluate(expr, state, spec);
+export function evaluateBoolean(expr: Expr, state: GameState, spec: GameSpec, ctx: EvalContext = {}): boolean {
+  const v = evaluate(expr, state, spec, ctx);
   if (typeof v !== "boolean") throw new EvalError("expression must evaluate to a boolean");
   return v;
 }
 
-function resolvePath(segs: readonly string[], state: GameState, spec: GameSpec): Value {
+export function evaluateNumber(expr: Expr, state: GameState, spec: GameSpec, ctx: EvalContext = {}): number {
+  const v = evaluate(expr, state, spec, ctx);
+  if (typeof v !== "number") throw new EvalError("expression must evaluate to a number");
+  return v;
+}
+
+function pieceInt(piece: PieceInstance | undefined, prop: string, root: string): number {
+  if (piece === undefined) throw new EvalError(`'${root}' is not available here`);
+  const value = piece.properties[prop];
+  if (typeof value !== "number") throw new EvalError(`${root}.${prop} is not an int property`);
+  return value;
+}
+
+function resolvePath(segs: readonly string[], state: GameState, spec: GameSpec, ctx: EvalContext): Value {
+  if (segs[0] === "vars") {
+    const value = state.vars[segs[1] ?? ""];
+    if (value === undefined) throw new EvalError(`unknown global variable '${segs[1]}'`);
+    return value;
+  }
+  if (segs[0] === "seat") {
+    const values = state.seatVars[segs[1] ?? ""];
+    if (values === undefined) throw new EvalError(`unknown perSeat variable '${segs[1]}'`);
+    const seat = ctx.actorSeat ?? state.activeSeat;
+    return values[seat] ?? 0;
+  }
+  if (segs[0] === "seatVars") {
+    const values = state.seatVars[segs[1] ?? ""];
+    if (values === undefined) throw new EvalError(`unknown perSeat variable '${segs[1]}'`);
+    const field = segs[2];
+    if (field === "min") return Math.min(...values);
+    if (field === "max") return Math.max(...values);
+    if (field === "sum") return values.reduce((a, b) => a + b, 0);
+    throw new EvalError(`unknown seatVars aggregate '${field}'`);
+  }
+  if (segs[0] === "this") return pieceInt(ctx.eventPiece, segs[1] ?? "", "this");
+  if (segs[0] === "target") return pieceInt(ctx.targetPiece, segs[1] ?? "", "target");
   if (segs[0] === "seats" && segs[1] === "count") return state.seats;
   if (segs[0] === "turn" && segs[1] === "round") return state.round;
   if (segs[0] === "turn" && segs[1] === "seatIndex") return state.activeSeat;

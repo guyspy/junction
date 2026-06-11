@@ -42,6 +42,18 @@ export function announce(event: GameEvent, viewerSeat: number): string | null {
       if (event.matched)
         return `A match! ${capitalize(seatName(event.bySeat, viewerSeat))} ${verb(event.bySeat, viewerSeat, "keep", "keeps")} the pair and ${verb(event.bySeat, viewerSeat, "go", "goes")} again.`;
       return "No match — the cards flip back.";
+    case "diceRolled":
+      return `${capitalize(seatName(event.seat, viewerSeat))} ${verb(event.seat, viewerSeat, "roll", "rolls")} a ${event.value}.`;
+    case "varChanged": {
+      // Narrate per-seat swings (damage, score) — global bookkeeping stays quiet.
+      if (event.scope !== "seat" || event.seat === null) return null;
+      const delta = event.to - event.from;
+      const who = capitalize(seatName(event.seat, viewerSeat));
+      if (delta < 0) return `${who} ${verb(event.seat, viewerSeat, "lose", "loses")} ${-delta} ${event.var} (${event.to} left).`;
+      return `${who} ${verb(event.seat, viewerSeat, "gain", "gains")} ${delta} ${event.var} (now ${event.to}).`;
+    }
+    case "propertyChanged":
+      return null; // visual layers handle stat ticks; the ticker stays readable
     case "turnSkipped":
       return `${capitalize(seatName(event.seat, viewerSeat))} ${verb(event.seat, viewerSeat, "have", "has")} no move — skipped.`;
     case "gameEnded":

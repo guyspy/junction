@@ -11,13 +11,15 @@ import {
   type Result,
   type ZoneSel,
 } from "@junction/spec";
+import type { Rng } from "../../kernel/rng.js";
 import type { GameEvent, GameEventInit, PieceView } from "../model/events.js";
 import { zoneKey, type GameState, type PieceInstance, type ZoneEntry } from "../model/state.js";
-import { evaluateBoolean } from "./expression-evaluator.js";
+import { evaluateBoolean, evaluateNumber, type EvalContext } from "./expression-evaluator.js";
 
 /**
  * The pure reducer: (state, action) → { state', events[] }.
- * Never mutates its input; all randomness happened at setup (v1alpha has no dice yet).
+ * Never mutates its input. Wave 1 adds the mutable world: variables, costs,
+ * modifyProperty, dice — all event-sourced, all replayable from the same seed.
  * Trigger conditions evaluate against the NEW state — Session 3's hard-won lesson.
  */
 
@@ -46,6 +48,8 @@ interface Draft {
   phaseIndex: number;
   zones: Record<string, ZoneEntry[]>;
   pieces: Record<string, PieceInstance>;
+  vars: Record<string, number>;
+  seatVars: Record<string, number[]>;
   winnerSeat: number | null;
   seq: number;
   consecutiveSkips: number;
@@ -57,6 +61,8 @@ function toDraft(state: GameState): Draft {
     ...state,
     zones: Object.fromEntries(Object.entries(state.zones).map(([k, v]) => [k, [...v]])),
     pieces: { ...state.pieces },
+    vars: { ...state.vars },
+    seatVars: Object.fromEntries(Object.entries(state.seatVars).map(([k, v]) => [k, [...v]])),
   };
 }
 
@@ -77,6 +83,12 @@ function expr(src: string): Expr {
   return cached;
 }
 
+/** Effect amounts: int literal or total expression evaluated in context. */
+function resolveAmount(value: number | string, draft: Draft, spec: GameSpec, ctx: EvalContext): number {
+  if (typeof value === "number") return value;
+  return evaluateNumber(expr(value), freeze(draft), spec, ctx);
+}
+
 function selKey(sel: ZoneSel, spec: GameSpec, actorSeat: number): string {
   const decl = spec.zones.find((z) => z.name === sel.zone)!;
   return decl.owner === "shared" ? zoneKey(sel.zone, null) : zoneKey(sel.zone, actorSeat);
@@ -87,6 +99,28 @@ function baseZoneName(key: string): string {
   return hash === -1 ? key : key.slice(0, hash);
 }
 
+function actionTargetPiece(state: GameState | Draft, action: ActionDecl, target: string | undefined): PieceInstance | undefined {
+  return target === undefined ? undefined : state.pieces[target];
+}
+
+/** Can the actor afford + satisfy this concrete move? */
+function moveAllowed(state: GameState, spec: GameSpec, action: ActionDecl, target: string | undefined): boolean {
+  const ctx: EvalContext = {
+    actorSeat: state.activeSeat,
+    targetPiece: actionTargetPiece(state, action, target),
+  };
+  if (action.requires !== undefined && !evaluateBoolean(expr(action.requires), state, spec, ctx)) return false;
+  if (action.cost !== undefined) {
+    const balance = state.seatVars[action.cost.var]?.[state.activeSeat] ?? 0;
+    const amount =
+      typeof action.cost.amount === "number"
+        ? action.cost.amount
+        : evaluateNumber(expr(action.cost.amount), state, spec, ctx);
+    if (balance < amount) return false;
+  }
+  return true;
+}
+
 /** Enumerate every concrete legal move for the active seat in the current phase. */
 export function legalMoves(state: GameState, spec: GameSpec): readonly PlayerMove[] {
   if (state.status !== "running") return [];
@@ -94,18 +128,20 @@ export function legalMoves(state: GameState, spec: GameSpec): readonly PlayerMov
   const moves: PlayerMove[] = [];
   for (const name of phase.actions) {
     const action = spec.actions.find((a) => a.name === name)!;
-    if (action.requires !== undefined && !evaluateBoolean(expr(action.requires), state, spec))
-      continue;
     if (action.move !== undefined) {
       const fromKey = selKey(action.move.from, spec, state.activeSeat);
       const entries = state.zones[fromKey] ?? [];
       if (entries.length === 0) continue;
-      if (action.move.take === "top") moves.push({ action: name });
-      else for (const entry of entries) moves.push({ action: name, target: entry.pieceId });
+      if (action.move.take === "top") {
+        if (moveAllowed(state, spec, action, undefined)) moves.push({ action: name });
+      } else {
+        for (const entry of entries)
+          if (moveAllowed(state, spec, action, entry.pieceId)) moves.push({ action: name, target: entry.pieceId });
+      }
     } else if (action.flip !== undefined) {
       const key = selKey(action.flip.zone, spec, state.activeSeat);
       for (const entry of state.zones[key] ?? [])
-        if (state.pieces[entry.pieceId]!.faceUp === false)
+        if (state.pieces[entry.pieceId]!.faceUp === false && moveAllowed(state, spec, action, entry.pieceId))
           moves.push({ action: name, target: entry.pieceId });
     }
   }
@@ -116,6 +152,7 @@ export function applyAction(
   state: GameState,
   spec: GameSpec,
   playerAction: PlayerAction,
+  rng?: Rng,
 ): Result<StepResult> {
   if (state.status === "ended")
     return err([
@@ -155,9 +192,18 @@ export function applyAction(
   emit({ type: "actionTaken", seat: actor, action: playerAction.action });
 
   const action = spec.actions.find((a) => a.name === playerAction.action)!;
-  const produced = executeAction(draft, spec, action, playerAction, emit);
+  const cascadeSeed: GameEvent[] = [];
 
-  runTriggerCascade(draft, spec, produced, actor, emit);
+  // Pay the cost first (mana before the spell) — its varChanged feeds the cascade too.
+  if (action.cost !== undefined) {
+    const ctx: EvalContext = { actorSeat: actor, targetPiece: actionTargetPiece(draft, action, playerAction.target) };
+    const amount = resolveAmount(action.cost.amount, draft, spec, ctx);
+    const changed = changeSeatVar(draft, action.cost.var, actor, (draft.seatVars[action.cost.var]?.[actor] ?? 0) - amount, emit);
+    if (changed !== null) cascadeSeed.push(changed);
+  }
+
+  cascadeSeed.push(...executeAction(draft, spec, action, playerAction, emit));
+  runTriggerCascade(draft, spec, cascadeSeed, actor, emit, rng);
   draft.consecutiveSkips = 0;
   settleAndAdvance(draft, spec, emit);
   return ok({ state: freeze(draft), events });
@@ -209,6 +255,58 @@ export function applySkip(state: GameState, spec: GameSpec): StepResult {
   }
   settleAndAdvance(draft, spec, emit);
   return { state: freeze(draft), events };
+}
+
+// ---- variable + property mutation (all event-sourced, no-ops elided) ------------
+
+function changeSeatVar(
+  draft: Draft,
+  varName: string,
+  seat: number,
+  to: number,
+  emit: (e: GameEventInit) => GameEvent,
+): GameEvent | null {
+  const values = draft.seatVars[varName];
+  if (values === undefined) throw new Error(`unvalidated seat variable '${varName}'`);
+  const from = values[seat] ?? 0;
+  if (from === to) return null;
+  values[seat] = to;
+  return emit({ type: "varChanged", scope: "seat", var: varName, seat, from, to });
+}
+
+function changeGlobalVar(
+  draft: Draft,
+  varName: string,
+  to: number,
+  emit: (e: GameEventInit) => GameEvent,
+): GameEvent | null {
+  const from = draft.vars[varName];
+  if (from === undefined) throw new Error(`unvalidated global variable '${varName}'`);
+  if (from === to) return null;
+  draft.vars[varName] = to;
+  return emit({ type: "varChanged", scope: "global", var: varName, seat: null, from, to });
+}
+
+function scopeSeat(scope: "global" | "actor" | "opponent", actorSeat: number): number | null {
+  if (scope === "global") return null;
+  return scope === "actor" ? actorSeat : 1 - actorSeat; // opponent: linted to exactly-2-seat games
+}
+
+function changeScopedVar(
+  draft: Draft,
+  scope: "global" | "actor" | "opponent",
+  varName: string,
+  to: number,
+  actorSeat: number,
+  emit: (e: GameEventInit) => GameEvent,
+): GameEvent | null {
+  const seat = scopeSeat(scope, actorSeat);
+  return seat === null ? changeGlobalVar(draft, varName, to, emit) : changeSeatVar(draft, varName, seat, to, emit);
+}
+
+function readScopedVar(draft: Draft, scope: "global" | "actor" | "opponent", varName: string, actorSeat: number): number {
+  const seat = scopeSeat(scope, actorSeat);
+  return seat === null ? (draft.vars[varName] ?? 0) : (draft.seatVars[varName]?.[seat] ?? 0);
 }
 
 // ---- internals --------------------------------------------------------------
@@ -300,12 +398,39 @@ function pieceView(draft: Draft, pieceId: string): PieceView {
   return { pieceId, decl: piece.decl, properties: { ...piece.properties } };
 }
 
+/** The piece an event is "about" (the trigger's `this`). */
+function eventPieceId(event: GameEvent): string | null {
+  switch (event.type) {
+    case "pieceMoved":
+    case "pieceFlipped":
+    case "propertyChanged":
+      return event.pieceId;
+    default:
+      return null;
+  }
+}
+
+function triggerMatches(trigger: GameSpec["triggers"][number], event: GameEvent, draft: Draft): boolean {
+  const on = trigger.on;
+  if (event.type !== on.event) return false;
+  if (on.intoZone !== undefined && !(event.type === "pieceMoved" && baseZoneName(event.to) === on.intoZone)) return false;
+  if (on.inZone !== undefined && !(event.type === "pieceFlipped" && event.zone === on.inZone)) return false;
+  if (on.pieceSet !== undefined) {
+    const pieceId = eventPieceId(event);
+    if (pieceId === null || draft.pieces[pieceId]?.decl !== on.pieceSet) return false;
+  }
+  if (on.property !== undefined && !(event.type === "propertyChanged" && event.property === on.property)) return false;
+  if (on.var !== undefined && !(event.type === "varChanged" && event.var === on.var)) return false;
+  return true;
+}
+
 function runTriggerCascade(
   draft: Draft,
   spec: GameSpec,
   initialEvents: readonly GameEvent[],
   actorSeat: number,
   emit: (e: GameEventInit) => GameEvent,
+  rng: Rng | undefined,
 ): void {
   const queue = [...initialEvents];
   let depth = 0;
@@ -314,23 +439,18 @@ function runTriggerCascade(
       throw new Error(`trigger cascade exceeded ${MAX_TRIGGER_CASCADE} steps — non-total spec?`);
     const event = queue.shift()!;
     for (const trigger of spec.triggers) {
-      if (event.type !== trigger.on.event) continue;
-      if (
-        trigger.on.intoZone !== undefined &&
-        !(event.type === "pieceMoved" && baseZoneName(event.to) === trigger.on.intoZone)
-      )
-        continue;
-      if (
-        trigger.on.inZone !== undefined &&
-        !(event.type === "pieceFlipped" && event.zone === trigger.on.inZone)
-      )
-        continue;
+      if (!triggerMatches(trigger, event, draft)) continue;
+      const pieceId = eventPieceId(event);
+      const ctx: EvalContext = {
+        actorSeat,
+        eventPiece: pieceId === null ? undefined : draft.pieces[pieceId],
+      };
       // Conditions see the NEW state (Session 3's lesson).
-      if (trigger.when !== undefined && !evaluateBoolean(expr(trigger.when), freeze(draft), spec))
+      if (trigger.when !== undefined && !evaluateBoolean(expr(trigger.when), freeze(draft), spec, ctx))
         continue;
       emit({ type: "triggerFired", trigger: trigger.name });
       for (const effect of trigger.effects) {
-        const produced = applyEffect(draft, spec, effect, actorSeat, emit);
+        const produced = applyEffect(draft, spec, effect, actorSeat, ctx, emit, rng);
         queue.push(...produced);
       }
     }
@@ -342,13 +462,56 @@ function applyEffect(
   spec: GameSpec,
   effect: EffectDecl,
   actorSeat: number,
+  ctx: EvalContext,
   emit: (e: GameEventInit) => GameEvent,
+  rng: Rng | undefined,
 ): GameEvent[] {
   if ("moveAll" in effect) {
     const fromKey = selKey(effect.moveAll.from, spec, actorSeat);
     const toKey = selKey(effect.moveAll.to, spec, actorSeat);
     const count = draft.zones[fromKey]!.length;
     return moveTopPieces(draft, { fromKey, toKey, count, bySeat: actorSeat, reveal: false, emit });
+  }
+
+  if ("modifyProperty" in effect) {
+    const piece = ctx.eventPiece;
+    if (piece === undefined) throw new Error("modifyProperty: no event piece in scope (unvalidated spec?)");
+    const { property } = effect.modifyProperty;
+    const from = piece.properties[property];
+    if (typeof from !== "number") throw new Error(`modifyProperty: '${property}' is not an int on ${piece.id}`);
+    const to =
+      effect.modifyProperty.set !== undefined
+        ? resolveAmount(effect.modifyProperty.set, draft, spec, ctx)
+        : from + resolveAmount(effect.modifyProperty.add!, draft, spec, ctx);
+    if (to === from) return [];
+    const updated: PieceInstance = { ...piece, properties: { ...piece.properties, [property]: to } };
+    draft.pieces[piece.id] = updated;
+    return [emit({ type: "propertyChanged", pieceId: piece.id, property, from, to, bySeat: actorSeat })];
+  }
+
+  if ("setVar" in effect) {
+    const { scope, var: varName, value } = effect.setVar;
+    const to = resolveAmount(value, draft, spec, ctx);
+    const changed = changeScopedVar(draft, scope, varName, to, actorSeat, emit);
+    return changed === null ? [] : [changed];
+  }
+
+  if ("addVar" in effect) {
+    const { scope, var: varName, amount } = effect.addVar;
+    const delta = resolveAmount(amount, draft, spec, ctx);
+    const to = readScopedVar(draft, scope, varName, actorSeat) + delta;
+    const changed = changeScopedVar(draft, scope, varName, to, actorSeat, emit);
+    return changed === null ? [] : [changed];
+  }
+
+  if ("roll" in effect) {
+    if (rng === undefined) throw new Error("roll effect requires an rng — pass one to applyAction");
+    const { scope, var: varName, sides } = effect.roll;
+    const value = rng.int(sides) + 1;
+    const seat = scopeSeat(scope, actorSeat) ?? actorSeat;
+    emit({ type: "diceRolled", seat, var: varName, sides, value });
+    const changed = changeScopedVar(draft, scope, varName, value, actorSeat, emit);
+    return changed === null ? [] : [changed];
   }
 
   if ("resolveHighest" in effect) {
@@ -422,21 +585,25 @@ function applyEffect(
 }
 
 function computeWinner(draft: Draft, spec: GameSpec): number | null {
-  const zone = spec.end.winner.mostPiecesIn;
-  let winner: number | null = null;
-  let best = -1;
+  const winner = spec.end.winner;
+  const scores: number[] =
+    "mostPiecesIn" in winner
+      ? Array.from({ length: draft.seats }, (_, seat) => draft.zones[zoneKey(winner.mostPiecesIn, seat)]?.length ?? 0)
+      : Array.from({ length: draft.seats }, (_, seat) => draft.seatVars[winner.highestSeatVar]?.[seat] ?? 0);
+
+  let best = Number.NEGATIVE_INFINITY;
+  let bestSeat: number | null = null;
   let tied = false;
-  for (let seat = 0; seat < draft.seats; seat++) {
-    const count = draft.zones[zoneKey(zone, seat)]?.length ?? 0;
-    if (count > best) {
-      best = count;
-      winner = seat;
+  scores.forEach((score, seat) => {
+    if (score > best) {
+      best = score;
+      bestSeat = seat;
       tied = false;
-    } else if (count === best) {
+    } else if (score === best) {
       tied = true;
     }
-  }
-  return tied ? null : winner;
+  });
+  return tied ? null : bestSeat;
 }
 
 function endGame(

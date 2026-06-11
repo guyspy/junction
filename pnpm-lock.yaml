@@ -30,8 +30,20 @@ importers:
         specifier: workspace:*
         version: link:../spec
 
+  packages/connexon:
+    dependencies:
+      '@junction/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@junction/spec':
+        specifier: workspace:*
+        version: link:../spec
+
   packages/mcp:
     dependencies:
+      '@junction/renderer':
+        specifier: workspace:*
+        version: link:../renderer
       '@junction/runtime':
         specifier: workspace:*
         version: link:../runtime

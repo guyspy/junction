@@ -49,6 +49,18 @@ body {
 .jx-sound:hover { background: rgba(255,255,255,0.2); }
 .jx-sound:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
+.jx-stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+.jx-stat-group {
+  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+  background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.10); border-radius: 999px;
+}
+.jx-stat-group.mine { border-color: var(--accent-glow); }
+.jx-stat-who { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.85; margin-right: 2px; }
+.jx-stat {
+  font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  background: rgba(255,255,255,0.14); white-space: nowrap;
+}
+
 .jx-zones { display: flex; flex-direction: column; gap: 14px; }
 .jx-zone {
   background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.10);

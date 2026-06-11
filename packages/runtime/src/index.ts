@@ -2,7 +2,7 @@
 export { createRng, shuffled, type Rng } from "./kernel/rng.js";
 export { zoneKey, type GameState, type GameStatus, type PieceInstance, type ZoneEntry } from "./domain/model/state.js";
 export { type GameEvent, type GameEventType, type PieceView } from "./domain/model/events.js";
-export { EvalError, evaluate, evaluateBoolean } from "./domain/service/expression-evaluator.js";
+export { EvalError, evaluate, evaluateBoolean, evaluateNumber, type EvalContext } from "./domain/service/expression-evaluator.js";
 export { SetupError, buildInitialState, type SetupResult } from "./domain/service/setup.js";
 export {
   applyAction,

@@ -60,6 +60,7 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
   const seed = options.seed ?? `web-${Math.floor(Math.random() * 1e9)}`;
   const botDelay = options.botDelay ?? 800;
   const botRng = createRng(`${seed}:bot`);
+  const diceRng = createRng(`${seed}:dice`);
 
   const theme = resolveTheme(doc.spec);
   const motion = motionParams(theme);
@@ -98,13 +99,14 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
   syncSoundToggle();
   statusBar.append(status, soundToggle);
 
+  const statsHost = el("div", "jx-stats");
   const zonesHost = el("div", "jx-zones");
   const buttonsHost = el("div", "jx-buttons");
   const tickerHost = el("div", "jx-ticker");
   const live = el("div", "visually-hidden");
   live.setAttribute("role", "status");
   live.setAttribute("aria-live", "polite");
-  container.append(statusBar, zonesHost, buttonsHost, tickerHost, live);
+  container.append(statusBar, statsHost, zonesHost, buttonsHost, tickerHost, live);
 
   // Browsers require a user gesture before audio: unlock on the first interaction.
   const unlockOnce = (): void => sound.unlock();
@@ -118,9 +120,11 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
     status.textContent = vm.statusLine;
     status.classList.toggle("your-turn", vm.yourTurn);
 
+    renderStats(statsHost, vm);
     renderZones(zonesHost, vm, doc.metadata.name, onMove);
     renderButtons(buttonsHost, vm, onMove);
     renderTicker(tickerHost, ticker);
+    pulseChangedStats(statsHost, stepEvents);
 
     if (firstRender) {
       firstRender = false;
@@ -181,7 +185,7 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
   function onMove(move: { action: string; target?: string }): void {
     if (state.status !== "running" || state.activeSeat !== viewerSeat) return;
     sound.unlock();
-    const result = applyAction(state, doc.spec, { seat: viewerSeat, ...move });
+    const result = applyAction(state, doc.spec, { seat: viewerSeat, ...move }, diceRng);
     if (!result.ok) return; // stale click (legal set changed); the re-render fixes it
     state = result.data.state;
     pushEvents(result.data.events);
@@ -201,7 +205,7 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
         pushEvents(step.events);
       } else {
         const move = randomChooser(legal, botRng);
-        const result = applyAction(state, doc.spec, { seat: state.activeSeat, ...move });
+        const result = applyAction(state, doc.spec, { seat: state.activeSeat, ...move }, diceRng);
         if (!result.ok) return;
         state = result.data.state;
         pushEvents(result.data.events);
@@ -313,6 +317,62 @@ function renderButtons(
     node.textContent = button.label;
     node.addEventListener("click", () => onMove(button.move));
     host.append(node);
+  }
+}
+
+function renderStats(host: HTMLElement, vm: ViewModel): void {
+  host.innerHTML = "";
+  if (vm.seatStats.length === 0 && vm.globalStats.length === 0) {
+    host.style.display = "none";
+    return;
+  }
+  host.style.display = "";
+  for (const group of vm.seatStats) {
+    const box = el("div", "jx-stat-group");
+    if (group.mine) box.classList.add("mine");
+    const who = el("span", "jx-stat-who");
+    who.textContent = group.title;
+    box.append(who);
+    for (const stat of group.stats) {
+      const chip = el("span", "jx-stat");
+      chip.dataset["stat"] = `seat-${group.seat}-${stat.name}`;
+      chip.textContent = `${stat.name} ${stat.value}`;
+      box.append(chip);
+    }
+    host.append(box);
+  }
+  if (vm.globalStats.length > 0) {
+    const box = el("div", "jx-stat-group");
+    for (const stat of vm.globalStats) {
+      const chip = el("span", "jx-stat");
+      chip.dataset["stat"] = `global-${stat.name}`;
+      chip.textContent = `${stat.name} ${stat.value}`;
+      box.append(chip);
+    }
+    host.append(box);
+  }
+}
+
+/** Flash the chips whose variables changed this step (damage lands visibly). */
+function pulseChangedStats(host: HTMLElement, events: readonly GameEvent[]): void {
+  for (const event of events) {
+    if (event.type !== "varChanged") continue;
+    const key = event.scope === "seat" ? `seat-${event.seat}-${event.var}` : `global-${event.var}`;
+    const chip = host.querySelector<HTMLElement>(`[data-stat="${key}"]`);
+    if (chip === null || typeof chip.animate !== "function") continue;
+    const dropped = event.to < event.from;
+    chip.animate(
+      [
+        { transform: "scale(1)", background: "rgba(255,255,255,0.14)" },
+        {
+          transform: "scale(1.35)",
+          background: dropped ? "rgba(255, 90, 90, 0.7)" : "rgba(120, 230, 140, 0.7)",
+          offset: 0.35,
+        },
+        { transform: "scale(1)", background: "rgba(255,255,255,0.14)" },
+      ],
+      { duration: 650, easing: "cubic-bezier(0.3, 1.2, 0.4, 1)" },
+    );
   }
 }
 

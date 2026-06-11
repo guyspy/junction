@@ -10,7 +10,7 @@
     "pnpm": ">=9"
   },
   "scripts": {
-    "build": "tsc -b packages/spec packages/runtime packages/renderer packages/mcp packages/cli && pnpm --filter @junction/renderer run bundle",
+    "build": "tsc -b packages/spec packages/runtime packages/renderer packages/connexon packages/mcp packages/cli && pnpm --filter @junction/renderer run bundle",
     "test": "pnpm -r --filter '@junction/*' test",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "check": "pnpm run check:boundaries && pnpm run build && pnpm run test",

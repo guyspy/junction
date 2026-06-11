@@ -32,6 +32,7 @@ export const DiagnosticCodes = {
   ZONE_REF_UNKNOWN: "ZONE_REF_UNKNOWN",
   PIECE_REF_UNKNOWN: "PIECE_REF_UNKNOWN",
   ACTION_REF_UNKNOWN: "ACTION_REF_UNKNOWN",
+  VAR_REF_UNKNOWN: "VAR_REF_UNKNOWN",
   EXPRESSION_SYNTAX_ERROR: "EXPRESSION_SYNTAX_ERROR",
   EXPRESSION_REF_INVALID: "EXPRESSION_REF_INVALID",
   // runtime
@@ -84,6 +85,7 @@ function humanPhrase(code: DiagnosticCode): string {
     ZONE_REF_UNKNOWN: "reference to an undeclared zone",
     PIECE_REF_UNKNOWN: "reference to an undeclared piece set",
     ACTION_REF_UNKNOWN: "reference to an undeclared action",
+    VAR_REF_UNKNOWN: "reference to an undeclared variable",
     EXPRESSION_SYNTAX_ERROR: "the expression has a syntax error",
     EXPRESSION_REF_INVALID: "the expression references an invalid path",
     ACTION_NOT_LEGAL: "the action is not legal in the current state",

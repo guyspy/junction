@@ -5,6 +5,7 @@ import {
   runDescribeGrammar,
   runGetReference,
   runListReferences,
+  runRenderGame,
   runScaffold,
   runSimulate,
   runValidate,
@@ -80,5 +81,31 @@ describe("Integrin tools (pure layer)", () => {
 
     const missing = runGetReference(refs, "nope");
     expect(missing.ok).toBe(false);
+  });
+});
+
+describe("render_game (the MCP Apps spike)", () => {
+  const FAKE_BUNDLE = "window.JunctionGame={boot(){}};";
+
+  it("renders a reference game into a ui:// playable page", () => {
+    const refs = loadRefs();
+    const page = runRenderGame(refs, FAKE_BUNDLE, { game: "war" });
+    expect(page.result.ok).toBe(true);
+    expect(page.uri).toBe("ui://junction/games/war");
+    expect(page.html).toContain("<!doctype html>");
+    expect(page.html).toContain("JunctionGame.boot");
+    expect(page.html).toContain(FAKE_BUNDLE);
+    expect(page.result.structured.badges?.some((b) => b.includes("always ends"))).toBe(true);
+  });
+
+  it("refuses invalid YAML with diagnostics and degrades gracefully without a bundle", () => {
+    const refs = loadRefs();
+    const bad = runRenderGame(refs, FAKE_BUNDLE, { yaml: "not: [valid" });
+    expect(bad.result.ok).toBe(false);
+    expect(bad.html).toBeUndefined();
+
+    const disabled = runRenderGame(refs, undefined, { game: "war" });
+    expect(disabled.result.ok).toBe(false);
+    expect(disabled.result.summary).toContain("not available");
   });
 });
