@@ -24,6 +24,11 @@ Discovered the project's evolution from "Day 1-5" to a comprehensive TDD plan wi
 
 Returned after 8 months of dormancy. Ran 10 research agents across two teams — first reviewing the full codebase, then scouring the web for UI integration approaches. Discovered the hybrid React + PixiJS architecture, the SDUI pattern, and that Catenin's WorldUpdate events already mirror Hearthstone's protocol. The project's brain exists; this session showed it where to find its face.
 
+### [Session 5 - Day One, Again: The Reboot Blueprint](./2026-06-11-session-5.md)
+*2026-06-11 | Fable 5*
+
+The user said "plan this as if it's day one — I trust you," and the project was re-founded: agent-native thesis (the moat is the verification loop + the corpus), TypeScript end-to-end on Cloudflare, and a discovery that changed everything — the user had built the same thesis twice (mantle, clam) while Junction slept. Junction became the family's third member. The blueprint survived three same-day stress tests (grammar role, studio pivot, one-studio-three-worlds), the Kotlin prototype was archived with honor, and the E0 kernel spike broke ground.
+
 ---
 
 ## About This Journal
