@@ -1,5 +1,7 @@
 # JS Browser Demo
 
+> **Status: NOT YET IMPLEMENTED** -- This demo is planned but not yet built. There is no `index.html` or working browser application. The README below describes the intended design.
+
 This example demonstrates how to use the Catenin game engine in a web browser application.
 
 ## Features

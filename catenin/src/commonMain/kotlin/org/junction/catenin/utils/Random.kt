@@ -30,33 +30,25 @@ object GameRandom {
      * Generate random integer in range [min, max] inclusive
      */
     @JsName("nextIntRange")
-    fun nextInt(min: Int, max: Int): Int {
-        return instance.nextInt(min, max + 1)
-    }
+    fun nextInt(min: Int, max: Int): Int = instance.nextInt(min, max + 1)
     
     /**
      * Generate random integer in range [0, until) exclusive
      */
     @JsName("nextIntUntil")
-    fun nextInt(until: Int): Int {
-        return instance.nextInt(until)
-    }
+    fun nextInt(until: Int): Int = instance.nextInt(until)
     
     /**
      * Choose random element from array
      */
     @JsName("chooseFromArray")
-    fun <T> choose(array: Array<T>): T? {
-        return if (array.isEmpty()) null else array[nextInt(array.size)]
-    }
+    fun <T> choose(array: Array<T>): T? = if (array.isEmpty()) null else array[nextInt(array.size)]
     
     /**
      * Choose random element from list
      */
     @JsName("chooseFromList")
-    fun <T> choose(list: List<T>): T? {
-        return if (list.isEmpty()) null else list[nextInt(list.size)]
-    }
+    fun <T> choose(list: List<T>): T? = if (list.isEmpty()) null else list[nextInt(list.size)]
     
     /**
      * Shuffle array in place and return it

@@ -1,5 +1,7 @@
 # Kotlin/JS Node.js Demo
 
+> **Status: NOT YET IMPLEMENTED** -- This demo is planned but not yet built. There is no `src/` directory or working Kotlin/JS application. The README below describes the intended design.
+
 **Technology Stack**: Kotlin → Kotlin/JS → Node.js
 
 This example demonstrates how to write **Kotlin code** that compiles to Node.js using Kotlin/JS compilation.

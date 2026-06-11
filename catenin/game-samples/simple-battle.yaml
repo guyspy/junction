@@ -1,0 +1,68 @@
+# Simple Battle - A two-player battle game using the Universal YAML Schema
+# Two unit types (warrior and mage) fight until one side is defeated.
+
+meta:
+  name: "Simple Battle"
+  targetAge: [8, 14]
+  participantCount: [2, 2]
+
+objectTypes:
+  warrior:
+    properties:
+      name: {type: STRING, initial: "Warrior"}
+      health: {type: INT, initial: 120, min: 0, max: 200}
+      attack: {type: INT, initial: 15, min: 0}
+      defense: {type: INT, initial: 10, min: 0}
+    states:
+      alive: {type: BOOL, initial: true}
+
+  mage:
+    properties:
+      name: {type: STRING, initial: "Mage"}
+      health: {type: INT, initial: 80, min: 0, max: 150}
+      attack: {type: INT, initial: 25, min: 0}
+      defense: {type: INT, initial: 5, min: 0}
+    states:
+      alive: {type: BOOL, initial: true}
+
+instances:
+  iron_warrior:
+    objectType: "warrior"
+    properties:
+      name: "Iron Warrior"
+      health: "140"
+      attack: "18"
+      defense: "12"
+
+  fire_mage:
+    objectType: "mage"
+    properties:
+      name: "Fire Mage"
+      health: "90"
+      attack: "30"
+      defense: "4"
+
+triggers:
+  - name: "warrior_defeated"
+    when:
+      objectType: warrior
+      propertyChanged: "health"
+      newValue: "0"
+    effects:
+      - log: "A warrior has fallen!"
+      - modifyProperty:
+          target: {id: "this"}
+          property: "alive"
+          value: "false"
+
+  - name: "mage_defeated"
+    when:
+      objectType: mage
+      propertyChanged: "health"
+      newValue: "0"
+    effects:
+      - log: "A mage has been defeated!"
+      - modifyProperty:
+          target: {id: "this"}
+          property: "alive"
+          value: "false"

@@ -1,70 +1,55 @@
 package org.junction.catenin.parser
 
+import kotlinx.serialization.Serializable
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
 
 class YamlParserTest {
-    
+
+    @Serializable
+    data class TestData(
+        val name: String,
+        val value: Int
+    )
+
     @Test
-    fun testParseSimpleGameDefinition() {
+    fun testParseValidYaml() {
+        val parser = YamlParser()
         val yaml = """
-            meta:
-              name: "Test Game"
-              target_age: [8, 12]
-              player_count: [2, 4]
-            
-            cards:
-              attack_card:
-                count: 10
-                properties:
-                  damage:
-                    type: int
-                    min: 1
-                    max: 5
-                  element:
-                    type: enum
-                    values: [fire, water]
-                events:
-                  on_play:
-                    action: "deal_damage"
-                    target: "opponent"
-                    amount: "{damage}"
+            name: "Test"
+            value: 42
         """.trimIndent()
-        
-        val parser = GameDefinitionParser()
-        val definition = parser.parseFromString(yaml)
-        
-        assertEquals("Test Game", definition.meta.name)
-        assertEquals(listOf(8, 12), definition.meta.targetAge)
-        assertEquals(1, definition.cards.size)
-        
-        val attackCard = definition.cards["attack_card"]
-        assertNotNull(attackCard)
-        assertEquals(10, attackCard.count)
-        assertEquals(2, attackCard.properties.size)
-        
-        val validation = parser.validate(definition)
-        assertTrue(validation is ParseResult.Success)
+
+        val result = parser.parseFromString<TestData>(yaml)
+
+        assertEquals("Test", result.name)
+        assertEquals(42, result.value)
     }
-    
+
     @Test
-    fun testValidationFailure() {
-        val yaml = """
-            meta:
-              name: ""
-              target_age: [8, 12]
-            
-            cards: {}
+    fun testParseInvalidYaml() {
+        val parser = YamlParser()
+        val invalidYaml = """
+            name: "Test"
+            value: not_a_number
         """.trimIndent()
-        
-        val parser = GameDefinitionParser()
-        val definition = parser.parseFromString(yaml)
-        val validation = parser.validate(definition)
-        
-        assertTrue(validation is ParseResult.Failure)
-        assertTrue(validation.errors.contains("Game name cannot be empty"))
-        assertTrue(validation.errors.contains("Game must define at least one card type"))
+
+        assertFailsWith<YamlParseException> {
+            parser.parseFromString<TestData>(invalidYaml)
+        }
+    }
+
+    @Test
+    fun testParseMalformedYaml() {
+        val parser = YamlParser()
+        val malformedYaml = """
+            name: "Test
+            value: 42
+        """.trimIndent()
+
+        assertFailsWith<YamlParseException> {
+            parser.parseFromString<TestData>(malformedYaml)
+        }
     }
 }

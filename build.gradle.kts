@@ -1,9 +1,9 @@
 plugins {
     // Kotlin plugins for catenin
-    kotlin("multiplatform") version "2.1.21" apply false
-    kotlin("jvm") version "2.1.21" apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.21" apply false
-    
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+
     // Java plugins for future services (quarkus, etc)
     // java plugin will be applied per-project as needed
 }
@@ -20,4 +20,11 @@ allprojects {
 // Service-specific configurations
 configure(subprojects.filter { it.name == "catenin" }) {
     group = "org.junction.catenin"
+}
+
+// Fix webpack version mismatch in npm workspaces for Kotlin/JS browser tests
+plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
+    extensions.configure<org.jetbrains.kotlin.gradle.targets.js.npm.NpmExtension> {
+        override("webpack", "5.101.3")
+    }
 }

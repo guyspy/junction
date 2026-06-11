@@ -1,5 +1,7 @@
 # TypeScript Node.js Demo
 
+> **Status: NOT YET IMPLEMENTED** -- This demo is planned but not yet built. There is no `package.json`, `server.ts`, or working TypeScript application. The README below describes the intended design.
+
 **Technology Stack**: TypeScript → JavaScript → Node.js
 
 This example demonstrates how to write **TypeScript code** that consumes Catenin as an NPM package with full type safety.
