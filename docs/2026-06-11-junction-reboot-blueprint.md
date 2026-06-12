@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-11
 **Status**: PROPOSAL — once accepted, this supersedes all prior architecture documents. Nothing in the repo has been deleted; the Kotlin implementation stands as the reference prototype that taught us what the product is.
-**Revision**: v1.3 (same day) — v1.1 reconciled the family addendum; v1.2 the studio pivot (Addendum 2); v1.3 the studio architecture (Addendum 3: one shell, three genre workspaces, one narrative). Addenda remain as the record of what changed and why.
+**Revision**: v1.4 (2026-06-12: Addendum 4 — Junction is the platform). v1.3 (same day) — v1.1 reconciled the family addendum; v1.2 the studio pivot (Addendum 2); v1.3 the studio architecture (Addendum 3: one shell, three genre workspaces, one narrative). Addenda remain as the record of what changed and why.
 
 ## The Goal (verbatim)
 
@@ -87,7 +87,7 @@ The biological naming deepens — every organ is a junction protein or structure
 | **Cadherin** | makes the cell visible & touchable | The renderer: accessible DOM component registry, game templates, MCP Apps packaging |
 | **Connexon** | gap-junction channel between cells | The online runtime: per-room actors, ordered event streams, classroom join codes |
 | **Synapse** | junction where minds meet | The studio: agentic desktop app (Electrobun, nacre pattern) — one shell, genre workspaces, one creation loop (Addendum 3); the web carries play |
-| **Plexus** | interwoven network | The community: registry of addressable, forkable, certified game artifacts |
+| **Plexus** | interwoven network | The registry layer inside **Junction, the web platform itself** — collab, ratings, peer review, donations, crowdfunding (Addendum 4) |
 | **Integrin** | transduces signals across the membrane, both ways | The agent interface: the MCP server — the platform's front door |
 | **Occludin** | tight junction; controls what may pass | Trust & safety: publish-time review, moderation, compliance guardrails |
 
@@ -566,3 +566,35 @@ Everything else — chat, preview host, project browser, QA panel, asset library
 同一套基因組,三種分化的細胞 —— 差異不在 DNA,在表現。
 Shell 是細胞膜;workspace 是胞器;genome 是 universal core。
 這不是比喻硬湊:這正是為什麼「一個敘事」可行 —— 因為它和「一個核心」可行,是同一個原因。
+
+---
+
+# Addendum 4 (2026-06-12): The name, revealed — Junction is the platform
+
+*Added after the founder disclosed a piece of the vision held since the very first Kotlin-era README ("rating systems, crowdfunding, charitable credit for underprivileged children") but never yet written into this repo: **the name Junction is reserved for the web platform itself** — the destination where people collaborate, rate, peer-review, donate, and crowdfund.*
+
+## What the name means
+
+Junctions connect cells. **Junction connects people.** The project was never named after its engine — it was named after its destination: the public web platform where educators and creators meet around games. The anatomy stands, one level deeper than before:
+
+| Name | Is | Public face |
+|---|---|---|
+| **Junction** | the web platform — community, collaboration, ratings, peer review, donations, crowdfunding | THE brand; the place |
+| Plexus | the registry *layer inside* Junction (addressable artifacts, lineage, search, QA badges) | internal/app name |
+| Synapse | the desktop studio | product name |
+| Catenin / Cadherin / Connexon / Integrin / Occludin | engine organs | package/docs names |
+
+## The platform pillars (beyond the registry)
+
+1. **Collaboration** — games are data, so co-creation is mergeable and lineage-preserving: co-editing, forking *together*, classroom-team projects. The registry's remix graph becomes a social graph.
+2. **Ratings** — lightweight community signal (stars, plays, collections), always displayed *alongside* QA badges, never instead of them.
+3. **Peer review** — the human trust layer atop machine verification, and culturally native to education (and to a PhD founder): fellow-educator reviews ("used in my 4th-grade class; the fraction pacing works"), reviewer reputation, and a **classroom-verified tier** that only peer review can confer. The trust ladder becomes: *machine-proven (badges) → peer-reviewed (educators) → classroom-verified (evidence of real use)*. No code-generation competitor can copy this — community trust compounds and cannot be prompted into existence.
+4. **Donations** — tips to creators (Rosebud's tip-jar validation from the June research); sponsor-a-classroom.
+5. **Crowdfunding** — fund a game that doesn't exist yet ("we need a Taiwanese-history deck-builder for grade 5"), fund engine features, and the founding dream: **funded access for underprivileged children** — the charitable-credit thread from the first README, now a platform pillar.
+
+## Consequences (recorded, not yet executed)
+
+- **Naming reconciliation**: `apps/plexus` remains the registry app; the public site IS Junction (the `games.junction.aotter.net` apiVersion group always pointed here). E5 epoch reads "Junction platform alpha (Plexus registry + ratings + peer review)".
+- **Roadmap**: E5 gains ratings + peer review (data-shaped, low-risk); donations/crowdfunding land later as **E5.5/E6 — payments touch compliance** (creator-side/adult-only flows, Stripe-class processor, never on student surfaces; District/NDPA posture unchanged).
+- **Strategy**: this sharpens the Higgsfield answer (competitive-watch): generation is commoditizing — **a peer-reviewing, crowdfunding community of educators is the un-copyable moat**. The badge proves the game; the community vouches for it; the funding sustains it.
+- The blueprint's flywheel (§3) gains its missing human loop: corpus → discovery → **peer trust → funding → more creators** → corpus.

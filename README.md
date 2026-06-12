@@ -20,7 +20,7 @@ The moat is not the DSL. The moat is the **verification loop** (validate → sim
 | **Cadherin** | the renderer — accessible DOM component registry + game templates |
 | **Connexon** | the online runtime — per-room actors, ordered event streams, classroom join codes |
 | **Synapse** | the studio — agentic desktop app where teachers and an embedded agent co-create |
-| **Plexus** | the community — registry of addressable, forkable, certified game artifacts |
+| **Plexus** | the registry layer inside **Junction — the web platform itself**: collaborate, rate, peer-review, donate, crowdfund |
 | **Integrin** | the agent interface — the MCP server, the platform's front door |
 | **Occludin** | trust & safety — publish gates, moderation, compliance |
 
