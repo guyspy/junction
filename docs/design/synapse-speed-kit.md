@@ -31,6 +31,8 @@ stack · fan · arc · grid · row · pile · score-track · dice-tray · tilema
 
 **E. The asset pipeline** (mantle media model): purpose-typed slots; components auto-consume whatever the slot holds; **a per-game style token** (art-direction prompt prefix the studio remembers) keeps every generated sprite consistent with the game's look; Occludin moderation at publish.
 
+> **Live rung-4 provider (2026-04-30): Higgsfield MCP** — hosted endpoint (`https://mcp.higgsfield.ai/mcp`), account OAuth (no API keys), 30+ image/video models, credit-billed, async with polling, generation history reusable as inputs. The decisive feature for game assets is **Soul character training**: train a character/style from references once, then every generation stays visually consistent — the industrial-strength version of our style token (16 memory tiles, 52 card faces, one protagonist across scenes, one art direction). Composition stays provider-agnostic: the studio agent simply calls Integrin and an asset MCP side by side; Junction never builds or proxies image gen. Their official server is also a design mirror worth studying: workflow tools over raw atoms (Anthropic's consolidation guidance in the wild), and a **virality-prediction scoring tool** — *their* version of our QA badges. The "platform that judges, not just generates" thesis, converging in an adjacent industry.
+
 **F. Agent workflow tools:** the Integrin loop (scaffold/validate/simulate — built) + render/screenshot/judge feel-loop (proven with preview MCP) + future UI lints (contrast, readability, touch-target size) in the same verdict format as simulate.
 
 ## The studio session, end to end (teacher's view)
