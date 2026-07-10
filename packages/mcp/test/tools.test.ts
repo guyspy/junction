@@ -20,7 +20,7 @@ function loadRefs(): ReferenceGame[] {
   });
 }
 
-describe("Integrin tools (pure layer)", () => {
+describe("Junction MCP tools (pure layer)", () => {
   it("describe_grammar returns the closed vocabulary", () => {
     const r = runDescribeGrammar();
     expect(r.ok).toBe(true);

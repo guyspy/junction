@@ -3,7 +3,7 @@ import { simulate } from "@junction/runtime";
 
 /**
  * The single-file game page, as pure functions: every consumer (CLI `render`,
- * Integrin's `render_game`, the future studio) builds the same artifact —
+ * MCP `render_game`, a future creator UI) builds the same artifact —
  * engine + renderer bundle + GameSpec inlined, QA badges stamped at build time.
  * Platform-agnostic: callers supply the bundle JS; nothing here touches fs.
  */

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "WebWorker"]
+  },
+  "include": ["src", "worker-configuration.d.ts"],
+  "references": [{ "path": "../spec" }, { "path": "../rooms" }]
+}

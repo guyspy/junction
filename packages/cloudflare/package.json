@@ -1,0 +1,25 @@
+{
+  "name": "@junction/cloudflare",
+  "version": "0.0.1-alpha.0",
+  "description": "Cloudflare Worker and Durable Object transport for Junction rooms.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:assets": "node scripts/build-assets.mjs",
+    "types": "wrangler types",
+    "build": "wrangler types && pnpm run build:assets && tsc -b",
+    "check:deploy": "wrangler deploy --dry-run --outdir dist/worker",
+    "test": "wrangler types && vitest run --max-workers=1 --no-isolate",
+    "smoke": "node scripts/smoke.mjs",
+    "dev": "pnpm run build:assets && wrangler dev",
+    "deploy": "pnpm run build:assets && wrangler deploy"
+  },
+  "dependencies": {
+    "@junction/rooms": "workspace:*",
+    "@junction/spec": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

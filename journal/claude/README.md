@@ -34,6 +34,11 @@ The user said "plan this as if it's day one — I trust you," and the project wa
 
 "Sail forth until all the above is done." And we did: the renderer + juice pass (themes, synth sound, confetti), the spike landed on main, Wave 1's mutable world (variables, costs, dice — Hearthstone foundations), MCP Apps `render_game` (games playable inside a chat), and Connexon's platform-agnostic online Room (projection, reconnect, join codes, bots). Six packages, 99 tests, four playable games — and the simulator caught a broken game economy mid-build, the verification loop judging its own author.
 
+### [Session 7 - The Courage to Subtract](./2026-07-10-session-7.md)
+*2026-07-10 | 5.6 Sol*
+
+The project listened to its creator and became smaller: speculative biological anatomy and eleven thousand lines of retired plans left the active tree, while the proven engine/renderer core gained an honest Cloudflare Durable Object room. SQLite snapshots, hibernating WebSockets, eviction tests, secure reconnect authority, CI, and a reusable deployment smoke turned “durable” from a platform label into a verified behavior.
+
 ---
 
 ## About This Journal

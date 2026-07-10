@@ -1,4 +1,4 @@
-import type { GameDocument } from "@junction/spec";
+import { parseGameDocument, type GameDocument } from "@junction/spec";
 import {
   applyAction,
   applySkip,
@@ -535,7 +535,6 @@ export function mountOnlineGame(container: HTMLElement, options: OnlineMountOpti
   }
 
   function scaffold(welcome: WireWelcome): void {
-    const { parseGameDocument } = junctionSpec();
     const parsed = parseGameDocument(welcome.spec, { file: "<online>" });
     if (!parsed.ok) {
       status.textContent = "This room's game failed to load.";
@@ -689,10 +688,4 @@ export function mountOnlineGame(container: HTMLElement, options: OnlineMountOpti
       socket?.close();
     },
   };
-}
-
-/** Indirection so the spec import stays at module top (bundled) without circularity. */
-import { parseGameDocument as _parseGameDocument } from "@junction/spec";
-function junctionSpec(): { parseGameDocument: typeof _parseGameDocument } {
-  return { parseGameDocument: _parseGameDocument };
 }

@@ -1,5 +1,4 @@
 import type { GameSpec } from "@junction/spec";
-import type { GameEvent } from "../model/events.js";
 import { zoneKey, type GameState } from "../model/state.js";
 
 /**
@@ -23,7 +22,7 @@ export interface ProjectedPiece {
  *
  * NOTE: in local/solo play the handle is the raw pieceId. Piece ids are creation-
  * ordered, so a determined client could infer properties from them; harmless against
- * a local bot, but Connexon (the online runtime) must mint opaque per-session handles
+ * a local bot, but an online room must mint opaque per-session handles
  * before this projection crosses a network boundary.
  */
 export interface HiddenPiece {
@@ -110,6 +109,3 @@ export function projectState(state: GameState, spec: GameSpec, viewerSeat: numbe
  * viewer is entitled to it. (In v1alpha a reveal is public, so revealed payloads pass
  * through; this is the seam where private reveals will be filtered.)
  */
-export function projectEvent(event: GameEvent, _viewerSeat: number): GameEvent {
-  return event;
-}

@@ -6,6 +6,9 @@ node_modules/
 dist/
 *.tsbuildinfo
 coverage/
+.wrangler/
+packages/cloudflare/public/standalone.js
+packages/cloudflare/worker-configuration.d.ts
 
 # Logs
 *.log

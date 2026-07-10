@@ -1,6 +1,6 @@
 ---
 name: game-designer
-description: Design a validated, balanced, playable educational card/board game for Junction by authoring a GameSpec through the Integrin MCP tools. Use whenever someone wants to make, modify, or balance a Junction game.
+description: Design a validated, balanced, playable educational card/board game for Junction by authoring a GameSpec through the Junction MCP tools. Use whenever someone wants to make, modify, or balance a Junction game.
 when_to_invoke: "make a game", "build a card game", "a game that teaches X", "balance my game"
 applies_to: junction games.junction.aotter.net/v1alpha1
 ---
@@ -15,7 +15,7 @@ The thesis: **you write config, the runtime carries the complexity.** Your job i
 design and the data. The runtime handles turns, hidden information, shuffling, scoring,
 and animation.
 
-## The tools (Integrin MCP)
+## The tools (Junction MCP)
 
 - `describe_grammar` — the complete closed vocabulary. **Call this first.** Never guess a
   key or enum value; if it isn't in the grammar, it doesn't exist.

@@ -1,71 +1,78 @@
 # CLAUDE.md
 
-Agent orientation for the Junction repository. Humans: see [README.md](./README.md) and [CONTRIBUTING](./docs/2026-06-11-junction-reboot-blueprint.md).
+Agent orientation for Junction. Humans start with [README.md](./README.md).
 
-## What this is
+## Product boundary
 
-Junction is an **agent-native game engine + studio for 2D educational card/board/adventure/RPG games**. The constitution is [`docs/2026-06-11-junction-reboot-blueprint.md`](./docs/2026-06-11-junction-reboot-blueprint.md) (v1.3) — thesis, anatomy, decision register with reversal triggers, roadmap E0–E7. Read it before proposing architectural change.
+Junction helps an educator and an AI agent author a closed GameSpec, validate
+and simulate it, render it as an accessible game, and optionally host an
+authoritative classroom room.
 
-**The thesis (family-shared with mantle/clam):** agents write config; the runtime carries the complexity. Teachers converse; agents compile conversation into validated GameSpec documents; the deterministic kernel executes and *judges* them (validate → simulate → critic → playtest).
+Read the [blueprint](./docs/2026-06-11-junction-reboot-blueprint.md) before
+changing architecture or grammar. Catenin and Cadherin are accepted names.
+Integrin and Occludin are reserved pending explicit approval. Use functional
+names for every other component.
 
-The Kotlin prototype (2025-07 → 2026-03) is archived at the `kotlin-prototype` tag. Reference it for trigger/expression/protocol design lineage; never resurrect it.
+The Kotlin prototype is archived at `kotlin-prototype`; do not resurrect it.
 
 ## Commands
 
 ```bash
-pnpm install                # workspace install
-pnpm check                  # check:boundaries → build → test (the CI gate — must pass before any PR)
-pnpm build                  # tsc -b (composite project references)
-pnpm test                   # vitest across packages
+pnpm install
+pnpm check
+pnpm build
+pnpm test
 node packages/cli/dist/index.js validate games/war.yaml
 node packages/cli/dist/index.js simulate games/war.yaml --games 200 --seed 42
 ```
 
-## Architecture (layering is the law)
+`pnpm check` is the merge gate: boundaries, build, then tests.
 
-```
-packages/spec      @junction/spec     — GameSpec grammar (Zod), manifest parser, expression parser,
-                                        diagnostics kernel. Zero runtime deps beyond yaml+zod.
-                                        sideEffects: false. Imports NO other @junction package.
-packages/runtime   @junction/runtime  — pure reducer (state, action) → {state', events[]}, seeded RNG,
-                                        trigger engine, per-seat projection, simulate. Imports
-                                        @junction/spec ONLY. No node:/platform imports in src/.
-packages/renderer  @junction/renderer — Cadherin: framework-free accessible DOM renderer.
-                                        Pure view-model (semantics → zone presentation), announcer
-                                        (events → ARIA live narration), procedural SVG card art,
-                                        FLIP animation, theme tokens + synth sound + celebrations,
-                                        single-file page builder + standalone IIFE bundle (esbuild).
-                                        Browser-only: NO node imports.
-packages/connexon  @junction/connexon — Connexon: the online runtime. Platform-agnostic Room
-                                        (authoritative state, per-seat projection, ordered event
-                                        log + resume, bots fill empty seats) + RoomManager (join
-                                        codes) + JSON wire protocol. Transport adapters (Durable
-                                        Objects, Node ws) are thin shells. Imports spec+runtime;
-                                        NO node/@cloudflare in src/.
-packages/mcp       @junction/mcp      — Integrin: the MCP server. Tools (describe_grammar,
-                                        list/get_reference_game, scaffold_game, validate_game,
-                                        simulate_game, render_game → ui:// playable pages) wrap pure functions; reference corpus is
-                                        injected (DI) so tools stay Workers-portable. stdio entry +
-                                        SDK. Imports spec+runtime.
-packages/cli       @junction/cli      — validate/simulate/play/render CLI. `render` emits a
-                                        self-contained playable HTML file with QA badges.
-games/                                — reference GameSpecs (YAML) + golden replays.
-skills/game-designer/SKILL.md         — the agent authoring guide (onboarding trinity).
-scripts/check-boundaries.mjs          — enforces the above. CI fails on violation.
+## Packages
+
+```text
+packages/spec        closed GameSpec grammar, parser, diagnostics
+packages/runtime     deterministic reducer, projection, simulation
+packages/renderer    Cadherin DOM renderer and standalone page builder
+packages/rooms       authoritative room core and wire protocol
+packages/node        Node WebSocket room adapter
+packages/cloudflare  Worker + Durable Object room adapter
+packages/mcp         Junction MCP server
+packages/cli         validate/simulate/play/render/serve commands
 ```
 
-Run Integrin: `node packages/mcp/dist/stdio.js` (connect from Claude Code/Desktop as an MCP server). Future packages per blueprint §7: `renderer` (Cadherin), `cloudflare` + `node` (Connexon adapters), `junction` (umbrella). Apps: `synapse` (studio), `plexus` (registry).
+Allowed dependency direction:
 
-## House rules (inherited from the mantle/clam family)
+```text
+spec <- runtime <- rooms <- transport adapters
+  ^        ^          ^
+  +----- renderer ----+
+  +-------- MCP / CLI
+```
 
-1. **Diagnostics** use the ADR-0008 shape: `{code, phase: validate|test|boot|runtime, severity, path, value?, expected?, candidates?, suggestion?, message}`. Codes are UPPER_SNAKE. Messages are generated by the single formatter in `packages/spec/src/kernel/diagnostic.ts` — never hand-write `message`.
-2. **Result objects, not exceptions**, at package boundaries: `{ok: true, data, warnings} | {ok: false, diagnostics}`. Tests assert on `diagnostic.code`.
-3. **The grammar is closed.** New manifest keys, effects, expression roots, or event types are grammar revisions — update the Zod schema + lints + docs together. Never add an open-ended escape hatch (no user code, no eval).
-4. **Determinism is sacred.** The reducer is pure; all randomness flows from the seeded RNG; `Date.now()`/`Math.random()` are forbidden in spec/ and runtime/ src. Golden replay tests guard this.
-5. **Expressions are total**: comparisons/arithmetic/boolean over typed context paths. No loops, no recursion, no side effects.
-6. **Manifest envelope**: `apiVersion: games.junction.aotter.net/v1alpha1`, `kind`, `metadata.name`, `spec`. v1alpha floats (breaking changes allowed) until the registry opens — "the registry locks the grammar; the studio floats it."
-7. Conventional commits; end commit messages with the Claude co-author trailer; branches `feature/YYYYMMDD_name` or `spike/YYYYMMDD_name`; PRs to `main`; merge, don't squash.
+`spec`, `runtime`, `renderer`, and `rooms` must remain platform-neutral. Node
+and Cloudflare APIs belong only in their adapters.
 
-## Journal convention
+## House rules
 
-Each working session: read [`journal/claude/README.md`](./journal/claude/README.md) + recent entries at session start; add `journal/claude/YYYY-MM-DD-session-N.md` (personal, reflective — see Session 4/5 for tone) and update that README at session end. The journal is institutional memory across model generations. Honor it.
+1. Diagnostics use `{code, phase, severity, path, value?, expected?,
+   candidates?, suggestion?, message}`. Messages come from the shared formatter.
+2. Package boundaries return result objects rather than throwing expected user
+   errors. Tests assert diagnostic codes.
+3. The grammar is closed. New keys, effects, expression roots, or events update
+   schema, lints, examples, and docs together.
+4. The reducer is pure. All randomness comes from a seeded RNG. No clocks or
+   ambient randomness in `spec` or `runtime`.
+5. Expressions are total: no loops, recursion, calls, or side effects.
+6. The manifest envelope is `apiVersion`, `kind`, `metadata.name`, and `spec`.
+7. Hidden information is projected on the authoritative side before transport.
+8. Prefer the smallest working implementation. Do not scaffold future products.
+9. Conventional commits; branches `feature/YYYYMMDD_name` or
+   `spike/YYYYMMDD_name`; PRs target `main`; merge rather than squash.
+
+## Journal
+
+At the start of a working session, read [`journal/claude/README.md`](./journal/claude/README.md)
+and the recent entries. At the end of a substantive implementation session,
+add `journal/claude/YYYY-MM-DD-session-N.md` in the established reflective
+format and update the README.

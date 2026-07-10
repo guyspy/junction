@@ -1,17 +1,17 @@
 import { createServer, type IncomingMessage, type Server } from "node:http";
-import { randomInt } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { WebSocketServer, type WebSocket } from "ws";
 import type { GameDocument } from "@junction/spec";
-import { RoomManager, parseClientMessage } from "@junction/connexon";
+import { RoomManager, parseClientMessage } from "@junction/rooms";
 import { buildOnlinePageHtml, computeQaBadges } from "@junction/renderer";
 
 /**
- * The Node room server — Connexon's portability hedge (blueprint §9) and the local
- * classroom host. One process serves: the play page (online client), `/ws?code=`
+ * The Node room server is the local classroom host and a second transport implementation.
+ * One process serves the play page (online client), `/ws?code=`
  * websockets into rooms, and `/check` (the school-IT self-test). The same Room core
- * will run on Durable Objects; this adapter exists so CI and a €4 VPS can run it too.
+ * The same room core also runs on Durable Objects.
  */
 
 export interface ServeOptions {
@@ -51,6 +51,8 @@ export async function startNodeServer(options: ServeOptions): Promise<RunningSer
     },
     now: () => Date.now(),
     randomInt: (max) => randomInt(max),
+    makeToken: () => randomUUID(),
+    close: (connId, code, reason) => sockets.get(connId)?.close(code, reason),
   });
   const code = manager.open({ doc: options.doc, yaml: options.yaml, seatCount: seats });
 
@@ -88,7 +90,7 @@ export async function startNodeServer(options: ServeOptions): Promise<RunningSer
       sockets.set(connId, ws);
       ws.on("message", (data) => {
         const message = parseClientMessage(String(data));
-        if (message !== null) manager.handle(connId, message as unknown as { t: string; [k: string]: unknown });
+        if (message !== null) manager.handle(connId, message);
       });
       ws.on("close", () => {
         sockets.delete(connId);
