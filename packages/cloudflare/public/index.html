@@ -34,7 +34,7 @@
     </section>
   </main>
 
-  <script src="/standalone.js"></script>
+  <script src="/standalone.js?v=pixi-default"></script>
   <script>
     const style = document.createElement("style");
     style.textContent = window.JunctionGame.css;
@@ -42,16 +42,7 @@
 
     const params = new URLSearchParams(window.location.search);
     if (params.has("code")) {
-      if (params.get("renderer") === "pixi") {
-        const script = document.createElement("script");
-        script.src = "/pixi.js";
-        script.addEventListener("load", () => {
-          window.JunctionGame.bootOnline({ visualAdapter: window.JunctionPixi.createVisualAdapter() });
-        });
-        document.head.append(script);
-      } else {
-        window.JunctionGame.bootOnline();
-      }
+      window.JunctionGame.bootOnline();
     } else {
       if (params.has("gameId") && params.has("revision")) {
         const status = document.querySelector("#create-status");
@@ -60,8 +51,7 @@
           .then(async (response) => ({ response, result: await response.json() }))
           .then(({ response, result }) => {
             if (!response.ok) throw new Error(result.error || "Could not create the room.");
-            const renderer = params.get("renderer");
-            window.location.search = `?code=${encodeURIComponent(result.code)}${renderer === null ? "" : `&renderer=${encodeURIComponent(renderer)}`}`;
+            window.location.search = `?code=${encodeURIComponent(result.code)}`;
           })
           .catch((error) => { status.textContent = error.message; });
       }

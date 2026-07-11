@@ -1,7 +1,7 @@
 {
   "name": "@junction/renderer",
   "version": "0.0.1-alpha.0",
-  "description": "Cadherin — Junction's accessible DOM renderer: GameSpec + projection → playable HTML.",
+  "description": "Cadherin — PixiJS visuals with accessible DOM controls: GameSpec + projection → playable HTML.",
   "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
@@ -12,8 +12,7 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./standalone.js": "./dist/standalone.js",
-    "./pixi-standalone.js": "./dist/pixi-standalone.js"
+    "./standalone.js": "./dist/standalone.js"
   },
   "files": ["dist"],
   "scripts": {

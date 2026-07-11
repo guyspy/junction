@@ -24,7 +24,8 @@ loop works for real educators.
 - **Catenin** is the engine: GameSpec, validation, simulation, and deterministic
   execution. Its implementation currently spans `@junction/spec` and
   `@junction/runtime`.
-- **Cadherin** is the accessible DOM renderer in `@junction/renderer`.
+- **Cadherin** is the PixiJS renderer with accessible DOM controls and
+  narration in `@junction/renderer`.
 - **Integrin** and **Occludin** are reserved names. They are not architectural
   commitments until explicitly approved.
 
@@ -66,8 +67,9 @@ CLI and MCP expose the same engine and renderer capabilities.
 
 ### Cadherin
 
-- Framework-free DOM renderer.
-- Keyboard operation, visible focus, ARIA live narration, and reduced motion.
+- PixiJS is the default visual engine; one projected view model drives it.
+- Accessible DOM controls and narration remain available for keyboard and
+  assistive-technology operation.
 - The same view model renders local and server-projected state.
 - The CLI can emit a self-contained playable HTML file.
 - Presentation data never changes game rules.

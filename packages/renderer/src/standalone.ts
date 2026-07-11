@@ -1,6 +1,7 @@
 import { parseGameDocument } from "@junction/spec";
 import { CADHERIN_CSS } from "./styles.js";
-import { mountGame, mountOnlineGame, type VisualAdapter } from "./dom-renderer.js";
+import { mountGame, mountOnlineGame } from "./dom-renderer.js";
+import { createPixiVisualAdapter } from "./pixi-adapter.js";
 
 /**
  * The single-file entry: `junction render` inlines this bundle next to the GameSpec
@@ -36,11 +37,16 @@ function boot(options: BootOptions): void {
   const seat = Number.isInteger(seatParam) && seatParam >= 0 && seatParam < seats ? seatParam : 0;
   const seed = params.get("seed") ?? undefined;
 
-  mountGame(container, parsed.data, { seat, seats, ...(seed !== undefined ? { seed } : {}) });
+  mountGame(container, parsed.data, {
+    seat,
+    seats,
+    ...(seed !== undefined ? { seed } : {}),
+    visualAdapter: createPixiVisualAdapter(),
+  });
 }
 
 /** Online boot: join the room whose code is in the URL (?code=ABCDE) over this host's /ws. */
-function bootOnline(options: { containerId?: string; visualAdapter?: VisualAdapter } = {}): void {
+function bootOnline(options: { containerId?: string } = {}): void {
   if (document.getElementById("jx-style") === null) {
     const style = document.createElement("style");
     style.id = "jx-style";
@@ -85,7 +91,7 @@ function bootOnline(options: { containerId?: string; visualAdapter?: VisualAdapt
   mountOnlineGame(container, {
     url,
     ...(name !== undefined ? { name } : {}),
-    ...(options.visualAdapter === undefined ? {} : { visualAdapter: options.visualAdapter }),
+    visualAdapter: createPixiVisualAdapter(),
   });
 }
 
@@ -93,7 +99,7 @@ declare global {
   interface Window {
     JunctionGame: {
       boot: (options: BootOptions) => void;
-      bootOnline: (options?: { containerId?: string; visualAdapter?: VisualAdapter }) => void;
+      bootOnline: (options?: { containerId?: string }) => void;
       css: string;
     };
   }

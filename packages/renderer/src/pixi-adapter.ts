@@ -7,7 +7,7 @@ const CARD_W = 64;
 const CARD_H = 90;
 const GAP = 10;
 
-/** Optional visual layer: the DOM remains the accessible controller and fallback. */
+/** Default visual layer: the DOM remains the accessible controller and fallback. */
 export function createPixiVisualAdapter(): VisualAdapter {
   const app = new Application();
   let host: HTMLElement | undefined;

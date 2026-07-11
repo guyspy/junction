@@ -16,15 +16,4 @@ await build({
   logLevel: "warning",
 });
 
-await build({
-  entryPoints: [`${root}src/pixi-standalone.ts`],
-  bundle: true,
-  format: "iife",
-  platform: "browser",
-  target: "es2022",
-  minify: true,
-  outfile: `${root}dist/pixi-standalone.js`,
-  logLevel: "warning",
-});
-
-console.log("cadherin: DOM + optional Pixi bundles built");
+console.log("cadherin: standalone Pixi + DOM bundle built");

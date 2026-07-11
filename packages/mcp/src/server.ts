@@ -319,11 +319,10 @@ function registerAuthoringTools(server: McpServer, deps: AuthoringDeps): void {
       const result = await deps.store.publish(deps.ownerId, id, expectedRevision);
       if (!result.ok) return reply(toolError(result.code, result.message));
       const playUrl = `${deps.playBaseUrl}/?gameId=${encodeURIComponent(id)}&revision=${result.value.revision}`;
-      const pixiPlayUrl = `${playUrl}&renderer=pixi`;
       return reply({
         ok: true,
         summary: `Published '${result.value.title}' revision ${result.value.revision}: ${playUrl}`,
-        structured: { game: result.value, report: simulation.structured.report, playUrl, pixiPlayUrl },
+        structured: { game: result.value, report: simulation.structured.report, playUrl },
       });
     },
   );

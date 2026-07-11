@@ -10,7 +10,7 @@ import { join } from "node:path";
 const RULES = {
   spec: { allow: [], allowNode: false, sideEffectsFree: true },
   runtime: { allow: ["@junction/spec"], allowNode: false, sideEffectsFree: true },
-  // Cadherin: the DOM renderer. Browser-only — no node imports.
+  // Cadherin: Pixi visuals + accessible DOM. Browser-only — no node imports.
   renderer: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
   // Authoritative room core. Platform adapters live elsewhere.
   rooms: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },

@@ -1,4 +1,4 @@
-// @junction/renderer — Cadherin: the accessible DOM renderer.
+// @junction/renderer — Cadherin: Pixi visuals with accessible DOM controls.
 export { announce, announceAll } from "./announcer.js";
 export { cardBackSVG, cardFaceSVG } from "./art.js";
 export { confettiBurst, scorePop } from "./celebrate.js";
