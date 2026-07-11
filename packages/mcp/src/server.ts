@@ -13,12 +13,10 @@ import {
 } from "./tools.js";
 
 /**
- * Integrin — the Junction MCP server. The agent-native front door: every authoring
- * capability the kernel has, exposed as a tool. The studio's embedded agent and any
- * external agent (Claude, ChatGPT) consume the same tools (commitment #1: parity).
+ * The Junction MCP server exposes the engine's authoring capabilities as tools.
  */
 
-export interface IntegrinDeps {
+export interface McpServerDeps {
   /** The reference-game corpus, injected so tools stay pure and Workers-portable. */
   readonly referenceGames: readonly ReferenceGame[];
   /** The standalone renderer+engine IIFE (contents of @junction/renderer/standalone.js), injected the same way. Enables render_game. */
@@ -39,8 +37,8 @@ function reply<T>(result: ToolResult<T>): {
   };
 }
 
-export function buildIntegrinServer(deps: IntegrinDeps): McpServer {
-  const server = new McpServer({ name: "junction-integrin", version: deps.version ?? "0.0.1-alpha.0" });
+export function buildMcpServer(deps: McpServerDeps): McpServer {
+  const server = new McpServer({ name: "junction-mcp", version: deps.version ?? "0.0.1-alpha.0" });
 
   server.registerTool(
     "describe_grammar",

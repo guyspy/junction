@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildIntegrinServer, type ReferenceGame } from "../src/index.js";
+import { buildMcpServer, type ReferenceGame } from "../src/index.js";
 
 /** Drive the real MCP server in-process over a linked in-memory transport. */
 function loadRefs(): ReferenceGame[] {
@@ -21,11 +21,11 @@ interface ToolReply {
   isError?: boolean;
 }
 
-describe("Integrin MCP server (end-to-end over a real client)", () => {
+describe("Junction MCP server (end-to-end over a real client)", () => {
   let client: Client;
 
   beforeEach(async () => {
-    const server = buildIntegrinServer({ referenceGames: loadRefs() });
+    const server = buildMcpServer({ referenceGames: loadRefs() });
     client = new Client({ name: "test-agent", version: "0.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);

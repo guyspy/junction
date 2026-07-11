@@ -2,24 +2,26 @@
   "name": "junction-monorepo",
   "private": true,
   "version": "0.0.1-alpha.0",
-  "description": "Agent-native game engine + studio for 2D educational card/board/adventure/RPG games.",
+  "description": "A deterministic engine for agent-authored educational games.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
-    "node": ">=20.19",
+    "node": ">=22",
     "pnpm": ">=9"
   },
   "scripts": {
-    "build": "tsc -b packages/spec packages/runtime packages/renderer packages/connexon packages/node packages/mcp packages/cli && pnpm --filter @junction/renderer run bundle",
+    "build": "tsc -b packages/spec packages/runtime packages/renderer packages/rooms packages/node packages/mcp packages/cli && pnpm --filter @junction/renderer run bundle && pnpm --filter @junction/cloudflare run build",
     "test": "pnpm -r --filter '@junction/*' test",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "check": "pnpm run check:boundaries && pnpm run build && pnpm run test",
+    "check": "pnpm run check:boundaries && pnpm run build && pnpm run test && pnpm --filter @junction/cloudflare run check:deploy",
     "junction": "node packages/cli/dist/index.js"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.110.0"
   },
   "packageManager": "pnpm@9.12.1"
 }

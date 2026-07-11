@@ -1,54 +1,65 @@
 # Junction
 
-**The agent-native game engine + studio where educators and AI agents make educational 2D games together** — card, board, adventure, RPG — and where every published game makes the next one easier to make.
+Junction turns a data-defined educational game into something an agent can
+validate, simulate, render, and host for a class.
 
-> The scripting language is conversation. The GameSpec is the bytecode.
+> Conversation is the authoring language. GameSpec is the bytecode.
 
-Junction is the third member of a family of agent-native platforms ([mantle](https://github.com/aotter/mantle) does content, clam does data, Junction does play) sharing one thesis: **agents write config, the runtime carries the complexity.**
+The accepted direction is intentionally narrow. Read the
+[blueprint](./docs/2026-06-11-junction-reboot-blueprint.md) before changing
+architecture or grammar.
 
-## The constitution
+## What exists
 
-Read [`docs/2026-06-11-junction-reboot-blueprint.md`](./docs/2026-06-11-junction-reboot-blueprint.md) — thesis, anatomy, decision register, roadmap E0–E7, and the three addenda that shaped it.
+- **Catenin**: GameSpec, deterministic execution, validation, and simulation
+  (`@junction/spec` + `@junction/runtime`).
+- **Cadherin**: accessible DOM rendering and self-contained playable HTML
+  (`@junction/renderer`).
+- **CLI and MCP**: agent and developer interfaces over the same capabilities.
+- **Rooms**: authoritative multiplayer state, per-seat projections, reconnect,
+  and Node/Cloudflare transports.
 
-The moat is not the DSL. The moat is the **verification loop** (validate → simulate → critic → playtest) and the **corpus** (a registry of schema-validated, simulation-certified, remixable games).
+Other biological names are not part of the architecture. Integrin and Occludin
+are reserved pending explicit approval; future products use functional names.
 
-## Anatomy
-
-| Organ | Role |
-|---|---|
-| **Catenin** | the kernel — GameSpec grammar, deterministic reducer, validator, simulator (`@junction/spec` + `@junction/runtime`) |
-| **Cadherin** | the renderer — accessible DOM component registry + game templates |
-| **Connexon** | the online runtime — per-room actors, ordered event streams, classroom join codes |
-| **Synapse** | the studio — agentic desktop app where teachers and an embedded agent co-create |
-| **Plexus** | the registry layer inside **Junction — the web platform itself**: collaborate, rate, peer-review, donate, crowdfund |
-| **Integrin** | the agent interface — the MCP server, the platform's front door |
-| **Occludin** | trust & safety — publish gates, moderation, compliance |
-
-## Quick start (E0 spike)
+## Quick start
 
 ```bash
 pnpm install
-pnpm check                                   # boundaries → build → test
+pnpm check
 node packages/cli/dist/index.js validate games/war.yaml
 node packages/cli/dist/index.js simulate games/war.yaml --games 200
-node packages/cli/dist/index.js play games/memory-match.yaml --seat 0   # play in the terminal
-node packages/cli/dist/index.js render games/war.yaml                  # → war.html, just open it
+node packages/cli/dist/index.js play games/memory-match.yaml --seat 0
+node packages/cli/dist/index.js render games/war.yaml
+node packages/cli/dist/index.js serve games/war.yaml
 ```
 
-**`render` is the magic trick**: one self-contained HTML file — engine in-browser,
-procedural card art, FLIP animations, keyboard + screen-reader playable, QA badges
-stamped at render time. Email it, drop it in a classroom LMS, open it offline.
+`render` writes one self-contained HTML file with the engine, renderer,
+GameSpec, and simulation badges. `serve` opens an authoritative local room.
 
-Reference games: [`games/war.yaml`](./games/war.yaml) (chance, hidden decks),
-[`games/memory-match.yaml`](./games/memory-match.yaml) (flips, go-again), and
-[`games/make-ten-match.yaml`](./games/make-ten-match.yaml) (addition facts — authored
-end-to-end by a cold AI agent). `play` and `render` both show only your seat's view —
-the per-seat projection the online runtime will reuse unchanged.
+The Cloudflare adapter lives in `packages/cloudflare`:
+
+```bash
+pnpm --filter @junction/cloudflare dev
+pnpm --filter @junction/cloudflare test
+pnpm --filter @junction/cloudflare deploy
+```
+
+It serves one SQLite-backed Durable Object per room and uses hibernating
+WebSockets. Deployment credentials stay in the environment; they are never
+stored in the repository.
+
+Reference games:
+
+- [`war.yaml`](./games/war.yaml)
+- [`memory-match.yaml`](./games/memory-match.yaml)
+- [`make-ten-match.yaml`](./games/make-ten-match.yaml)
+- [`math-duel.yaml`](./games/math-duel.yaml)
 
 ## History
 
-The Kotlin Multiplatform prototype (Sessions 1–4, 2025-07 → 2026-03) is archived with honor at the [`kotlin-prototype`](../../tree/kotlin-prototype) tag — the prototype that taught us the shape. The development journal lives in [`journal/claude/`](./journal/claude/).
+The retired Kotlin Multiplatform prototype is preserved at the
+[`kotlin-prototype`](../../tree/kotlin-prototype) tag. The development journal
+lives in [`journal/claude/`](./journal/claude/).
 
-## License
-
-Apache-2.0 (engine). Published GameSpecs default to CC BY.
+Apache-2.0. Published GameSpecs default to CC BY.

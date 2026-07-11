@@ -75,7 +75,7 @@ export function runSimulate(input: SimulateInput): ToolResult<SimulateOutput> {
   const report = simulate(parsed.data, {
     games: clamp(input.games ?? 200, 1, 5000),
     seats: input.seats,
-    seed: input.seed ?? "integrin",
+    seed: input.seed ?? "junction-mcp",
   });
   const summary = [
     `Simulated ${report.games} games of '${report.game}' (${report.seats} seats):`,

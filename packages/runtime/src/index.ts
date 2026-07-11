@@ -13,7 +13,6 @@ export {
   type StepResult,
 } from "./domain/service/reducer.js";
 export {
-  projectEvent,
   projectState,
   type HiddenPiece,
   type ProjectedEntry,

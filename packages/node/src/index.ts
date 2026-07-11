@@ -1,2 +1,2 @@
-// @junction/node — Connexon's Node ws adapter + local classroom server.
+// @junction/node — Node WebSocket adapter + local classroom server.
 export { startNodeServer, type RunningServer, type ServeOptions } from "./server.js";

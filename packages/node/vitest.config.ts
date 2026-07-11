@@ -6,7 +6,7 @@ export default defineConfig({
     alias: {
       "@junction/spec": fileURLToPath(new URL("../spec/src/index.ts", import.meta.url)),
       "@junction/runtime": fileURLToPath(new URL("../runtime/src/index.ts", import.meta.url)),
-      "@junction/connexon": fileURLToPath(new URL("../connexon/src/index.ts", import.meta.url)),
+      "@junction/rooms": fileURLToPath(new URL("../rooms/src/index.ts", import.meta.url)),
       "@junction/renderer": fileURLToPath(new URL("../renderer/src/index.ts", import.meta.url)),
     },
   },

@@ -1,7 +1,7 @@
 {
   "name": "@junction/mcp",
   "version": "0.0.1-alpha.0",
-  "description": "Integrin \u2014 the Junction MCP server: scaffold, validate, simulate, and playtest games as agent tools.",
+  "description": "The Junction MCP server: scaffold, validate, simulate, and render games as agent tools.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
@@ -25,6 +25,6 @@
     "@junction/renderer": "workspace:*"
   },
   "engines": {
-    "node": ">=20.19"
+    "node": ">=22"
   }
 }

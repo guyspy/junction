@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Create or join a Junction classroom game room.">
+  <title>Junction Rooms</title>
+</head>
+<body>
+  <main id="junction-root" aria-label="Junction room">
+    <section class="jx-banner-box" style="margin: 48px auto; max-width: 420px; display: grid; gap: 20px;">
+      <h1>Junction Rooms</h1>
+
+      <form id="create-room" style="display: grid; gap: 10px;">
+        <h2>Create a room</h2>
+        <label for="game">Game</label>
+        <select id="game" name="game">
+          <option value="war">War</option>
+          <option value="memory-match">Memory Match</option>
+          <option value="make-ten-match">Make Ten Match</option>
+          <option value="math-duel">Math Duel</option>
+        </select>
+        <button class="jx-button" type="submit">Create room</button>
+        <p id="create-status" role="status"></p>
+      </form>
+
+      <form id="join-room" style="display: grid; gap: 10px;">
+        <h2>Join a room</h2>
+        <label for="code">Room code</label>
+        <input id="code" name="code" maxlength="5" autocomplete="off"
+          style="font: inherit; font-size: 24px; font-weight: 800; text-align: center; letter-spacing: 5px; text-transform: uppercase;">
+        <button class="jx-button" type="submit">Join room</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="/standalone.js"></script>
+  <script>
+    const style = document.createElement("style");
+    style.textContent = window.JunctionGame.css;
+    document.head.append(style);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("code")) {
+      window.JunctionGame.bootOnline();
+    } else {
+      document.querySelector("#create-room").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const game = document.querySelector("#game").value;
+        const status = document.querySelector("#create-status");
+        status.textContent = "Creating room…";
+        const response = await fetch(`/api/rooms?game=${encodeURIComponent(game)}`, { method: "POST" });
+        const result = await response.json();
+        if (!response.ok) {
+          status.textContent = result.error || "Could not create the room.";
+          return;
+        }
+        window.location.search = `?code=${encodeURIComponent(result.code)}`;
+      });
+
+      document.querySelector("#join-room").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const code = document.querySelector("#code").value.trim().toUpperCase();
+        if (code.length === 5) window.location.search = `?code=${encodeURIComponent(code)}`;
+      });
+    }
+  </script>
+</body>
+</html>

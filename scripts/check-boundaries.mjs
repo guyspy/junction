@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The layering law, enforced (blueprint §7: "biology is the brand; layering is the law").
+// Keep the deterministic engine and room core free of platform APIs.
 //   spec     → imports no @junction package, no node: builtins
 //   runtime  → imports @junction/spec only, no node: builtins
 //   cli      → imports spec + runtime, node: allowed
@@ -10,13 +10,15 @@ import { join } from "node:path";
 const RULES = {
   spec: { allow: [], allowNode: false, sideEffectsFree: true },
   runtime: { allow: ["@junction/spec"], allowNode: false, sideEffectsFree: true },
-  // Cadherin: the DOM renderer. Browser-only — no node imports, ever.
+  // Cadherin: the DOM renderer. Browser-only — no node imports.
   renderer: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
-  // Connexon: the online runtime core. Platform-agnostic — no node, no @cloudflare; adapters live elsewhere.
-  connexon: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
-  // Node adapter: Connexon's ws transport + local server. Node allowed by definition.
-  node: { allow: ["@junction/spec", "@junction/runtime", "@junction/connexon", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
-  // Integrin: the MCP server. Imports spec+runtime; the SDK + stdio transport need node.
+  // Authoritative room core. Platform adapters live elsewhere.
+  rooms: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
+  // Node WebSocket transport + local server.
+  node: { allow: ["@junction/spec", "@junction/runtime", "@junction/rooms", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
+  // Cloudflare Worker + Durable Object transport.
+  cloudflare: { allow: ["@junction/spec", "@junction/rooms"], allowNode: false, sideEffectsFree: false },
+  // MCP server. The SDK + stdio transport need Node.
   mcp: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
   cli: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer", "@junction/node"], allowNode: true, sideEffectsFree: false },
 };
