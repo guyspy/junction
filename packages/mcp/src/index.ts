@@ -1,5 +1,12 @@
 // @junction/mcp — the Junction MCP server.
-export { buildMcpServer, type McpServerDeps } from "./server.js";
+export {
+  buildMcpServer,
+  type AuthoringDeps,
+  type GameStore,
+  type McpServerDeps,
+  type StoredGame,
+  type StoreResult,
+} from "./server.js";
 export {
   runDescribeGrammar,
   runGetReference,

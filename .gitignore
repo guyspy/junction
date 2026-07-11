@@ -8,6 +8,8 @@ dist/
 coverage/
 .wrangler/
 packages/cloudflare/public/standalone.js
+packages/cloudflare/public/standalone.txt
+packages/cloudflare/public/pixi.js
 packages/cloudflare/worker-configuration.d.ts
 
 # Logs

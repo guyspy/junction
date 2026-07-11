@@ -62,6 +62,12 @@ body {
 }
 
 .jx-zones { display: flex; flex-direction: column; gap: 14px; }
+.jx-pixi-stage {
+  width: 100%; height: 520px; margin: 0 0 14px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 14px;
+  background: rgba(0,0,0,0.14);
+}
+.jx-pixi-stage canvas { width: 100%; height: 100%; display: block; }
 .jx-zone {
   background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.10);
   border-radius: 14px; padding: 10px 12px 14px;
@@ -154,6 +160,7 @@ button.jx-card.playable::after {
 @media (max-width: 560px) {
   :root { --card-w: 56px; --card-h: 78px; }
   .jx-title { font-size: 21px; }
+  .jx-pixi-stage { height: 430px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .jx-card, .jx-card-inner, .jx-button { transition: none !important; }

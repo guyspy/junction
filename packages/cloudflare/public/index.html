@@ -42,8 +42,30 @@
 
     const params = new URLSearchParams(window.location.search);
     if (params.has("code")) {
-      window.JunctionGame.bootOnline();
+      if (params.get("renderer") === "pixi") {
+        const script = document.createElement("script");
+        script.src = "/pixi.js";
+        script.addEventListener("load", () => {
+          window.JunctionGame.bootOnline({ visualAdapter: window.JunctionPixi.createVisualAdapter() });
+        });
+        document.head.append(script);
+      } else {
+        window.JunctionGame.bootOnline();
+      }
     } else {
+      if (params.has("gameId") && params.has("revision")) {
+        const status = document.querySelector("#create-status");
+        status.textContent = "Opening published game…";
+        fetch(`/api/rooms?gameId=${encodeURIComponent(params.get("gameId"))}&revision=${encodeURIComponent(params.get("revision"))}`, { method: "POST" })
+          .then(async (response) => ({ response, result: await response.json() }))
+          .then(({ response, result }) => {
+            if (!response.ok) throw new Error(result.error || "Could not create the room.");
+            const renderer = params.get("renderer");
+            window.location.search = `?code=${encodeURIComponent(result.code)}${renderer === null ? "" : `&renderer=${encodeURIComponent(renderer)}`}`;
+          })
+          .catch((error) => { status.textContent = error.message; });
+      }
+
       document.querySelector("#create-room").addEventListener("submit", async (event) => {
         event.preventDefault();
         const game = document.querySelector("#game").value;

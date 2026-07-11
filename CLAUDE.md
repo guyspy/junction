@@ -33,10 +33,10 @@ node packages/cli/dist/index.js simulate games/war.yaml --games 200 --seed 42
 ```text
 packages/spec        closed GameSpec grammar, parser, diagnostics
 packages/runtime     deterministic reducer, projection, simulation
-packages/renderer    Cadherin DOM renderer and standalone page builder
+packages/renderer    Cadherin DOM renderer, optional Pixi adapter, page builder
 packages/rooms       authoritative room core and wire protocol
 packages/node        Node WebSocket room adapter
-packages/cloudflare  Worker + Durable Object room adapter
+packages/cloudflare  Worker, DO rooms, D1 GameSpecs, hosted MCP
 packages/mcp         Junction MCP server
 packages/cli         validate/simulate/play/render/serve commands
 ```
@@ -69,6 +69,8 @@ and Cloudflare APIs belong only in their adapters.
 8. Prefer the smallest working implementation. Do not scaffold future products.
 9. Conventional commits; branches `feature/YYYYMMDD_name` or
    `spike/YYYYMMDD_name`; PRs target `main`; merge rather than squash.
+10. Optional visual adapters consume Cadherin's projected view-model and send
+    ordinary moves. They do not own rules, hidden state, or accessibility.
 
 ## Journal
 

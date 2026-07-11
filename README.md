@@ -13,7 +13,8 @@ architecture or grammar.
 
 - **Catenin**: GameSpec, deterministic execution, validation, and simulation
   (`@junction/spec` + `@junction/runtime`).
-- **Cadherin**: accessible DOM rendering and self-contained playable HTML
+- **Cadherin**: accessible DOM rendering and self-contained playable HTML,
+  with an optional PixiJS visual adapter over the same view-model
   (`@junction/renderer`).
 - **CLI and MCP**: agent and developer interfaces over the same capabilities.
 - **Rooms**: authoritative multiplayer state, per-seat projections, reconnect,
@@ -46,8 +47,51 @@ pnpm --filter @junction/cloudflare deploy
 ```
 
 It serves one SQLite-backed Durable Object per room and uses hibernating
-WebSockets. Deployment credentials stay in the environment; they are never
-stored in the repository.
+WebSockets. D1 stores educator-owned GameSpec drafts, immutable revisions, and
+the published revision used to create rooms. Deployment credentials stay out
+of the repository.
+
+## Hosted agent workflow
+
+The deployed Worker exposes an authenticated Streamable HTTP MCP endpoint at
+`/mcp`. It reuses the local MCP tools and adds the smallest hosted authoring
+loop:
+
+```text
+describe/scaffold -> validate/simulate -> create/update -> publish -> play
+```
+
+The hosted-only tools are `create_game`, `get_game`, `list_my_games`,
+`update_game`, and `publish_game`. Updates replace the complete YAML and require
+the expected revision. Publishing re-validates and simulates that exact
+revision before returning stable DOM and Pixi play URLs.
+
+For the current single-educator alpha, authentication is one 64-character
+hexadecimal bearer token. The Worker stores only an HMAC verifier; keep the
+token in a password manager or environment variable, never in Git. A coding
+agent can connect with an MCP client that sends
+`Authorization: Bearer $JUNCTION_MCP_TOKEN`. For Codex:
+
+```bash
+export JUNCTION_MCP_TOKEN='...'
+codex mcp add junction \
+  --url https://junction-rooms.phsu-31c.workers.dev/mcp \
+  --bearer-token-env-var JUNCTION_MCP_TOKEN
+```
+
+Apply D1 migrations before the first deployment:
+
+```bash
+pnpm --filter @junction/cloudflare exec wrangler d1 migrations apply junction-games --remote
+pnpm --filter @junction/cloudflare deploy
+```
+
+The normal play URL uses the accessible DOM renderer. Add `renderer=pixi` (or
+use the `pixiPlayUrl` returned by `publish_game`) to load the optional PixiJS
+canvas. Pixi consumes Cadherin's projected view-model and sends the same moves;
+the accessible DOM controls remain present as the fallback and semantic layer.
+Game art is currently generated from GameSpec properties as SVG and canvas
+textures. There is deliberately no asset upload, asset service, or marketplace.
 
 Reference games:
 

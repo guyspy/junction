@@ -12,7 +12,8 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./standalone.js": "./dist/standalone.js"
+    "./standalone.js": "./dist/standalone.js",
+    "./pixi-standalone.js": "./dist/pixi-standalone.js"
   },
   "files": ["dist"],
   "scripts": {
@@ -26,7 +27,8 @@
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
-    "happy-dom": "^18.0.0"
+    "happy-dom": "^18.0.0",
+    "pixi.js": "^8.19.0"
   },
   "engines": {
     "node": ">=22"

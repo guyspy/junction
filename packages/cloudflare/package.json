@@ -16,8 +16,10 @@
     "deploy": "pnpm run build:assets && wrangler deploy"
   },
   "dependencies": {
+    "@junction/mcp": "workspace:*",
     "@junction/rooms": "workspace:*",
-    "@junction/spec": "workspace:*"
+    "@junction/spec": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "engines": {
     "node": ">=22"

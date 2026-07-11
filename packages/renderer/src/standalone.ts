@@ -1,6 +1,6 @@
 import { parseGameDocument } from "@junction/spec";
 import { CADHERIN_CSS } from "./styles.js";
-import { mountGame, mountOnlineGame } from "./dom-renderer.js";
+import { mountGame, mountOnlineGame, type VisualAdapter } from "./dom-renderer.js";
 
 /**
  * The single-file entry: `junction render` inlines this bundle next to the GameSpec
@@ -40,7 +40,7 @@ function boot(options: BootOptions): void {
 }
 
 /** Online boot: join the room whose code is in the URL (?code=ABCDE) over this host's /ws. */
-function bootOnline(options: { containerId?: string } = {}): void {
+function bootOnline(options: { containerId?: string; visualAdapter?: VisualAdapter } = {}): void {
   if (document.getElementById("jx-style") === null) {
     const style = document.createElement("style");
     style.id = "jx-style";
@@ -82,12 +82,20 @@ function bootOnline(options: { containerId?: string } = {}): void {
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   const url = `${proto}://${window.location.host}/ws?code=${encodeURIComponent(code)}`;
   const name = params.get("name") ?? undefined;
-  mountOnlineGame(container, { url, ...(name !== undefined ? { name } : {}) });
+  mountOnlineGame(container, {
+    url,
+    ...(name !== undefined ? { name } : {}),
+    ...(options.visualAdapter === undefined ? {} : { visualAdapter: options.visualAdapter }),
+  });
 }
 
 declare global {
   interface Window {
-    JunctionGame: { boot: (options: BootOptions) => void; bootOnline: (options?: { containerId?: string }) => void; css: string };
+    JunctionGame: {
+      boot: (options: BootOptions) => void;
+      bootOnline: (options?: { containerId?: string; visualAdapter?: VisualAdapter }) => void;
+      css: string;
+    };
   }
 }
 

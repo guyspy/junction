@@ -27,6 +27,7 @@ export interface ReferenceGame {
 export interface ValidateOutput {
   readonly ok: boolean;
   readonly game?: string;
+  readonly title?: string;
   readonly diagnostics: readonly Diagnostic[];
 }
 
@@ -47,7 +48,16 @@ export function runValidate(yaml: string): ToolResult<ValidateOutput> {
     warnings.length === 0
       ? `Valid Game '${parsed.data.metadata.name}'.`
       : `Valid Game '${parsed.data.metadata.name}' with ${warnings.length} warning(s).`;
-  return { ok: true, summary, structured: { ok: true, game: parsed.data.metadata.name, diagnostics: warnings } };
+  return {
+    ok: true,
+    summary,
+    structured: {
+      ok: true,
+      game: parsed.data.metadata.name,
+      title: parsed.data.spec.meta.title,
+      diagnostics: warnings,
+    },
+  };
 }
 
 export interface SimulateInput {

@@ -22,6 +22,49 @@ export interface McpServerDeps {
   /** The standalone renderer+engine IIFE (contents of @junction/renderer/standalone.js), injected the same way. Enables render_game. */
   readonly rendererBundle?: string;
   readonly version?: string;
+  readonly authoring?: AuthoringDeps;
+}
+
+export interface StoredGame {
+  readonly id: string;
+  readonly name: string;
+  readonly title: string;
+  readonly yaml: string;
+  readonly revision: number;
+  readonly status: "draft" | "published";
+  readonly publishedRevision: number | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export type StoreResult<T> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly code: "NOT_FOUND" | "REVISION_CONFLICT"; readonly message: string };
+
+export interface GameStore {
+  readonly create: (
+    ownerId: string,
+    game: { readonly name: string; readonly title: string; readonly yaml: string },
+  ) => Promise<StoredGame>;
+  readonly get: (ownerId: string, id: string) => Promise<StoredGame | undefined>;
+  readonly list: (ownerId: string) => Promise<readonly StoredGame[]>;
+  readonly update: (
+    ownerId: string,
+    id: string,
+    expectedRevision: number,
+    game: { readonly name: string; readonly title: string; readonly yaml: string },
+  ) => Promise<StoreResult<StoredGame>>;
+  readonly publish: (
+    ownerId: string,
+    id: string,
+    expectedRevision: number,
+  ) => Promise<StoreResult<StoredGame>>;
+}
+
+export interface AuthoringDeps {
+  readonly ownerId: string;
+  readonly store: GameStore;
+  readonly playBaseUrl: string;
 }
 
 /** Wrap a pure ToolResult as an MCP tool response (text summary + structured content). */
@@ -146,5 +189,146 @@ export function buildMcpServer(deps: McpServerDeps): McpServer {
     },
   );
 
+  if (deps.authoring !== undefined) registerAuthoringTools(server, deps.authoring);
+
   return server;
+}
+
+function registerAuthoringTools(server: McpServer, deps: AuthoringDeps): void {
+  server.registerTool(
+    "create_game",
+    {
+      title: "Create an owned game draft",
+      description:
+        "Validate and save a full GameSpec YAML document as a new private draft. Returns its stable game ID and revision. Use scaffold_game first when starting from an idea.",
+      inputSchema: { yaml: z.string().describe("The complete GameSpec YAML document.") },
+    },
+    async ({ yaml }) => {
+      const validated = runValidate(yaml);
+      if (!validated.ok || validated.structured.game === undefined || validated.structured.title === undefined)
+        return reply(validated);
+      const game = await deps.store.create(deps.ownerId, {
+        name: validated.structured.game,
+        title: validated.structured.title,
+        yaml,
+      });
+      return reply({
+        ok: true,
+        summary: `Created draft '${game.title}' at revision ${game.revision}.`,
+        structured: { game },
+      });
+    },
+  );
+
+  server.registerTool(
+    "get_game",
+    {
+      title: "Get an owned game",
+      description: "Fetch the current YAML and metadata for one of your games by its stable ID.",
+      inputSchema: { id: z.string().uuid().describe("Stable game ID returned by create_game or list_my_games.") },
+    },
+    async ({ id }) => {
+      const game = await deps.store.get(deps.ownerId, id);
+      return game === undefined
+        ? reply(toolError("NOT_FOUND", `Game '${id}' was not found.`))
+        : reply({ ok: true, summary: `Fetched '${game.title}' revision ${game.revision}.`, structured: { game } });
+    },
+  );
+
+  server.registerTool(
+    "list_my_games",
+    {
+      title: "List owned games",
+      description: "List your saved Junction game drafts and published revisions.",
+      inputSchema: {},
+    },
+    async () => {
+      const games = await deps.store.list(deps.ownerId);
+      return reply({
+        ok: true,
+        summary: `${games.length} saved game(s).`,
+        structured: { games },
+      });
+    },
+  );
+
+  server.registerTool(
+    "update_game",
+    {
+      title: "Revise an owned game draft",
+      description:
+        "Validate and replace a game's complete YAML. expectedRevision prevents an agent from overwriting a newer edit; fetch the game again if it conflicts.",
+      inputSchema: {
+        id: z.string().uuid().describe("Stable game ID."),
+        expectedRevision: z.number().int().min(1).describe("Current revision from get_game."),
+        yaml: z.string().describe("Complete replacement GameSpec YAML."),
+      },
+    },
+    async ({ id, expectedRevision, yaml }) => {
+      const validated = runValidate(yaml);
+      if (!validated.ok || validated.structured.game === undefined || validated.structured.title === undefined)
+        return reply(validated);
+      const result = await deps.store.update(deps.ownerId, id, expectedRevision, {
+        name: validated.structured.game,
+        title: validated.structured.title,
+        yaml,
+      });
+      return result.ok
+        ? reply({
+            ok: true,
+            summary: `Updated '${result.value.title}' to revision ${result.value.revision}.`,
+            structured: { game: result.value },
+          })
+        : reply(toolError(result.code, result.message));
+    },
+  );
+
+  server.registerTool(
+    "publish_game",
+    {
+      title: "Publish a validated game revision",
+      description:
+        "Run the simulation termination gate and publish the current revision. Returns an immutable hosted-play URL for that revision.",
+      inputSchema: {
+        id: z.string().uuid().describe("Stable game ID."),
+        expectedRevision: z.number().int().min(1).describe("Revision to publish."),
+        games: z.number().int().min(1).max(5000).optional().describe("Simulation runs (default 200)."),
+        seed: z.string().optional().describe("Reproducible simulation seed."),
+      },
+    },
+    async ({ id, expectedRevision, games, seed }) => {
+      const game = await deps.store.get(deps.ownerId, id);
+      if (game === undefined) return reply(toolError("NOT_FOUND", `Game '${id}' was not found.`));
+      if (game.revision !== expectedRevision)
+        return reply(
+          toolError(
+            "REVISION_CONFLICT",
+            `Expected revision ${expectedRevision}, but '${game.title}' is at revision ${game.revision}.`,
+          ),
+        );
+
+      const simulation = runSimulate({ yaml: game.yaml, games, seed });
+      if (!simulation.ok || simulation.structured.report === undefined) return reply(simulation);
+      if (simulation.structured.report.capped > 0 || simulation.structured.report.stalled > 0)
+        return reply({
+          ok: false,
+          summary: `Publish blocked: ${simulation.structured.report.capped} simulation(s) hit the turn cap and ${simulation.structured.report.stalled} ended via the stall guard.`,
+          structured: { code: "SIMULATION_DID_NOT_TERMINATE_CLEANLY", report: simulation.structured.report },
+        });
+
+      const result = await deps.store.publish(deps.ownerId, id, expectedRevision);
+      if (!result.ok) return reply(toolError(result.code, result.message));
+      const playUrl = `${deps.playBaseUrl}/?gameId=${encodeURIComponent(id)}&revision=${result.value.revision}`;
+      const pixiPlayUrl = `${playUrl}&renderer=pixi`;
+      return reply({
+        ok: true,
+        summary: `Published '${result.value.title}' revision ${result.value.revision}: ${playUrl}`,
+        structured: { game: result.value, report: simulation.structured.report, playUrl, pixiPlayUrl },
+      });
+    },
+  );
+}
+
+function toolError(code: string, message: string): ToolResult<{ code: string }> {
+  return { ok: false, summary: message, structured: { code } };
 }

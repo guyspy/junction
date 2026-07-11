@@ -9,11 +9,23 @@
     "binding": "ASSETS",
     "run_worker_first": true
   },
+  "vars": {
+    "JUNCTION_MCP_OWNER_ID": "guyspy",
+    "JUNCTION_MCP_TOKEN_HMAC": "9aac0bc5acce34edabfc802b8804a4d2bcc27b121408acf1ac10002e41b45f1d"
+  },
+  "d1_databases": [
+    {
+      "binding": "GAMES",
+      "database_name": "junction-games",
+      "database_id": "cb3b3734-4e1a-4408-861e-40de6eff28ca",
+      "migrations_dir": "./migrations"
+    }
+  ],
   "durable_objects": {
     "bindings": [{ "name": "ROOMS", "class_name": "GameRoom" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameRoom"] }],
-  "rules": [{ "type": "Text", "globs": ["**/*.yaml"], "fallthrough": true }],
+  "rules": [{ "type": "Text", "globs": ["**/*.yaml", "**/*.txt"], "fallthrough": true }],
   "observability": {
     "enabled": true,
     "logs": { "enabled": true, "head_sampling_rate": 1 }
