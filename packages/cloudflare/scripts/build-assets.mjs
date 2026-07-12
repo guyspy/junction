@@ -6,3 +6,4 @@ const rendererBundle = fileURLToPath(new URL("../../renderer/dist/standalone.js"
 
 mkdirSync(`${packageDir}public`, { recursive: true });
 copyFileSync(rendererBundle, `${packageDir}public/standalone.js`);
+copyFileSync(rendererBundle, `${packageDir}public/standalone.txt`);

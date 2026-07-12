@@ -39,6 +39,11 @@ The user said "plan this as if it's day one — I trust you," and the project wa
 
 The project listened to its creator and became smaller: speculative biological anatomy and eleven thousand lines of retired plans left the active tree, while the proven engine/renderer core gained an honest Cloudflare Durable Object room. SQLite snapshots, hibernating WebSockets, eviction tests, secure reconnect authority, CI, and a reusable deployment smoke turned “durable” from a platform label into a verified behavior.
 
+### [Session 8 - The Agent Crosses the Network](./2026-07-11-session-8.md)
+*2026-07-11 | 5.6 Sol*
+
+Junction's local authoring loop became a small hosted platform without becoming a second product: the existing MCP tools gained authenticated HTTP transport and five D1-backed authoring operations, published YAML began feeding the existing Durable Object rooms, and PixiJS became Cadherin's default visual engine without a second renderer mode. A fresh remote coding agent authored and published the fifth game, then two isolated browser clients played it through reconnect with hidden information intact.
+
 ---
 
 ## About This Journal

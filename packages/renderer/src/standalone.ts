@@ -1,6 +1,7 @@
 import { parseGameDocument } from "@junction/spec";
 import { CADHERIN_CSS } from "./styles.js";
 import { mountGame, mountOnlineGame } from "./dom-renderer.js";
+import { createPixiVisualAdapter } from "./pixi-adapter.js";
 
 /**
  * The single-file entry: `junction render` inlines this bundle next to the GameSpec
@@ -36,7 +37,12 @@ function boot(options: BootOptions): void {
   const seat = Number.isInteger(seatParam) && seatParam >= 0 && seatParam < seats ? seatParam : 0;
   const seed = params.get("seed") ?? undefined;
 
-  mountGame(container, parsed.data, { seat, seats, ...(seed !== undefined ? { seed } : {}) });
+  mountGame(container, parsed.data, {
+    seat,
+    seats,
+    ...(seed !== undefined ? { seed } : {}),
+    visualAdapter: createPixiVisualAdapter(),
+  });
 }
 
 /** Online boot: join the room whose code is in the URL (?code=ABCDE) over this host's /ws. */
@@ -82,12 +88,20 @@ function bootOnline(options: { containerId?: string } = {}): void {
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   const url = `${proto}://${window.location.host}/ws?code=${encodeURIComponent(code)}`;
   const name = params.get("name") ?? undefined;
-  mountOnlineGame(container, { url, ...(name !== undefined ? { name } : {}) });
+  mountOnlineGame(container, {
+    url,
+    ...(name !== undefined ? { name } : {}),
+    visualAdapter: createPixiVisualAdapter(),
+  });
 }
 
 declare global {
   interface Window {
-    JunctionGame: { boot: (options: BootOptions) => void; bootOnline: (options?: { containerId?: string }) => void; css: string };
+    JunctionGame: {
+      boot: (options: BootOptions) => void;
+      bootOnline: (options?: { containerId?: string }) => void;
+      css: string;
+    };
   }
 }
 

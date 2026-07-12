@@ -34,7 +34,7 @@
     </section>
   </main>
 
-  <script src="/standalone.js"></script>
+  <script src="/standalone.js?v=pixi-default"></script>
   <script>
     const style = document.createElement("style");
     style.textContent = window.JunctionGame.css;
@@ -44,6 +44,18 @@
     if (params.has("code")) {
       window.JunctionGame.bootOnline();
     } else {
+      if (params.has("gameId") && params.has("revision")) {
+        const status = document.querySelector("#create-status");
+        status.textContent = "Opening published game…";
+        fetch(`/api/rooms?gameId=${encodeURIComponent(params.get("gameId"))}&revision=${encodeURIComponent(params.get("revision"))}`, { method: "POST" })
+          .then(async (response) => ({ response, result: await response.json() }))
+          .then(({ response, result }) => {
+            if (!response.ok) throw new Error(result.error || "Could not create the room.");
+            window.location.search = `?code=${encodeURIComponent(result.code)}`;
+          })
+          .catch((error) => { status.textContent = error.message; });
+      }
+
       document.querySelector("#create-room").addEventListener("submit", async (event) => {
         event.preventDefault();
         const game = document.querySelector("#game").value;

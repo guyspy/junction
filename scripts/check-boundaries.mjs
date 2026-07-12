@@ -10,14 +10,14 @@ import { join } from "node:path";
 const RULES = {
   spec: { allow: [], allowNode: false, sideEffectsFree: true },
   runtime: { allow: ["@junction/spec"], allowNode: false, sideEffectsFree: true },
-  // Cadherin: the DOM renderer. Browser-only — no node imports.
+  // Cadherin: Pixi visuals + accessible DOM. Browser-only — no node imports.
   renderer: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
   // Authoritative room core. Platform adapters live elsewhere.
   rooms: { allow: ["@junction/spec", "@junction/runtime"], allowNode: false, sideEffectsFree: true },
   // Node WebSocket transport + local server.
   node: { allow: ["@junction/spec", "@junction/runtime", "@junction/rooms", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
   // Cloudflare Worker + Durable Object transport.
-  cloudflare: { allow: ["@junction/spec", "@junction/rooms"], allowNode: false, sideEffectsFree: false },
+  cloudflare: { allow: ["@junction/spec", "@junction/rooms", "@junction/mcp"], allowNode: false, sideEffectsFree: false },
   // MCP server. The SDK + stdio transport need Node.
   mcp: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer"], allowNode: true, sideEffectsFree: false },
   cli: { allow: ["@junction/spec", "@junction/runtime", "@junction/renderer", "@junction/node"], allowNode: true, sideEffectsFree: false },

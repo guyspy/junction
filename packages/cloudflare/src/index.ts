@@ -1,6 +1,8 @@
 import { isValidJoinCode } from "@junction/rooms";
 import { GAMES, isGameName } from "./games.js";
 import { GameRoom } from "./game-room.js";
+import { D1GameStore } from "./game-store.js";
+import { handleMcp } from "./mcp.js";
 
 export { GameRoom };
 
@@ -11,6 +13,8 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     try {
+      if (url.pathname === "/mcp") return await handleMcp(request, env);
+
       if (request.method === "POST" && url.pathname === "/api/rooms")
         return await createRoom(url, env);
 
@@ -22,7 +26,7 @@ export default {
       }
 
       if (request.method === "GET" && url.pathname === "/check")
-        return Response.json({ ok: true, websocket: "/ws?code=ABCDE", games: Object.keys(GAMES) });
+        return Response.json({ ok: true, mcp: "/mcp", websocket: "/ws?code=ABCDE", games: Object.keys(GAMES) });
 
       return env.ASSETS.fetch(request);
     } catch (error) {
@@ -40,9 +44,24 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 async function createRoom(url: URL, env: Env): Promise<Response> {
-  const game = url.searchParams.get("game") ?? "war";
-  if (!isGameName(game))
-    return Response.json({ error: `Unknown game '${game}'.` }, { status: 400 });
+  const gameId = url.searchParams.get("gameId");
+  const revisionText = url.searchParams.get("revision");
+  let game = url.searchParams.get("game") ?? "war";
+  let yaml: string;
+
+  if (gameId !== null || revisionText !== null) {
+    const revision = Number(revisionText);
+    if (gameId === null || !Number.isInteger(revision) || revision < 1)
+      return Response.json({ error: "A gameId and positive published revision are required." }, { status: 400 });
+    const published = await new D1GameStore(env.GAMES).getPublished(gameId, revision);
+    if (published === undefined)
+      return Response.json({ error: "Published game revision not found." }, { status: 404 });
+    game = published.id;
+    yaml = published.yaml;
+  } else {
+    if (!isGameName(game)) return Response.json({ error: `Unknown game '${game}'.` }, { status: 400 });
+    yaml = GAMES[game];
+  }
 
   const seatsParam = url.searchParams.get("seats");
   const seats = seatsParam === null ? null : Number(seatsParam);
@@ -51,7 +70,7 @@ async function createRoom(url: URL, env: Env): Promise<Response> {
 
   for (let attempt = 0; attempt < 8; attempt++) {
     const code = makeRoomCode();
-    const result = await env.ROOMS.getByName(code).initialize(GAMES[game], seats, crypto.randomUUID());
+    const result = await env.ROOMS.getByName(code).initialize(yaml, seats, crypto.randomUUID());
     if (result.error !== undefined) return Response.json({ error: result.error }, { status: 400 });
     if (result.created)
       return Response.json(

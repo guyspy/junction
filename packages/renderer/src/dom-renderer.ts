@@ -30,6 +30,7 @@ export interface MountOptions {
   readonly seed?: string;
   /** ms between bot moves (0 in tests). */
   readonly botDelay?: number;
+  readonly visualAdapter?: VisualAdapter;
 }
 
 export interface GameController {
@@ -106,7 +107,9 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
   const live = el("div", "visually-hidden");
   live.setAttribute("role", "status");
   live.setAttribute("aria-live", "polite");
-  container.append(statusBar, statsHost, zonesHost, buttonsHost, tickerHost, live);
+  container.append(statusBar);
+  options.visualAdapter?.mount(container);
+  container.append(statsHost, zonesHost, buttonsHost, tickerHost, live);
 
   // Browsers require a user gesture before audio: unlock on the first interaction.
   const unlockOnce = (): void => sound.unlock();
@@ -123,6 +126,7 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
     renderStats(statsHost, vm);
     renderZones(zonesHost, vm, doc.metadata.name, onMove);
     renderButtons(buttonsHost, vm, onMove);
+    options.visualAdapter?.render(vm, onMove);
     renderTicker(tickerHost, ticker);
     pulseChangedStats(statsHost, stepEvents);
 
@@ -242,6 +246,7 @@ export function mountGame(container: HTMLElement, doc: GameDocument, options: Mo
       disposed = true;
       if (timer !== undefined) clearTimeout(timer);
       container.removeEventListener("pointerdown", unlockOnce, { capture: true });
+      options.visualAdapter?.dispose();
     },
   };
 }
@@ -472,6 +477,13 @@ export interface OnlineMountOptions {
   /** WebSocket URL including the room code, e.g. wss://host/ws?code=ABCDE */
   readonly url: string;
   readonly name?: string;
+  readonly visualAdapter?: VisualAdapter;
+}
+
+export interface VisualAdapter {
+  readonly mount: (container: HTMLElement) => void;
+  readonly render: (view: ViewModel, move: (move: { action: string; target?: string }) => void) => void;
+  readonly dispose: () => void;
 }
 
 interface WireWelcome {
@@ -570,7 +582,9 @@ export function mountOnlineGame(container: HTMLElement, options: OnlineMountOpti
     const live = el("div", "visually-hidden");
     live.setAttribute("role", "status");
     live.setAttribute("aria-live", "polite");
-    container.append(statusBar, statsHost, zonesHost, buttonsHost, tickerHost, live);
+    container.append(statusBar);
+    options.visualAdapter?.mount(container);
+    container.append(statsHost, zonesHost, buttonsHost, tickerHost, live);
     container.addEventListener("pointerdown", () => sound.unlock(), { capture: true });
 
     game = {
@@ -606,6 +620,10 @@ export function mountOnlineGame(container: HTMLElement, options: OnlineMountOpti
       send({ t: "move", ...move });
     });
     renderButtons(g.buttonsHost, vm, (move) => {
+      g.sound.unlock();
+      send({ t: "move", ...move });
+    });
+    options.visualAdapter?.render(vm, (move) => {
       g.sound.unlock();
       send({ t: "move", ...move });
     });
@@ -686,6 +704,7 @@ export function mountOnlineGame(container: HTMLElement, options: OnlineMountOpti
       disposed = true;
       if (retryTimer !== undefined) clearTimeout(retryTimer);
       socket?.close();
+      options.visualAdapter?.dispose();
     },
   };
 }

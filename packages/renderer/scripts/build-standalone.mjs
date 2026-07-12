@@ -16,4 +16,4 @@ await build({
   logLevel: "warning",
 });
 
-console.log("cadherin: dist/standalone.js bundled");
+console.log("cadherin: standalone Pixi + DOM bundle built");
